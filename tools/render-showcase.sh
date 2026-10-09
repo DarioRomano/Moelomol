@@ -28,11 +28,15 @@ SIZES=(1280x720 1920x1080 2560x1440 1366x768 1280x800 2560x1080 3440x1440 3840x1
 "$GODOT" --headless --path "$ROOT" --import >/dev/null 2>&1
 mkdir -p "$OUT"
 
+# The outcome is also left as a CI annotation, because job logs cannot be read
+# from the engineer's environment but annotations can.
 if command -v openbox >/dev/null 2>&1; then
   WM_CHECK=(--check-window-mode)
+  [ "${GITHUB_ACTIONS:-}" = "true" ] && echo "::notice title=Window mode::checked on every render (openbox running)"
 else
   WM_CHECK=()
   echo "WARNING: openbox not installed; window mode (fullscreen) is NOT checked." >&2
+  [ "${GITHUB_ACTIONS:-}" = "true" ] && echo "::warning title=Window mode::NOT checked: openbox not installed"
 fi
 
 # Runs one render inside its own virtual display, with the window manager
