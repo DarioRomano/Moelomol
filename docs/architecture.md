@@ -156,6 +156,23 @@ quits; exits non-zero on failure), `--export-release <preset> <path>`,
   errors; the build stamp was embedded.
 - Windows and macOS builds have **not** been run (no such machines here).
 
+### 2026-10-09 (performance overlay), Godot 4.7.2.stable.official.ed1daf0bf
+
+Probed under Xvfb with the Compatibility renderer (llvmpipe):
+- `Performance.get_monitor()` with `TIME_FPS`, `TIME_PROCESS`,
+  `TIME_PHYSICS_PROCESS` (seconds), `MEMORY_STATIC`, `RENDER_VIDEO_MEM_USED`
+  (bytes), `RENDER_TOTAL_DRAW_CALLS_IN_FRAME`: all return values.
+- `RenderingServer.viewport_set_measure_render_time(rid, true)`, then
+  `viewport_get_measured_render_time_cpu/gpu(rid)` (milliseconds): both
+  return values under Compatibility.
+- `RenderingServer.get_video_adapter_name/_vendor/_api_version`,
+  `get_current_rendering_method()` (`gl_compatibility`),
+  `get_current_rendering_driver_name()` (`opengl3`), `OS.get_processor_name`,
+  `OS.get_processor_count`, `Engine.get_architecture_name()` (`x86_64`).
+- `DisplayServer.screen_get_refresh_rate()` returns NaN under Xvfb.
+- **Autoloads are instantiated when a script runs with `-s`** (render tool,
+  test runner): `root` had a `WindowControls` child.
+
 ### 2026-10-09 (input, window, frame rate), Godot 4.7.2.stable.official.ed1daf0bf
 
 Same probe method; plus a search of every class's methods.
@@ -193,21 +210,3 @@ a real controller)
 - `physics/common/physics_interpolation`: exists, default false.
 - `physics/common/max_physics_steps_per_frame`: default 8.
 - `physics/common/physics_jitter_fix`: default 0.5.
-
-### 2026-10-09 (performance overlay), Godot 4.7.2.stable.official.ed1daf0bf
-
-Probed under Xvfb with the Compatibility renderer (llvmpipe):
-- `Performance.get_monitor()` with `TIME_FPS`, `TIME_PROCESS`,
-  `TIME_PHYSICS_PROCESS` (seconds), `MEMORY_STATIC`, `RENDER_VIDEO_MEM_USED`
-  (bytes), `RENDER_TOTAL_DRAW_CALLS_IN_FRAME`: all return values.
-- `RenderingServer.viewport_set_measure_render_time(rid, true)`, then
-  `viewport_get_measured_render_time_cpu/gpu(rid)` (milliseconds): both
-  return values under Compatibility.
-- `RenderingServer.get_video_adapter_name/_vendor/_api_version`,
-  `get_current_rendering_method()` (`gl_compatibility`),
-  `get_current_rendering_driver_name()` (`opengl3`), `OS.get_processor_name`,
-  `OS.get_processor_count`, `Engine.get_architecture_name()` (`x86_64`).
-- `DisplayServer.screen_get_refresh_rate()` returns NaN under Xvfb.
-- **Autoloads are instantiated when a script runs with `-s`** (render tool,
-  test runner): `root` had a `WindowControls` child.
-
