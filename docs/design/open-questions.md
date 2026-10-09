@@ -5,26 +5,32 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-09: 11 open. Q1, Q2, Q3 and Q9 block the art-and-music work;
-Q1 and Q5 block creating the Godot project (Milestone 1).
+Status at 2026-10-09 (after the CI pull request): Q1 and Q10 resolved; Q5 and
+Q8 are applied as working assumptions in the Godot project until the lead
+decides; Q12 is new.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
-| Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | Open |
+| Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | **Resolved** → ADR-0008 |
 | Q2 | Where the art comes from | M2 | Open |
 | Q3 | Where the music and sound come from | M2 | Open |
 | Q4 | Performance budget values (ADR-0007) | M1 CI budget checks | Open |
-| Q5 | Renderer | M1 | Open |
+| Q5 | Renderer | M1 | Open (working assumption: A) |
 | Q6 | Input model | Player movement (later) | Open |
 | Q7 | Is the web build a shipping platform? | Nothing yet | Open |
-| Q8 | Approve ADR-0003 (typed GDScript) | M1 | Open |
+| Q8 | Approve ADR-0003 (typed GDScript) | M1 | Open (working assumption: approve) |
 | Q9 | What was the calamity? | M2 art direction detail | Open |
-| Q10 | Merging docs-only PRs before CI exists | Docs PRs | Open |
+| Q10 | Merging docs-only PRs before CI exists | Docs PRs | **Resolved**: CI PR went first |
 | Q11 | Plain git or Git LFS for binary assets | First large assets | Open |
+| Q12 | Start fullscreen or windowed? | Release builds people judge | Open |
 
 ---
 
 ## Q1. Base resolution, tile size, stretch and scale mode
+
+**Resolved 2026-10-09:** the lead accepted the recommendation (C with the
+stretch settings below). Recorded in ADR-0008, with what the first renders
+showed.
 
 Pixel art needs one fixed internal resolution, scaled up by whole numbers so
 every art pixel becomes the same number of screen pixels. Everything else
@@ -162,6 +168,10 @@ first real-machine playtest.
 
 ## Q5. Renderer
 
+**Working assumption since 2026-10-09:** the Godot project uses option A so it
+could be created. Switching is one setting while there is no content. The
+feature check is still to do.
+
 Godot's web export always uses the Compatibility renderer
 (`rendering/renderer/rendering_method.web` defaults to `gl_compatibility`); the
 desktop default is Forward+ (`forward_plus`). Both verified in 4.7.2.
@@ -221,6 +231,9 @@ one, never raw keys. Controller behaviour goes on playtest checklists.
 
 ## Q8. Approve ADR-0003 (statically typed GDScript)
 
+**Working assumption since 2026-10-09:** the project is typed GDScript with
+untyped declarations as errors. ADR-0003 stays Proposed until the lead answers.
+
 The brief does not name a language. The engineer proposed GDScript with static
 typing (see the ADR for the reasoning). The alternative, C#, needs the .NET
 build of Godot and the .NET SDK in CI, and its web export support in 4.7.2 has
@@ -258,6 +271,9 @@ changed.
 
 ## Q10. Merging docs-only PRs before CI exists
 
+**Resolved 2026-10-09:** the lead asked for CI first, so the CI pull request was
+the first one and every later PR gets the checks (option A in effect).
+
 ADR-0006 requires four CI checks to pass before merging, and those checks do
 not exist until Milestone 1.
 
@@ -286,3 +302,31 @@ merged** (recommended)
 
 **Recommendation:** A until the repository approaches about 500 MB, then
 revisit. Pixel art PNGs are small; music is the main growth risk.
+
+## Q12. Start fullscreen or windowed?
+
+Found while writing the first playtest checklist. With whole-number scaling
+(ADR-0008), a maximised window on a 1920×1080 monitor is a little shorter than
+the screen (taskbar, title bar), so it drops from 3x to 2x and shows wide black
+bars. The game currently starts in a 1280×720 window and has no fullscreen
+option. The setting is `display/window/size/mode`; its values have not yet been
+verified against the engine.
+
+**A. Start in fullscreen** (recommended)
+- Pro: every common monitor shows the game at full size with no bars (3x at
+  1080p, 4x at 1440p, 6x at 4K).
+- Con: needs a way out (an options menu or a key), which touches the input
+  model and needs your approval.
+
+**B. Start windowed at 1280×720** (current)
+- Pro: friendly for development and for small laptop screens.
+- Con: first impression is small, and maximising gives bars.
+
+**C. Start windowed at the largest whole multiple that fits the screen**
+- Pro: no bars, still a window.
+- Con: more code, and window decorations differ per platform, so it needs
+  testing on all three.
+
+**Recommendation:** A, with fullscreen toggled by an options menu when the
+first menu is built, plus the platform-standard shortcut (to be confirmed
+under Q6).

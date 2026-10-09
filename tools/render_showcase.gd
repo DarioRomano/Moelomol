@@ -1,0 +1,55 @@
+extends SceneTree
+## Renders one scene in a real window and saves what the window shows, after
+## stretch and scaling, to a PNG. Run through tools/render-showcase.sh, which
+## provides a virtual display of the right size.
+##
+##   godot --path . --resolution 1366x768 --position 0,0 \
+##     -s res://tools/render_showcase.gd -- --scene res://... --out /abs/file.png
+
+const SETTLE_FRAMES: int = 10
+
+
+func _initialize() -> void:
+	_render.call_deferred()
+
+
+func _render() -> void:
+	var args: PackedStringArray = OS.get_cmdline_user_args()
+	var scene_path: String = _arg(args, "--scene")
+	var out_path: String = _arg(args, "--out")
+	if scene_path.is_empty() or out_path.is_empty():
+		printerr("render_showcase: need --scene and --out")
+		quit(2)
+		return
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		printerr("render_showcase: cannot load %s" % scene_path)
+		quit(2)
+		return
+	root.add_child(packed.instantiate())
+	for i: int in range(SETTLE_FRAMES):
+		await process_frame
+	await RenderingServer.frame_post_draw
+	# screen_get_image_rect() returns an empty image under Xvfb in 4.7.2
+	# (verified 2026-10-09); capture the whole screen and crop to the window.
+	var window_rect: Rect2i = Rect2i(DisplayServer.window_get_position(), DisplayServer.window_get_size())
+	var screen: Image = DisplayServer.screen_get_image(DisplayServer.window_get_current_screen())
+	var image: Image = null
+	if screen != null and not screen.is_empty():
+		image = screen.get_region(window_rect.intersection(Rect2i(Vector2i.ZERO, screen.get_size())))
+	if image == null or image.is_empty():
+		printerr("render_showcase: screen capture returned nothing")
+		quit(3)
+		return
+	var error: Error = image.save_png(out_path)
+	if error != OK:
+		printerr("render_showcase: cannot save %s (%s)" % [out_path, error_string(error)])
+		quit(3)
+		return
+	print("render_showcase: %s -> %s (%dx%d)" % [scene_path, out_path, image.get_width(), image.get_height()])
+	quit(0)
+
+
+func _arg(args: PackedStringArray, name: String) -> String:
+	var index: int = args.find(name)
+	return args[index + 1] if index >= 0 and index + 1 < args.size() else ""

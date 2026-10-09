@@ -19,5 +19,7 @@ Clarifications that do not change the decision (typos, links) are fine.
 | [0003](0003-language-typed-gdscript.md) | Language: statically typed GDScript | Proposed |
 | [0004](0004-target-platforms.md) | Target platforms | Accepted |
 | [0005](0005-core-design-constraints.md) | Core design constraints | Accepted |
-| [0006](0006-workflow-and-merge-gate.md) | Development workflow and merge gate | Accepted |
+| [0006](0006-workflow-and-merge-gate.md) | Development workflow and merge gate | Accepted; gate extended by 0009 |
 | [0007](0007-performance-budget.md) | Performance budget | Proposed (values pending Q4) |
+| [0008](0008-display-resolution-and-scaling.md) | Display: 640×360 base, 16 px tiles, whole-number scaling | Accepted |
+| [0009](0009-ci-builds-and-releases.md) | CI, pull-request builds and releases | Accepted |

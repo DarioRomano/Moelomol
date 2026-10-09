@@ -1,6 +1,7 @@
 # ADR-0006: Development workflow and merge gate
 
-- **Status:** Accepted
+- **Status:** Accepted. Merge gate extended by ADR-0009 (adds the Change notes
+  check), on the lead's instruction of 2026-10-09.
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (brief of 2026-10-09)
 

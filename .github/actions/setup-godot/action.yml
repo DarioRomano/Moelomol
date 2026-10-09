@@ -1,0 +1,26 @@
+name: Set up Godot
+description: >
+  Installs the pinned Godot editor (ADR-0002) and optionally the export
+  templates, cached between runs, and sets GODOT for later steps.
+inputs:
+  templates:
+    description: Also install the export templates the presets need.
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Cache Godot
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/moelomol-godot
+        # Bump the suffix if tools/install-godot.sh changes what it keeps.
+        key: godot-4.7.2-${{ inputs.templates == 'true' && 'templates' || 'editor' }}-v1
+    - name: Install Godot
+      shell: bash
+      run: |
+        args=()
+        if [ "${{ inputs.templates }}" = "true" ]; then args+=(--templates); fi
+        godot_path="$(tools/install-godot.sh "${args[@]}" | tail -n 1)"
+        echo "GODOT=$godot_path" >> "$GITHUB_ENV"
+        GODOT="$godot_path" tools/check-godot-version.sh
+        "$godot_path" --version
