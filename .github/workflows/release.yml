@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/lfs-pull
       - uses: ./.github/actions/setup-godot
       - run: tools/run-tests.sh
 
@@ -32,6 +33,7 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/lfs-pull
       - uses: ./.github/actions/setup-godot
         with:
           templates: "true"

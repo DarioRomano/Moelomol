@@ -24,3 +24,4 @@ Clarifications that do not change the decision (typos, links) are fine.
 | [0008](0008-display-resolution-and-scaling.md) | Display: 640×360 base, 16 px tiles, whole-number scaling | Accepted |
 | [0009](0009-ci-builds-and-releases.md) | CI, pull-request builds and releases | Accepted |
 | [0010](0010-the-pet-companion.md) | The pet companion | Accepted |
+| [0011](0011-git-lfs-for-large-assets.md) | Git LFS for large assets | Accepted |

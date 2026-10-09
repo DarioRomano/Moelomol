@@ -128,6 +128,9 @@ Design doc for the consequences. Update `docs/roadmap.md` when a milestone moves
   and folders `snake_case`, `class_name` in `PascalCase`, constants
   `CONSTANT_CASE`.
 - Line endings LF (enforced by `.gitattributes`).
+- Audio, art source files and video go through Git LFS (ADR-0011; patterns in
+  `.gitattributes`). Run `git lfs install` once per machine. CI fails any
+  tracked file over 1 MiB outside LFS, and any LFS-type file committed raw.
 - Commit the `*.import` and `*.uid` sidecar files Godot writes next to assets
   and scripts; never commit `.godot/`. Delete the `.uid` of any script you delete.
 - Placeholder art or audio must be labelled as placeholder in the progress note

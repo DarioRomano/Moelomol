@@ -1,0 +1,22 @@
+name: Pull Git LFS files (cached)
+description: >
+  Downloads the Git LFS files of the checked-out commit, reusing a cache keyed
+  on the exact set of LFS objects, so CI does not spend the LFS bandwidth
+  quota on every job (ADR-0011). Use after actions/checkout (with lfs: false).
+runs:
+  using: composite
+  steps:
+    - name: List LFS objects
+      shell: bash
+      run: |
+        mkdir -p .git/lfs
+        git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-assets-id
+        echo "LFS objects in this commit: $(wc -l < .lfs-assets-id)"
+    - name: Restore LFS cache
+      uses: actions/cache@v6
+      with:
+        path: .git/lfs
+        key: lfs-${{ hashFiles('.lfs-assets-id') }}
+    - name: Pull LFS files
+      shell: bash
+      run: git lfs pull

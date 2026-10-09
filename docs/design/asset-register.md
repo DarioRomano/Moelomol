@@ -2,7 +2,8 @@
 
 Every art, audio and font asset in the game, where it came from, its licence,
 and whether it is placeholder. Add a row in the same PR that adds the asset.
-Placeholders are replaced when the provisioned art arrives (Q2).
+Placeholders are replaced when the provisioned art arrives (Q2). Audio, art
+source files and video are stored through Git LFS (ADR-0011).
 
 | Asset | Path | Source | Licence | Status |
 |---|---|---|---|---|
