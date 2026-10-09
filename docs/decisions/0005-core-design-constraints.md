@@ -1,6 +1,7 @@
 # ADR-0005: Core design constraints
 
-- **Status:** Accepted
+- **Status:** Accepted. Point 4 amended by ADR-0010 (the pet companion), on the
+  lead's decision of 2026-10-09.
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (brief of 2026-10-09)
 

@@ -5,24 +5,26 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-09 (after the CI pull request): Q1 and Q10 resolved; Q5 and
-Q8 are applied as working assumptions in the Godot project until the lead
-decides; Q12 is new.
+Status at 2026-10-09: Q1, Q2, Q3, Q9 and Q10 resolved. Q5 and Q8 are applied
+as working assumptions in the Godot project until the lead decides. Q12, Q13
+and Q14 are new.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
 | Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | **Resolved** → ADR-0008 |
-| Q2 | Where the art comes from | M2 | Open |
-| Q3 | Where the music and sound come from | M2 | Open |
+| Q2 | Where the art comes from | M2 | **Resolved**: placeholders now, art provisioned later |
+| Q3 | Where the music and sound come from | M2 | **Resolved**: AI tools run by the lead; prompts in `audio-prompts.md` |
 | Q4 | Performance budget values (ADR-0007) | M1 CI budget checks | Open |
 | Q5 | Renderer | M1 | Open (working assumption: A) |
 | Q6 | Input model | Player movement (later) | Open |
 | Q7 | Is the web build a shipping platform? | Nothing yet | Open |
 | Q8 | Approve ADR-0003 (typed GDScript) | M1 | Open (working assumption: approve) |
-| Q9 | What was the calamity? | M2 art direction detail | Open |
+| Q9 | What was the calamity? | M2 art direction detail | **Resolved** → ADR-0010, `story.md` |
 | Q10 | Merging docs-only PRs before CI exists | Docs PRs | **Resolved**: CI PR went first |
 | Q11 | Plain git or Git LFS for binary assets | First large assets | Open |
 | Q12 | Start fullscreen or windowed? | Release builds people judge | Open |
+| Q13 | What the calamity looked like; where monsters come from | Art and audio of adventure areas | Open |
+| Q14 | Does feeding the pet do anything in play? | Crafting/recipe design | Open |
 
 ---
 
@@ -83,6 +85,9 @@ renders at several window sizes in Milestone 1; not yet verified.
 
 ## Q2. Where the art comes from
 
+**Resolved 2026-10-09:** option A. Placeholders made in code now; the final art
+will be provisioned later by the lead.
+
 Adding external art or commissioning art needs the lead's approval. The
 engineer can draw pixel art only with code (scripts that write PNGs pixel by
 pixel), which is fine for shapes, palettes, tiles and layout tests but will not
@@ -119,6 +124,12 @@ the Milestone 2 renders and `art-direction.md` as the brief. Avoid B except
 perhaps for short-lived reference.
 
 ## Q3. Where the music and sound come from
+
+**Resolved 2026-10-09:** none of the options below. Music and ambience will be
+made with separate specialised AI tools, run by the lead. The engineer writes
+and maintains the prompts for each designed area in
+`docs/design/audio-prompts.md`. Sound effects (footsteps, tools, UI) are not
+covered by that decision and remain open until sound work starts.
 
 **A. Code-synthesised placeholders** (Python standard library writing WAV
 files, or Godot's `AudioStreamGenerator`, which exists in 4.7.2)
@@ -243,6 +254,13 @@ not been verified.
 
 ## Q9. What was the calamity?
 
+**Resolved 2026-10-09** (the lead's own answer, not one of the options below):
+the player's pet, a cat that lives on the farm, is secretly an eldritch god. The
+farm is unharmed because it enjoys the place; the player is the only one left
+because they alone know how to make the most delicious cat treats, the first
+recipe, unlocked from the start. Recorded in ADR-0010 and `story.md`. What the
+calamity looked like and where monsters come from are still open (Q13).
+
 Not stated in the brief. The answer decides the visual language of the world,
 what the notes talk about, and why monsters exist. It is a creative decision for
 the lead; options are offered only to make the choice concrete.
@@ -330,3 +348,66 @@ verified against the engine.
 **Recommendation:** A, with fullscreen toggled by an options menu when the
 first menu is built, plus the platform-standard shortcut (to be confirmed
 under Q6).
+
+## Q13. What did the calamity look like, and where do monsters come from?
+
+Q9 settled who and why (the pet; see ADR-0010). Still open is what happened to
+everyone and what the player fights. This decides how adventure areas look and
+sound, what the notes describe, and what monsters drop. The no-gore rule from
+the art direction applies to every option.
+
+**What happened to the people**
+
+**A. They vanished.** Overnight, everywhere, nothing left but their things.
+- Pro: strongest for environmental storytelling (set tables, half-written
+  letters); consistent with "traces, not bodies"; quietly cosmic.
+- Con: notes must be written before the moment, so nobody can describe it
+  directly.
+
+**B. They were taken over time.** Town by town, following the cat's wandering.
+- Pro: notes can witness it happening elsewhere ("the next valley went quiet
+  last week"), which carries the reveal (`story.md`).
+- Con: more writing to keep the timeline consistent.
+
+**Where monsters come from**
+
+**C. Wildlife and land changed by the god's presence.** Stronger change further
+from the base.
+- Pro: matches the art and audio rule "further from the base, more changed";
+  monster drops can be natural materials, which fits farming and crafting.
+- Con: needs care so animals do not read as cruelty.
+
+**D. The god's dreams given shape.** Strange creatures that are not of this
+world.
+- Pro: free creature design; strongly eldritch.
+- Con: harder to justify farmed and dropped materials; risks a generic
+  "corruption" look.
+
+**Recommendation:** B with C. People were taken town by town, so notes can
+witness the spread and point at the cat. Monsters are wildlife and land changed
+by the god's presence, more so further from the base, which is also why the
+base (where it is content) stays peaceful.
+
+## Q14. Does feeding the pet do anything in play?
+
+Cat treats are the first recipe (ADR-0010). Whether giving them to the pet has
+an effect is not decided, and it shapes the recipe and upgrade systems.
+
+**A. Affection only.** The pet reacts happily; nothing else.
+- Pro: simple; keeps the pet a companion rather than a power-up.
+- Con: the first recipe has no gameplay purpose.
+
+**B. Small blessings.** Treats give temporary bonuses (luck, foraging, combat).
+- Pro: gives the first recipe a reason; uncanny if the blessings are slightly
+  too strong.
+- Con: overlaps with trinkets, artefacts and upgrades; risks making the god a
+  vending machine.
+
+**C. Story moments.** Feeding triggers rare small uncanny events at the base
+that carry the reveal (`story.md`), with no stat effect.
+- Pro: makes the core recipe the core story device; no balance impact.
+- Con: content to author; easy to miss.
+
+**Recommendation:** decide when recipes and crafting are designed. Leaning
+towards A plus C: no stat bonuses, but feeding sometimes shows the player
+something impossible.

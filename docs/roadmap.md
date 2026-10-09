@@ -26,13 +26,15 @@ CI yet), Q5 and Q8 (working assumptions), Q12 (fullscreen).
 
 ## Milestone 2: Art and audio direction slice (not started)
 
-Blocked on: nothing (Q2, Q3 and Q9 answered 2026-10-09; recorded in the
-following pull request).
+Blocked on: nothing. Q2 (placeholders now), Q3 (AI audio from the prompts in
+`docs/design/audio-prompts.md`, run by the lead) and Q9 (the pet, ADR-0010)
+were answered 2026-10-09. Audio files depend on the lead generating them and
+confirming the tools' licence terms.
 
-- Palette and placeholder (or real) art for the base area as listed in
-  `docs/design/art-direction.md`, with an asset register.
+- Placeholder art for the base area as listed in
+  `docs/design/art-direction.md`, including the pet, recorded in the asset register.
 - A showcase scene of the base, rendered for review; no gameplay.
-- Audio bus layout and base ambience, if Q3 allows.
+- Audio bus layout; base music and ambience once the lead has generated them.
 - A playtest checklist for the lead to judge the mood on real screens and
   speakers.
 

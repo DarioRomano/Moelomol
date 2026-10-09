@@ -10,9 +10,12 @@ Moelomol is a 2D farming and adventure RPG in Godot 4.7.2 for Windows, macOS and
 Linux. One base where farming happens, peaceful and separate from fighting.
 Exploration, foraging and combat happen outside the base and drive the story
 forward by fulfilling objectives and unlocking areas. The player is the last
-person left after a calamity and never meets another character; the story is
-told only through the environment and notes. The binding version of these
-constraints is ADR-0005 (`docs/decisions/0005-core-design-constraints.md`).
+person left after a calamity and never meets another person; the story is
+told only through the environment and notes. The one companion is the
+player's pet cat, which never speaks and is secretly the eldritch god that
+caused the calamity (ADR-0010, `docs/design/story.md`); the player is spared
+because they make the best cat treats. The binding constraints are ADR-0005 as
+amended by ADR-0010.
 
 ## Current status
 
