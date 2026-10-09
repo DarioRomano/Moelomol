@@ -40,8 +40,10 @@ smoke-runs the Linux build, and publishes a GitHub release:
 - tag `v<application/config/version>-build.<run number>`, for example
   `v0.1.0-build.3`;
 - marked as a pre-release while the version is below 1.0;
-- notes are the merged PR's title and Change notes, plus how to run each
-  download;
+- notes are the title and Change notes of every PR merged since the previous
+  release, oldest first, plus how to run each download (corrected
+  2026-10-09: the first version took only one PR per release, see the
+  progress note of that date on release notes);
 - assets are one zip per desktop platform. The web build is not released
   (open question Q7).
 
