@@ -34,8 +34,13 @@ it is a laptop screen or an external monitor.
    whether black bars appear: 1920×1080 should show 3x, 2560×1440 4x, with no
    bars. On an ultrawide monitor, 2560×1080 should show 3x (view 853×360),
    3440×1440 4x (860×360); on a 32:9 monitor, 3840×1080 3x and 5120×1440 4x
-   (both 1280×360). There is no way to leave fullscreen inside the game yet:
-   quit with Alt+F4 (Windows, Linux) or Cmd+Q (macOS). Result:
+   (both 1280×360). Result:
+6b. **Leaving and re-entering fullscreen.** Windows and Linux: Alt+Enter
+   switches to a window and back. macOS: Ctrl+Cmd+F does the same; also check
+   the green window button still works, and that Ctrl+Cmd+F switches exactly
+   once per press (if macOS also handles the shortcut itself, it could switch
+   twice and appear to do nothing). Holding the keys down must not flicker.
+   Result:
 7. **Resizing** (skip unless you started it with `--windowed` from a
    terminal). Drag the window smaller and larger. The picture should jump
    between whole sizes (never blurry in between), with black bars when the
