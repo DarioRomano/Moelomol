@@ -12,7 +12,8 @@ Constraints the architecture must honour:
   declarations are parse errors.
 - ADR-0005: one base; no combat at the base; no character/dialogue systems.
 - ADR-0007 (proposed): performance budget, values pending.
-- ADR-0008: 640×360 base, `viewport` stretch, `integer` scale, `expand` aspect.
+- ADR-0008: 640×360 layout size, `canvas_items` stretch (full-resolution
+  rendering), `integer` scale, `expand` aspect.
 
 ## What exists
 
@@ -187,4 +188,18 @@ a real controller)
 - `physics/common/physics_interpolation`: exists, default false.
 - `physics/common/max_physics_steps_per_frame`: default 8.
 - `physics/common/physics_jitter_fix`: default 0.5.
+
+### 2026-10-09 (full-resolution rendering), Godot 4.7.2.stable.official.ed1daf0bf
+
+- With `stretch/mode = canvas_items` + `integer` + `expand`, the visible area
+  (`root.get_visible_rect()`) is identical to `viewport` mode at all ten
+  review sizes.
+- `root.get_final_transform()` maps layout units to screen pixels, including
+  the black-border offset: 1366×768 → scale 2, origin (43, 24); 1920×1080 →
+  scale 3, origin (0, 0); 1024×768 → scale 1, origin (192, 144).
+  `root.canvas_transform` stays identity; `get_stretch_transform()` has the
+  scale without the offset.
+- A rect at a fractional layout position (x + 0.5) is drawn at screen
+  precision in `canvas_items` mode and snapped to whole art pixels in
+  `viewport` mode (the test card's `render_checks()` relies on this).
 

@@ -11,6 +11,8 @@ extends SceneTree
 ## and exits 4 if it does not, so a display-setting regression fails CI even
 ## if nobody looks at the image. With --check-window-mode it also checks the
 ## window mode matches the project setting (exit 5), e.g. fullscreen (Q12).
+## If the scene has render_checks(image, layout_to_screen), its problems fail
+## the render (exit 6).
 
 const SETTLE_FRAMES: int = 10
 
@@ -40,7 +42,8 @@ func _render() -> void:
 		printerr("render_showcase ERROR: cannot load %s" % scene_path)
 		quit(2)
 		return
-	root.add_child(packed.instantiate())
+	var scene: Node = packed.instantiate()
+	root.add_child(scene)
 	for i: int in range(SETTLE_FRAMES):
 		await process_frame
 	await RenderingServer.frame_post_draw
@@ -70,6 +73,15 @@ func _render() -> void:
 			view.x, view.y, window_rect.size.x, window_rect.size.y, expected.x, expected.y])
 		quit(4)
 		return
+	# Scene-specific checks on the captured image (e.g. the test card's
+	# full-resolution marker). Exit 6 on any problem.
+	if scene.has_method("render_checks"):
+		var problems: Array = scene.call("render_checks", image, root.get_final_transform())
+		for problem: Variant in problems:
+			printerr("render_showcase ERROR: %s: %s" % [scene_path, problem])
+		if not problems.is_empty():
+			quit(6)
+			return
 	# X11 only reports fullscreen when a window manager is running, so the
 	# shell script passes --check-window-mode only when it started one.
 	if args.has("--check-window-mode"):
