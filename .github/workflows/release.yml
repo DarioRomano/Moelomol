@@ -1,0 +1,66 @@
+# Every merge to main becomes a GitHub release with runnable builds for all
+# shipping platforms (ADR-0004, ADR-0009). Release notes are the merged pull
+# request's "Change notes" section.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Headless tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-godot
+      - run: tools/run-tests.sh
+
+  release:
+    name: Build and publish release
+    needs: tests
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-godot
+        with:
+          templates: "true"
+      - name: Work out the version
+        id: version
+        run: |
+          version="$(sed -n 's/^config\/version="\(.*\)"$/\1/p' project.godot)"
+          [ -n "$version" ] || { echo "::error::application/config/version missing from project.godot"; exit 1; }
+          tag="v${version}-build.${{ github.run_number }}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "BUILD_COMMIT=${{ github.sha }}" >> "$GITHUB_ENV"
+          echo "BUILD_LABEL=$tag" >> "$GITHUB_ENV"
+      - run: tools/export.sh windows macos linux
+      - name: Install a virtual display
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri
+      - name: Smoke-run the Linux build
+        run: tools/smoke-run.sh "dist/Moelomol-${BUILD_LABEL}-linux.zip"
+      - name: Write release notes from the merged pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/ci/release-notes.sh > release-notes.md && cat release-notes.md
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release create "$TAG" dist/*.zip \
+            --target "$GITHUB_SHA" \
+            --title "Moelomol $TAG" \
+            --notes-file release-notes.md \
+            --prerelease

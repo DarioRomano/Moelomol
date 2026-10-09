@@ -9,31 +9,32 @@ not targets.
   direction drafts, open questions, this roadmap.
 - No code, no Godot project, no CI.
 
-## Milestone 1: Project skeleton and CI (not started)
+## Milestone 1: Project skeleton and CI (done 2026-10-09, first pull request)
 
-Blocked on: Q1 (resolution and stretch), Q5 (renderer), Q8 (language).
-Benefits from: Q4 (performance budget), Q10 (docs PR handling).
+- `project.godot` with the ADR-0008 display settings, Compatibility renderer
+  (Q5 working assumption) and typed GDScript (Q8 working assumption).
+- Headless test runner, `tools/run-tests.sh`; showcase renders at six window
+  sizes, `tools/render-showcase.sh`.
+- Pull-request workflow: Change notes, Headless tests, Web build, Desktop
+  export, Visual review renders, plus a build-links comment.
+- Release workflow: every merge to `main` publishes Windows, macOS and Linux
+  builds (ADR-0009).
+- Playtest checklist for the lead: `docs/playtests/2026-10-09-foundation-build.md`.
 
-- `project.godot` with the decided display, rendering and input settings.
-- A headless test runner and `tools/run-tests.sh`.
-- `tools/render-showcase.sh` rendering showcase scenes at several window sizes
-  and aspect ratios.
-- GitHub Actions workflow with the four checks: Headless tests, Web build,
-  Desktop export (Windows, macOS, Linux), Visual review renders.
-- Engine version pin check (ADR-0002); untyped-code check (ADR-0003).
-- First playtest checklist: open the desktop build on each of the lead's
-  machines.
-
-No gameplay in this milestone.
+Still open from this milestone: Q4 (performance budget, so no budget checks in
+CI yet), Q5 and Q8 (working assumptions), Q12 (fullscreen).
 
 ## Milestone 2: Art and audio direction slice (not started)
 
-Blocked on: Milestone 1, Q2 (art source), Q3 (audio source). Benefits from Q9.
+Blocked on: nothing. Q2 (placeholders now), Q3 (AI audio from the prompts in
+`docs/design/audio-prompts.md`, run by the lead) and Q9 (the pet, ADR-0010)
+were answered 2026-10-09. Audio files depend on the lead generating them and
+confirming the tools' licence terms.
 
-- Palette and placeholder (or real) art for the base area as listed in
-  `docs/design/art-direction.md`, with an asset register.
+- Placeholder art for the base area as listed in
+  `docs/design/art-direction.md`, including the pet, recorded in the asset register.
 - A showcase scene of the base, rendered for review; no gameplay.
-- Audio bus layout and base ambience, if Q3 allows.
+- Audio bus layout; base music and ambience once the lead has generated them.
 - A playtest checklist for the lead to judge the mood on real screens and
   speakers.
 

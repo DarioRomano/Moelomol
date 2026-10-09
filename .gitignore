@@ -26,3 +26,7 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+
+# Build output and the CI build stamp
+/dist/
+build_stamp.json

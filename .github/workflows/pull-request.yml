@@ -1,0 +1,138 @@
+# Checks and runnable builds for every pull request (ADR-0006, ADR-0009).
+# The four gate checks are the jobs named "Headless tests", "Web build",
+# "Desktop export" and "Visual review renders"; "Change notes" is the fifth.
+name: Pull request
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  BUILD_NUMBER: pr${{ github.event.pull_request.number || 'manual' }}.${{ github.run_number }}
+  BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+  BUILD_LABEL: pr${{ github.event.pull_request.number || 'manual' }}-${{ github.run_number }}
+
+jobs:
+  change-notes:
+    name: Change notes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check the PR description has change notes
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: printf '%s' "$PR_BODY" | python3 tools/ci/change_notes.py check
+
+  tests:
+    name: Headless tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-godot
+      - run: tools/run-tests.sh
+
+  web:
+    name: Web build
+    runs-on: ubuntu-24.04
+    outputs:
+      url: ${{ steps.upload.outputs.artifact-url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-godot
+        with:
+          templates: "true"
+      - run: tools/export.sh web
+      - id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/Moelomol-${{ env.BUILD_LABEL }}-web.zip
+          archive: false
+          retention-days: 14
+
+  desktop:
+    name: Desktop export
+    runs-on: ubuntu-24.04
+    outputs:
+      windows: ${{ steps.windows.outputs.artifact-url }}
+      macos: ${{ steps.macos.outputs.artifact-url }}
+      linux: ${{ steps.linux.outputs.artifact-url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-godot
+        with:
+          templates: "true"
+      - run: tools/export.sh windows macos linux
+      - name: Install a virtual display
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri
+      - name: Smoke-run the Linux build
+        run: tools/smoke-run.sh dist/Moelomol-${{ env.BUILD_LABEL }}-linux.zip
+      - id: windows
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/Moelomol-${{ env.BUILD_LABEL }}-windows.zip
+          archive: false
+          retention-days: 14
+      - id: macos
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/Moelomol-${{ env.BUILD_LABEL }}-macos.zip
+          archive: false
+          retention-days: 14
+      - id: linux
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/Moelomol-${{ env.BUILD_LABEL }}-linux.zip
+          archive: false
+          retention-days: 14
+
+  renders:
+    name: Visual review renders
+    runs-on: ubuntu-24.04
+    outputs:
+      url: ${{ steps.upload.outputs.artifact-url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-godot
+      - name: Install a virtual display
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri
+      - run: tools/render-showcase.sh renders
+      - id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: renders-${{ env.BUILD_LABEL }}
+          path: renders/*.png
+          retention-days: 14
+
+  comment:
+    name: Post build links
+    if: always() && github.event_name == 'pull_request'
+    needs: [tests, web, desktop, renders]
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Create or update the build comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESULT_TESTS: ${{ needs.tests.result }}
+          RESULT_WEB: ${{ needs.web.result }}
+          RESULT_DESKTOP: ${{ needs.desktop.result }}
+          RESULT_RENDERS: ${{ needs.renders.result }}
+          URL_WINDOWS: ${{ needs.desktop.outputs.windows }}
+          URL_MACOS: ${{ needs.desktop.outputs.macos }}
+          URL_LINUX: ${{ needs.desktop.outputs.linux }}
+          URL_WEB: ${{ needs.web.outputs.url }}
+          URL_RENDERS: ${{ needs.renders.outputs.url }}
+        run: tools/ci/post-build-comment.sh

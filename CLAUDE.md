@@ -10,40 +10,42 @@ Moelomol is a 2D farming and adventure RPG in Godot 4.7.2 for Windows, macOS and
 Linux. One base where farming happens, peaceful and separate from fighting.
 Exploration, foraging and combat happen outside the base and drive the story
 forward by fulfilling objectives and unlocking areas. The player is the last
-person left after a calamity and never meets another character; the story is
-told only through the environment and notes. The binding version of these
-constraints is ADR-0005 (`docs/decisions/0005-core-design-constraints.md`).
+person left after a calamity and never meets another person; the story is
+told only through the environment and notes. The one companion is the
+player's pet cat, which never speaks and is secretly the eldritch god that
+caused the calamity (ADR-0010, `docs/design/story.md`); the player is spared
+because they make the best cat treats. The binding constraints are ADR-0005 as
+amended by ADR-0010.
 
 ## Current status
 
-Milestone 0 (foundation). There is **no Godot project, no gameplay, no tests and
-no CI yet**. Do not invent gameplay systems speculatively; build what the task
-asks for. See `docs/roadmap.md`.
+Milestone 1 (project skeleton and CI). A Godot project exists with a test-card
+main scene, a headless test runner, visual review renders, PR builds and
+releases. **There is no gameplay.** Do not invent gameplay systems
+speculatively; build what the task asks for. See `docs/roadmap.md`.
 
 ## Commands
 
-These do not exist yet. They are created in Milestone 1 and this section must be
-updated when they land:
-
-- `tools/run-tests.sh`: full headless test suite, needs no display.
-- `tools/render-showcase.sh`: renders the visual review scenes to images.
-
-Getting Godot 4.7.2 in a fresh Linux session (verified 2026-10-09; the GitHub
-release page itself returns 403 through the session proxy, the asset download
-works):
-
 ```sh
-GODOT_DIR=/tmp/godot   # any directory outside the repository
-mkdir -p "$GODOT_DIR" && cd "$GODOT_DIR"
-curl -sSL -o g.zip https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
-unzip -oq g.zip
-./Godot_v4.7.2-stable_linux.x86_64 --version   # expect 4.7.2.stable.official.ed1daf0bf
+GODOT="$(tools/install-godot.sh | tail -n 1)"; export GODOT   # editor only
+GODOT="$(tools/install-godot.sh --templates | tail -n 1)"     # plus export templates (1.3 GB download)
+
+tools/run-tests.sh                   # full headless suite (GDScript + CI-script tests), no display
+tools/run-tests.sh --filter palette  # only tests whose "path::name" contains the text
+tools/render-showcase.sh [out_dir]   # renders showcase scenes at 6 window sizes (needs xvfb-run)
+tools/export.sh windows macos linux web   # runnable zips in dist/
+tools/smoke-run.sh dist/Moelomol-dev-linux.zip   # start the exported Linux build for 120 frames
 ```
 
-Querying the engine headlessly (use this to verify any API before relying on it):
+All tools use `$GODOT` (default `godot` on PATH) and refuse any engine other
+than 4.7.2.stable.official (`tools/check-godot-version.sh`). The GitHub release
+*page* returns 403 through this environment's proxy; the release *asset*
+downloads used by `install-godot.sh` work.
+
+Querying the engine headlessly (do this to verify any API before relying on it):
 
 ```sh
-./Godot_v4.7.2-stable_linux.x86_64 --headless --path <project_dir> -s probe.gd
+"$GODOT" --headless --path <project_dir> -s probe.gd
 ```
 
 where `probe.gd` `extends SceneTree`, prints what you need in `_init()`, and
@@ -51,13 +53,38 @@ calls `quit()`. The release binary's `--doctool` output has **no descriptions or
 deprecation notes**, only signatures and defaults; do not conclude "not
 deprecated" from it.
 
+From this environment you can read PRs and check results through the GitHub
+REST API (`gh api repos/DarioRomano/Moelomol/...`; `gh pr` commands fail
+because GraphQL is blocked), but **not** Actions job logs. That is why every tool
+prints failures as `::error` annotations: read them with
+`gh api repos/DarioRomano/Moelomol/check-runs/<id>/annotations`.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `project.godot` | Engine settings (ADR-0008 display, Compatibility renderer, typing as errors) |
+| `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`; names are used by CI |
+| `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
+| `scenes/showcase/` | Scenes rendered for visual review; add new ones to `tools/render-showcase.sh` |
+| `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette |
+| `tests/runner/` | Test runner and `TestCase` base class |
+| `tests/unit/` | Tests: `test_*.gd`, methods `test_*`, extend `TestCase` |
+| `tools/` | Scripts above; `tools/ci/` holds CI-only helpers and their Python tests |
+| `.github/` | Workflows, the `setup-godot` composite action, PR template |
+
 ## Workflow rules (ADR-0006)
 
 - Never commit to `main`. Branch per change, open a PR against `main`, one
   coherent change per PR. (The initial commit was the one sanctioned exception.)
-- Merge only when all four CI checks pass: Headless tests, Web build, Desktop
-  export, Visual review renders. Branch protection is not configured; honour the
-  gate by hand. Never skip, disable or quarantine a test to get green.
+- Merge only when all five CI checks pass: Change notes, Headless tests, Web
+  build, Desktop export, Visual review renders (ADR-0009). Branch protection is
+  not configured; honour the gate by hand. Never skip, disable or quarantine a
+  test to get green.
+- Every PR description fills in `## Change notes` (it becomes the release
+  notes). Every new feature comes with tests in the same PR.
+- Every merge to `main` publishes a release automatically. Do not create
+  releases or tags by hand.
 - Never force-push or rewrite history. Never rename the default branch.
 
 ## Ask the project lead before
@@ -75,7 +102,7 @@ with pros and cons per option **and your recommendation**, then ask.
 
 ## Checking your work
 
-- Run `tools/run-tests.sh` (once it exists).
+- Run `tools/run-tests.sh`.
 - Touched anything visual: run `tools/render-showcase.sh` and **look at the
   images**, at more than one window size and aspect ratio.
 - Wrote a test: break the code it covers on purpose and confirm the test fails.
@@ -95,16 +122,30 @@ Design doc for the consequences. Update `docs/roadmap.md` when a milestone moves
 
 ## Conventions
 
-- Language: statically typed GDScript (ADR-0003). Type every variable,
+- Language: statically typed GDScript (ADR-0003, proposed; applied as the
+  working assumption). The project treats untyped declarations as parse errors. Type every variable,
   parameter and return value. Follow the official GDScript style guide: files
   and folders `snake_case`, `class_name` in `PascalCase`, constants
   `CONSTANT_CASE`.
 - Line endings LF (enforced by `.gitattributes`).
-- Commit the `*.import` sidecar files; never commit `.godot/`.
+- Commit the `*.import` and `*.uid` sidecar files Godot writes next to assets
+  and scripts; never commit `.godot/`. Delete the `.uid` of any script you delete.
 - Placeholder art or audio must be labelled as placeholder in the progress note
-  and in `docs/design/asset-register.md` (to be created with the first asset).
+  and in `docs/design/asset-register.md`. Every asset in the repository is listed there.
 
 ## Rules that have caught bugs
 
-None yet. When a rule catches a real bug in this project, add it here with a
-one-line note of the bug it caught.
+When a rule catches a real bug in this project, add it here with a one-line
+note of the bug it caught.
+
+- **Look at the renders.** The first renders showed the test card's scale
+  readout was wrong (2.13x at 1366×768 when the real scale was 2x) and that the
+  darkest palette swatches vanished into the background. Tests had passed.
+- **Fail a test on any logged error, not only on assertions.** A GDScript
+  runtime error aborts the function silently and the test would otherwise
+  pass. The runner hooks the engine's `Logger` for this; keep it.
+- **Run the real export, not just the tests.** The first macOS export failed
+  (Apple Silicon needs ETC2/ASTC import enabled); nothing else would have
+  shown it.
+- **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
+  returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.
