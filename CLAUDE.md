@@ -66,7 +66,7 @@ prints failures as `::error` annotations: read them with
 | `project.godot` | Engine settings (ADR-0008 display, Compatibility renderer, typing as errors) |
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`; names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
-| `scenes/showcase/` | Scenes rendered for visual review; add new ones to `tools/render-showcase.sh` |
+| `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette |
 | `tests/runner/` | Test runner and `TestCase` base class |
 | `tests/unit/` | Tests: `test_*.gd`, methods `test_*`, extend `TestCase` |
