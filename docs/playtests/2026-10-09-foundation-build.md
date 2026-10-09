@@ -28,15 +28,16 @@ it is a laptop screen or an external monitor.
    squares all the same size. Result:
 4. **Edges.** A thin yellow line is visible along all four edges of the game
    area, and a red square sits in each corner. Result:
-5. **Scale readout.** Bottom left says `scale Nx`. In the default window this
-   should be `2x`. Result:
-6. **Maximised.** The game has no fullscreen option yet. Maximise the window
-   (macOS: the green button makes it fullscreen, which is fine). Note the
-   readout and whether black bars appear. A maximised window is a bit smaller
-   than the monitor because of the taskbar or title bar, so expect one step
-   less than fullscreen (for example 2x with bars on a 1920×1080 monitor).
-   Result:
-7. **Resizing.** Drag the window smaller and larger. The picture should jump
+5. **Scale readout.** Bottom left says `scale Nx` and the view size; they
+   should match the table in check 6 for your monitor. Result:
+6. **Fullscreen.** The game starts fullscreen. Note the scale readout and
+   whether black bars appear: 1920×1080 should show 3x, 2560×1440 4x, with no
+   bars. On an ultrawide monitor, 2560×1080 should show 3x (view 853×360),
+   3440×1440 4x (860×360); on a 32:9 monitor, 3840×1080 3x and 5120×1440 4x
+   (both 1280×360). There is no way to leave fullscreen inside the game yet:
+   quit with Alt+F4 (Windows, Linux) or Cmd+Q (macOS). Result:
+7. **Resizing** (skip unless you started it with `--windowed` from a
+   terminal). Drag the window smaller and larger. The picture should jump
    between whole sizes (never blurry in between), with black bars when the
    window is not an exact multiple. Note anything that looks wrong. Result:
 8. **Palette.** Do the 27 colours look as intended on your screen? Any that

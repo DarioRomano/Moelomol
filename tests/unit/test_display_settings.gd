@@ -20,6 +20,11 @@ func test_wider_screens_show_more_world() -> void:
 	assert_eq(ProjectSettings.get_setting("display/window/stretch/aspect"), "expand", "stretch aspect")
 
 
+func test_game_starts_fullscreen() -> void:
+	# Q12, lead 2026-10-09. 3 = Fullscreen (borderless), 4 = Exclusive Fullscreen.
+	assert_eq(ProjectSettings.get_setting("display/window/size/mode"), 3, "window mode")
+
+
 func test_textures_use_nearest_filtering() -> void:
 	# 0 = Nearest. The engine default is 1 (Linear), which blurs pixel art.
 	assert_eq(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter"), 0,
