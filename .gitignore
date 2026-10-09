@@ -1,0 +1,28 @@
+# Godot 4 editor and import cache. The *.import sidecar files next to assets
+# ARE committed; only this cache directory is not.
+.godot/
+
+# Export output
+/build/
+/exports/
+*.pck
+*.exe
+*.x86_64
+*.app
+*.dmg
+
+# Mono / .NET (not used, see ADR-0003; kept so an accidental C# file does not
+# pollute the tree)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Visual review renders are produced by tools and uploaded by CI, not committed
+/renders/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

@@ -1,0 +1,13 @@
+# Normalise line endings so Windows, macOS and Linux checkouts produce identical
+# files (Godot scene and resource files are text and diff badly with CRLF).
+* text=auto eol=lf
+
+*.png binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.aseprite binary
+*.ase binary
