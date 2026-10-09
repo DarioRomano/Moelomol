@@ -24,6 +24,7 @@ Commit \`${BUILD_COMMIT:0:7}\` · [CI run]($RUN_URL)
 | Visual review renders | $(icon "$RESULT_RENDERS") |
 
 **Runnable builds:** $(link Windows "$URL_WINDOWS") · $(link macOS "$URL_MACOS") · $(link Linux "$URL_LINUX") · $(link Web "$URL_WEB")
+**Test build (not a supported platform):** $(link "Linux ARM64, e.g. Steam Frame" "${URL_LINUX_ARM64:-}")
 **Renders to review:** $(link "Showcase images" "$URL_RENDERS")
 
 Downloads need a GitHub login and expire after 14 days. The macOS build is

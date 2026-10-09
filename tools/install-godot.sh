@@ -15,6 +15,7 @@ BASE="https://github.com/godotengine/godot/releases/download/${TAG}"
 TEMPLATES_NEEDED=(
   version.txt
   linux_release.x86_64 linux_debug.x86_64
+  linux_release.arm64 linux_debug.arm64
   windows_release_x86_64.exe windows_debug_x86_64.exe
   windows_release_x86_64_console.exe windows_debug_x86_64_console.exe
   macos.zip

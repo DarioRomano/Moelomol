@@ -47,7 +47,7 @@ jobs:
           echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
           echo "BUILD_COMMIT=${{ github.sha }}" >> "$GITHUB_ENV"
           echo "BUILD_LABEL=$tag" >> "$GITHUB_ENV"
-      - run: tools/export.sh windows macos linux
+      - run: tools/export.sh windows macos linux linux-arm64
       - name: Install a virtual display
         run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri
       - name: Smoke-run the Linux build
