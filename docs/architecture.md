@@ -29,6 +29,12 @@ Constraints the architecture must honour:
   and Linux) and `toggle_fullscreen_macos` (Ctrl+Cmd+F) in `project.godot`.
   Handles them in `_input` so they work over menus. No `class_name`: an
   autoload's name must not also be a class name.
+- `DevTools` (`src/core/dev_tools.gd`, **autoload**) with `FrameStats`
+  (`src/core/frame_stats.gd`): the performance overlay (Q16). F3 or both
+  stick buttons: overlay; F2: cycle showcase scenes; F4: V-Sync. Launch
+  options `--perf-overlay`, `--start-scene <name>`, `--no-vsync` (not
+  `--scene`, which the render tool uses; autoloads also run under the render
+  tool and the test runner).
 - `BuildInfo` (`src/core/build_info.gd`): reads `res://build_stamp.json`,
   written by `tools/export.sh` before export and included through each
   preset's `include_filter`; returns `dev` values when absent.
@@ -187,4 +193,21 @@ a real controller)
 - `physics/common/physics_interpolation`: exists, default false.
 - `physics/common/max_physics_steps_per_frame`: default 8.
 - `physics/common/physics_jitter_fix`: default 0.5.
+
+### 2026-10-09 (performance overlay), Godot 4.7.2.stable.official.ed1daf0bf
+
+Probed under Xvfb with the Compatibility renderer (llvmpipe):
+- `Performance.get_monitor()` with `TIME_FPS`, `TIME_PROCESS`,
+  `TIME_PHYSICS_PROCESS` (seconds), `MEMORY_STATIC`, `RENDER_VIDEO_MEM_USED`
+  (bytes), `RENDER_TOTAL_DRAW_CALLS_IN_FRAME`: all return values.
+- `RenderingServer.viewport_set_measure_render_time(rid, true)`, then
+  `viewport_get_measured_render_time_cpu/gpu(rid)` (milliseconds): both
+  return values under Compatibility.
+- `RenderingServer.get_video_adapter_name/_vendor/_api_version`,
+  `get_current_rendering_method()` (`gl_compatibility`),
+  `get_current_rendering_driver_name()` (`opengl3`), `OS.get_processor_name`,
+  `OS.get_processor_count`, `Engine.get_architecture_name()` (`x86_64`).
+- `DisplayServer.screen_get_refresh_rate()` returns NaN under Xvfb.
+- **Autoloads are instantiated when a script runs with `-s`** (render tool,
+  test runner): `root` had a `WindowControls` child.
 

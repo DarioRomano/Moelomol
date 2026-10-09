@@ -67,7 +67,7 @@ prints failures as `::error` annotations: read them with
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`; names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
-| `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette |
+| `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
 | `tests/runner/` | Test runner and `TestCase` base class |
 | `tests/unit/` | Tests: `test_*.gd`, methods `test_*`, extend `TestCase` |
 | `tools/` | Scripts above; `tools/ci/` holds CI-only helpers and their Python tests |
