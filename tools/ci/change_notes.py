@@ -15,7 +15,9 @@ import re
 import sys
 
 HEADING = re.compile(r"^##\s+Change notes\s*$", re.IGNORECASE | re.MULTILINE)
-NEXT_HEADING = re.compile(r"^##\s", re.MULTILINE)
+# The section ends at the next level-2 heading or at a horizontal rule
+# (tools append footers after "---", which must not count as notes).
+NEXT_HEADING = re.compile(r"^(##\s|(-{3,}|\*{3,}|_{3,})\s*$)", re.MULTILINE)
 COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
