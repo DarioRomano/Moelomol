@@ -36,6 +36,13 @@
   **the darkest palette swatches were invisible.** Found only by looking at the
   renders; all tests had passed. Fixed, and a test for the scale arithmetic
   was added.
+- **The Change notes check passed an empty section.** Found by opening a
+  throwaway PR (#2, closed unmerged) with a deliberate test failure and empty
+  change notes: Headless tests went red as intended, but Change notes stayed
+  green, because tooling had appended a `---` footer after the empty section
+  and the footer counted as notes. The same footer would also have leaked into
+  release notes. Fixed: a horizontal rule ends the section; two tests added
+  and seen to fail before the fix.
 - **`gh pr` commands fail** in this environment (GraphQL blocked) and **Actions
   logs are not readable**; only the REST API and check runs are. Hence every
   tool prints `::error` annotations.
@@ -49,6 +56,9 @@ build stamp left out of a preset's include filter; a palette colour removed
 stamp values ignored; no test matching the filter; a test file not extending
 `TestCase`; change-notes parser not stripping comments; change-notes parser
 stopping at `###` subheadings.
+
+In CI: a throwaway PR (#2) with viewport width 641 and empty change notes,
+to prove the checks really go red (see "What broke").
 
 ## Found while doing this
 
