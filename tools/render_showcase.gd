@@ -4,7 +4,8 @@ extends SceneTree
 ## provides a virtual display of the right size.
 ##
 ##   godot --path . --resolution 1366x768 --position 0,0 \
-##     -s res://tools/render_showcase.gd -- --scene res://... --out /abs/file.png
+##     -s res://tools/render_showcase.gd -- --scene res://... --out /abs/file.png \
+##     [--ui-width full|21:9|16:9]
 ##
 ## It also checks that the visible game area matches DisplayMath (ADR-0008)
 ## and exits 4 if it does not, so a display-setting regression fails CI even
@@ -26,6 +27,14 @@ func _render() -> void:
 		printerr("render_showcase ERROR: need --scene and --out")
 		quit(2)
 		return
+	var ui_width_text: String = _arg(args, "--ui-width")
+	if not ui_width_text.is_empty():
+		var ui_width: int = GameSettings.parse_ui_width(ui_width_text)
+		if ui_width < 0:
+			printerr("render_showcase ERROR: unknown --ui-width '%s'" % ui_width_text)
+			quit(2)
+			return
+		GameSettings.shared().set_ui_width(ui_width as GameSettings.UiWidth)
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		printerr("render_showcase ERROR: cannot load %s" % scene_path)

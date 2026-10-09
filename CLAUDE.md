@@ -150,5 +150,9 @@ note of the bug it caught.
 - **Run the real export, not just the tests.** The first macOS export failed
   (Apple Silicon needs ETC2/ASTC import enabled); nothing else would have
   shown it.
+- **Use `set_anchors_and_offsets_preset`, not `set_anchors_preset`, to make a
+  control fill its parent.** `set_anchors_preset` keeps the control's current
+  size (a new control stays 0×0); only the renders showed it (one corner
+  marker instead of four on the UI-width test card).
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.

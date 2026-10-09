@@ -7,7 +7,7 @@ const TEST_CARD: PackedScene = preload("res://scenes/showcase/test_card.tscn")
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(TEST_CARD.instantiate())
 	var title: Label = Label.new()
 	title.text = "MOELOMOL\nfoundation build - no gameplay yet"
