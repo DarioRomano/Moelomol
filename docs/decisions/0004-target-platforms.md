@@ -1,6 +1,7 @@
 # ADR-0004: Target platforms
 
-- **Status:** Accepted
+- **Status:** Accepted. Q7 answered 2026-10-09 by the project lead: the web build
+  is never shipped, only built for validation.
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (brief of 2026-10-09)
 

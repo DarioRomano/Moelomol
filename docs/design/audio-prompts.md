@@ -228,7 +228,8 @@ changed, with fewer living sounds.
 ## <Area name>
 
 <One paragraph: what the area is, how far from the base, what the player does
-there, and what changed there in the calamity (see Q13).>
+there, when it was taken and how the god's presence changed its wildlife and
+land (see `story.md`).>
 
 ### AMB-<nn> <Area> ambience
 - **Prompt:** <environment, time, weather, 3–6 specific sound sources with how

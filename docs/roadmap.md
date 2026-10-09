@@ -21,8 +21,9 @@ not targets.
   builds (ADR-0009).
 - Playtest checklist for the lead: `docs/playtests/2026-10-09-foundation-build.md`.
 
-Still open from this milestone: Q4 (performance budget, so no budget checks in
-CI yet), Q5 and Q8 (working assumptions), Q12 (fullscreen).
+Still open from this milestone: Q4 (performance budget; guidance given, three
+answers needed, so no budget checks in CI yet), Q5 and Q8 (working
+assumptions). Q12 (fullscreen) was decided and done after the milestone.
 
 ## Milestone 2: Art and audio direction slice (not started)
 
@@ -39,6 +40,9 @@ confirming the tools' licence terms.
   speakers.
 
 ## Later (not planned)
+
+Needed before the first gameplay system: Q4 (performance budget) and Q6
+(input model, Q6a–Q6d). Needed before the first level layout: Q15.
 
 Farming, exploration and foraging, combat, crafting and enhancement, upgrade
 systems, skills, trinkets and artefacts, notes and story. These are named in

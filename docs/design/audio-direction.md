@@ -4,7 +4,8 @@
 - **Decided inputs:** Q3: music and ambience come from separate specialised AI
   tools, run by the lead, from the prompts in `audio-prompts.md`. Q9 → ADR-0010
   (the pet is secretly a god).
-- **Still open:** Q13 (what the calamity looked like), sound effects source.
+- **Still open:** sound effects source. (Q13 decided: monsters are wildlife
+  changed by the god's presence, more so further from the base.)
 - **Binding constraints:** ADR-0005 as amended by ADR-0010 (lonely tone, no
   human characters, so no voices).
 - **Cannot be verified headlessly:** the mix, loudness and how anything feels.
@@ -30,8 +31,8 @@ footsteps on wood, animals, a door. Out in the world, sounds are more distant
 and reverberant. Returning home should be audible.
 
 **Distance changes the soundscape.** In step with the art rule, areas further
-from the base sound more changed: fewer birds, odder textures. Exact form
-depends on Q13.
+from the base sound more changed: fewer birds, odder textures, and the
+changed wildlife (monsters) more often heard than seen.
 
 **The pet has a sound signature.** A short four-note motif that ends on an
 "off" note lives quietly inside the base theme and the title music. Late in

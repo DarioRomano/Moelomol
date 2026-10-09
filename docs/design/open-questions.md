@@ -5,26 +5,28 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-09: Q1, Q2, Q3, Q9 and Q10 resolved. Q5 and Q8 are applied
-as working assumptions in the Godot project until the lead decides. Q12, Q13
-and Q14 are new.
+Status at 2026-10-09 (second round): Q1, Q2, Q3, Q7, Q9, Q10, Q11, Q12, Q13
+and Q14 resolved. **Waiting for the lead:** Q4 (three answers), Q6 (four
+decisions), Q15 (new). Q5 and Q8 are applied as working assumptions in the
+Godot project until the lead decides.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
-| Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | **Resolved** → ADR-0008 |
+| Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | **Resolved** → ADR-0008 (amended: 21:9, 32:9) |
 | Q2 | Where the art comes from | M2 | **Resolved**: placeholders now, art provisioned later |
 | Q3 | Where the music and sound come from | M2 | **Resolved**: AI tools run by the lead; prompts in `audio-prompts.md` |
-| Q4 | Performance budget values (ADR-0007) | M1 CI budget checks | Open |
+| Q4 | Performance budget values (ADR-0007) | First gameplay system | **Open**: guidance added; three answers needed |
 | Q5 | Renderer | M1 | Open (working assumption: A) |
-| Q6 | Input model | Player movement (later) | Open |
-| Q7 | Is the web build a shipping platform? | Nothing yet | Open |
+| Q6 | Input model | Player movement, first menu | **Open**: guidance added; decisions Q6a–Q6d |
+| Q7 | Is the web build a shipping platform? | Nothing yet | **Resolved**: validation only, never shipped |
 | Q8 | Approve ADR-0003 (typed GDScript) | M1 | Open (working assumption: approve) |
 | Q9 | What was the calamity? | M2 art direction detail | **Resolved** → ADR-0010, `story.md` |
 | Q10 | Merging docs-only PRs before CI exists | Docs PRs | **Resolved**: CI PR went first |
-| Q11 | Plain git or Git LFS for binary assets | First large assets | Open |
-| Q12 | Start fullscreen or windowed? | Release builds people judge | Open |
-| Q13 | What the calamity looked like; where monsters come from | Art and audio of adventure areas | Open |
-| Q14 | Does feeding the pet do anything in play? | Crafting/recipe design | Open |
+| Q11 | Plain git or Git LFS for binary assets | First large assets | **Resolved** → ADR-0011 |
+| Q12 | Start fullscreen or windowed? | Release builds people judge | **Resolved**: fullscreen → ADR-0008 |
+| Q13 | What the calamity looked like; where monsters come from | Art and audio of adventure areas | **Resolved**: B + C → `story.md` |
+| Q14 | Does feeding the pet do anything in play? | Crafting/recipe design | **Resolved**: tutorial recipe; feeding = story moments → `story.md` |
+| Q15 | How much world should 32:9 screens show? | First level layout | **Open** (new) |
 
 ---
 
@@ -32,7 +34,9 @@ and Q14 are new.
 
 **Resolved 2026-10-09:** the lead accepted the recommendation (C with the
 stretch settings below). Recorded in ADR-0008, with what the first renders
-showed.
+showed. **Addition (lead, 2026-10-09):** 21:9 and 32:9 screens at 1080p and
+1440p are supported targets; ADR-0008 amended with how they display. How much
+world 32:9 should show is Q15.
 
 Pixel art needs one fixed internal resolution, scaled up by whole numbers so
 every art pixel becomes the same number of screen pixels. Everything else
@@ -157,25 +161,82 @@ can be thinned and thickened at runtime (`AudioStreamSynchronized` and
 
 ## Q4. Performance budget values (ADR-0007)
 
-Proposed values, for the lead to accept, change or reject:
+**Lead's direction (2026-10-09):** ideally 120 fps on a GeForce GTX 1050 Ti.
+The lead asked for more guidance before deciding. This section explains what
+that target means for this game, proposes a complete budget built around it,
+and lists the few answers still needed.
+
+### What "120 fps on a 1050 Ti" means here
+
+- **8.3 ms per frame, everything included.** At 60 fps a frame may take
+  16.7 ms; at 120 fps, half that. Game logic, physics, preparing the frame and
+  the GPU all have to fit in 8.3 ms, every frame, or the game visibly stutters.
+- **The GPU is unlikely to be the problem.** The game draws at 640×360
+  (about 0.23 million pixels; ADR-0008) and then scales the finished picture
+  up, which is a single cheap copy even at 5120×1440. A 1050 Ti (2016,
+  4 GB) runs the Compatibility renderer (OpenGL 3.3, Q5) comfortably. The GPU
+  risks are effects added later: many lights, full-screen shaders, large
+  particle counts.
+- **The CPU is the real risk.** Godot runs game scripts, physics and the scene
+  tree on one main thread. Farming games tend to have many objects that each
+  "think" every frame (crops, animals, the pet, enemies), and GDScript is
+  interpreted (typed GDScript, ADR-0003, is faster but still not C++). The
+  budget below keeps game logic to about 3 ms per frame, which shapes code
+  from the start: crops update on a timer rather than every frame,
+  off-screen things sleep, and so on.
+- **The monitor decides what the player sees.** 120 fps is only visible on a
+  120 Hz (or faster) screen. With V-Sync on (the engine default, verified),
+  a 60 Hz monitor shows 60 fps. The budget is about having the headroom; an
+  options menu can offer 60 / 120 / uncapped later
+  (`application/run/max_fps`, verified).
+- **Movement must be interpolated.** Godot's physics runs 60 times a second
+  by default. Drawing 120 frames a second from 60 physics updates makes
+  moving things judder unless physics interpolation is on
+  (`physics/common/physics_interpolation`, verified to exist, off by default)
+  or physics runs at 120. That touches camera behaviour and how movement
+  feels, so it comes back to you with the first moving character.
+- **What 120 fps buys in pixel art.** Positions are drawn on a 640×360 grid,
+  so slow movement still steps one art pixel at a time at any frame rate. The
+  gains are lower input latency and smoother fast camera pans. Worth having,
+  but this is why the budget below also defines a 60 fps floor.
+
+### Proposed budget
 
 | Item | Proposal |
 |---|---|
-| Minimum spec | 4-core CPU from about 2017; Intel UHD 620-class integrated GPU; 8 GB RAM; SSD |
-| Frame rate | 60 fps sustained on minimum spec at 1080p |
-| Frame time split | gameplay logic ≤ 4 ms, rendering ≤ 8 ms, headroom ≥ 4 ms |
-| RAM | ≤ 1 GB in play |
-| Loads | cold start ≤ 5 s; base ↔ area transition ≤ 2 s |
-| Install size | ≤ 500 MB |
-| Automatic in CI | logic time per simulated in-game day and peak memory, measured headless; rendering on real hardware via playtest checklist |
+| **Minimum spec (Windows, Linux)** | GTX 1050 Ti 4 GB; Intel Core i5-7400 or AMD Ryzen 5 1600 (2017, 4–6 cores); 8 GB RAM; SSD |
+| **Target on minimum spec** | 120 fps sustained at any supported screen size (ADR-0008), on a 120 Hz+ display |
+| **Floor on minimum spec** | never below 60 fps, including the busiest scenes |
+| **Frame time split at 120 fps** | game logic ≤ 3 ms, rendering (CPU side) ≤ 3 ms, headroom ≥ 2.3 ms |
+| **macOS** | Apple M1, 8 GB: 120 fps on 120 Hz (ProMotion) displays, 60 fps on others. Intel Macs: best effort, not a target |
+| **Steam Deck** (if Linux handhelds matter) | 60 fps (LCD model) / 90 fps (OLED model) |
+| **RAM** | ≤ 1.5 GB in play |
+| **Video memory** | ≤ 1 GB (pixel art needs far less) |
+| **Loads** | cold start ≤ 5 s; base ↔ area transition ≤ 1.5 s, on SSD |
+| **Install size** | ≤ 1 GB (music is the largest part) |
 
-- Pro: modest numbers that suit a 2D pixel game and keep old laptops and the
-  Steam Deck viable.
-- Con: no real hardware has been measured; the numbers are educated guesses
-  until a playtest on the lead's machines.
+### What can be checked, and how
 
-**Recommendation:** accept as a starting budget, to be revisited after the
-first real-machine playtest.
+- **Automatically in CI:** game-logic time per simulated tick and peak memory,
+  measured headless once there is a simulation to measure. CI machines are not
+  a 1050 Ti, so CI can only catch regressions (something got 30% slower), not
+  prove the target.
+- **Only on real hardware:** actual frame rate and smoothness. This needs a
+  machine at or near the minimum spec, run against a playtest checklist with
+  an in-game frame-time display (to be built with the first gameplay).
+
+### What I need from you
+
+1. **The CPU.** A 1050 Ti says nothing about the processor, and the CPU is the
+   real constraint. Accept the i5-7400 / Ryzen 5 1600 pairing, or name one.
+2. **Mac and Steam Deck:** accept the targets above, or drop either.
+3. **A test machine.** Do you have (or can you get) a machine near the
+   minimum spec to run performance checklists on? Without one, the 120 fps
+   target cannot be confirmed by anyone.
+
+**Recommendation:** accept the table above (with your CPU answer) as
+ADR-0007's values. I then mark ADR-0007 accepted and add the frame-time
+display and benchmark harness when the first gameplay system lands.
 
 ## Q5. Renderer
 
@@ -209,24 +270,134 @@ no needed 2D feature is missing.
 
 ## Q6. Input model
 
-**A. Keyboard and mouse only**
-- Pro: simplest UI; least testing.
-- Con: excludes the Steam Deck and players who prefer controllers; a relaxed
-  farming game is commonly played on controllers.
+**Lead's direction (2026-10-09):** support a standard keyboard and controller
+input. Controllers get haptic feedback. DualSense players get DualSense
+features: adaptive triggers and its haptic feedback. The lead asked for more
+guidance. This section explains how input is built, what Godot 4.7.2 can and
+cannot do (checked against the engine), and the four decisions left.
 
-**B. Keyboard and mouse plus full controller support** (recommended)
-- Pro: covers every desktop setup including the Steam Deck (Linux).
-- Con: every menu needs focus navigation; more playtesting; controller feel can
-  only be checked by a human.
+### How input will be built (engineering, no decision needed)
 
-**C. Controller first**
-- Pro: one well-tuned control scheme.
-- Con: mouse users are second-class in inventory and crafting screens.
+- **Actions, never keys.** Every input goes through named actions (`move_up`,
+  `interact`, `use_tool`, `attack`, `open_inventory`, …) in Godot's InputMap.
+  Keyboard keys and controller buttons are both bound to the same actions, so
+  game code never knows which device is used.
+- **Rebinding** of every action in the options menu, for keyboard and
+  controller separately, saved per player.
+- **The last device used wins.** Button prompts on screen switch instantly to
+  whatever the player last touched.
+- **Accessibility basics:** hold-or-toggle for held actions, adjustable stick
+  dead zones, vibration intensity slider including off.
+- **One haptics service.** Gameplay asks for named effects ("hoe hits soil",
+  "harvest", "hit taken", "pet purrs nearby"). The service decides what each
+  controller can do with them, so DualSense effects can be added later
+  without touching gameplay code.
 
-**Recommendation:** B. All input goes through named InputMap actions from day
-one, never raw keys. Controller behaviour goes on playtest checklists.
+### What Godot 4.7.2 provides (verified against the engine, 2026-10-09)
+
+| Feature | Built in? | Notes |
+|---|---|---|
+| Rumble (two motors, strength, duration) | **Yes** | `Input.start_joy_vibration(device, weak, strong, duration)`, for any controller with motors; how each controller model feels needs a playtest |
+| Light bar colour | **Yes** | `Input.set_joy_light`, `has_joy_light` (DualShock 4, DualSense) |
+| Gyro and accelerometer | **Yes** | `get_joy_gyroscope`, `get_joy_accelerometer`, calibration functions |
+| Controller name and type | **Yes** | `get_joy_name`, `get_joy_info`, for picking button prompts |
+| **DualSense adaptive triggers** | **No** | No method in any engine class (searched every class) |
+| **DualSense HD haptics** (voice-coil, finer than rumble) | **No** | Same search |
+
+Outside the engine (from the Godot community, not verified by me): adaptive
+triggers need operating-system-specific native code that scripts cannot do;
+on PC they work only over a USB cable, not Bluetooth; an engine change for
+them covered only macOS and iOS. DualSense HD haptics on PC are driven as an
+audio signal over USB. One open-source Godot extension, "Audio Haptics" (MIT),
+does this; it was built for Godot 4.2, is tested on Linux and untested on
+Windows, with no macOS support. No Godot extension for adaptive triggers was
+found.
+
+**Plainly: rumble on every controller is easy. DualSense adaptive triggers and
+HD haptics are not available in Godot and would need native (C++) code we
+write or adopt, and on PC they would only work with the controller plugged in
+by cable.**
+
+### Decision Q6a: the mouse
+
+"Standard keyboard" leaves open whether the mouse is used.
+
+**A. Keyboard only; the mouse is never used.**
+- Pro: one keyboard layout to design for; matches controller play exactly.
+- Con: players instinctively click in inventories and menus.
+
+**B. Keyboard for play; the mouse also works in menus and inventories**
+(recommended)
+- Pro: natural for PC players; costs little because menus need pointer
+  support anyway.
+- Con: every menu must work with mouse, keyboard and controller.
+
+**C. Keyboard and mouse for play** (mouse aims tools and attacks)
+- Pro: precise aiming on PC.
+- Con: combat and farming must then be designed around aiming, and play
+  differently on controller.
+
+**Recommendation:** B.
+
+### Decision Q6b: which controller families get their own button prompts
+
+Each family needs its own set of button icons (art; placeholder until art is
+provisioned).
+
+**Recommendation:** keyboard, Xbox, PlayStation (one set covering DualShock 4
+and DualSense) and Nintendo. Steam Deck shows Xbox-style prompts, as it does
+in most games. Other controllers fall back to Xbox prompts.
+
+### Decision Q6c: how to get DualSense adaptive triggers and HD haptics
+
+**A. Standard rumble and light bar only.**
+- Pro: no dependencies, no native code; works wired and wireless on every
+  platform.
+- Con: does not meet your DualSense requirement.
+
+**B. Adopt third-party extensions.**
+- Pro: least work, if one fits.
+- Con: an external dependency each (needs your approval); the only one found
+  covers HD haptics only, targets Godot 4.2, is untested on Windows and
+  missing on macOS; nothing covers adaptive triggers; we would depend on
+  others to keep them working with future Godot versions.
+
+**C. Write our own native extension for DualSense.**
+- Pro: full control over both features, shaped to our effects.
+- Con: C++ native code, which ADR-0003 rules out (it would need superseding);
+  separate builds for Windows, macOS and Linux in CI; it has to talk to the
+  controller alongside Godot's own controller handling, which needs a
+  prototype to prove the two do not interfere; on PC it works only over USB
+  cable; it can only be tested by someone holding a DualSense.
+
+**D. Start with A, design for C, prototype C when there is something to feel**
+(recommended)
+- Ship rumble and light bar for every controller now, through the haptics
+  service. Treat adaptive triggers and HD haptics as a later, timeboxed
+  prototype on Windows over USB, once tools and combat exist (that is where
+  triggers mean something: resistance on a hoe swing, a bow draw). The
+  prototype decides between B and C with facts, and C would come to you as
+  an ADR superseding ADR-0003.
+- Pro: no cost before the effects can be judged; no gameplay code changes
+  later.
+- Con: DualSense owners get only rumble until then; Bluetooth players get
+  only rumble even after.
+
+**Recommendation:** D. It needs a DualSense (and you to test it) when the
+prototype comes.
+
+### Decision Q6d: leaving fullscreen
+
+The game starts fullscreen (Q12) and has no way out yet.
+
+**Recommendation:** an options-menu setting (fullscreen / windowed) when the
+first menu is built, plus the platform shortcuts players expect: Alt+Enter on
+Windows and Linux, Ctrl+Cmd+F on macOS.
 
 ## Q7. Is the web build a shipping platform?
+
+**Resolved 2026-10-09:** the web build is never shipped; it is only built to
+validate the export pipeline (option A). ADR-0004 updated.
 
 **A. CI-only build check** (recommended)
 - Pro: proves the export pipeline works without committing to web-specific
@@ -308,6 +479,9 @@ merged** (recommended)
 
 ## Q11. Plain git or Git LFS for binary assets
 
+**Resolved 2026-10-09:** Git LFS for larger assets (option B). Recorded in
+ADR-0011: which file types, the 1 MiB guard, and cached LFS downloads in CI.
+
 **A. Plain git** (recommended for now)
 - Pro: no extra tooling for anyone cloning; CI is simpler.
 - Con: the repository grows forever with each revision of large files.
@@ -322,6 +496,9 @@ merged** (recommended)
 revisit. Pixel art PNGs are small; music is the main growth risk.
 
 ## Q12. Start fullscreen or windowed?
+
+**Resolved 2026-10-09:** start fullscreen (option A). Recorded in the ADR-0008
+amendment. How to leave fullscreen is Q6d.
 
 Found while writing the first playtest checklist. With whole-number scaling
 (ADR-0008), a maximised window on a 1920×1080 monitor is a little shorter than
@@ -350,6 +527,10 @@ first menu is built, plus the platform-standard shortcut (to be confirmed
 under Q6).
 
 ## Q13. What did the calamity look like, and where do monsters come from?
+
+**Resolved 2026-10-09:** B with C, as recommended. People were taken over
+time, town by town; monsters are wildlife and land changed by the god's
+presence, more so further from the base. Recorded in `story.md`.
 
 Q9 settled who and why (the pet; see ADR-0010). Still open is what happened to
 everyone and what the player fights. This decides how adventure areas look and
@@ -390,6 +571,10 @@ base (where it is content) stays peaceful.
 
 ## Q14. Does feeding the pet do anything in play?
 
+**Resolved 2026-10-09:** the cat treats recipe is the tutorial for the skill
+and crafting systems. Beyond that, feeding the pet triggers story moments
+(option C), with no stat effects. Recorded in `story.md`.
+
 Cat treats are the first recipe (ADR-0010). Whether giving them to the pet has
 an effect is not decided, and it shapes the recipe and upgrade systems.
 
@@ -411,3 +596,34 @@ that carry the reveal (`story.md`), with no stat effect.
 **Recommendation:** decide when recipes and crafting are designed. Leaning
 towards A plus C: no stat bonuses, but feeding sometimes shows the player
 something impossible.
+
+## Q15. How much world should 32:9 screens show?
+
+Found while adding super-ultrawide support (ADR-0008 amendment). With the
+display settings unchanged, 32:9 screens see 1280×360 base pixels: twice the
+width of 16:9 (80 tiles across instead of 40). 21:9 sees about 860 (54 tiles).
+
+**A. Show it all** (current behaviour)
+- Pro: wide, empty vistas suit the lonely tone; no black bars for
+  super-ultrawide owners, who dislike them; no extra code.
+- Con: every area must make sense at 80 tiles wide: areas narrower than that
+  need a camera rule (stop at the area edge and fill the rest with darkness,
+  or centre the area); more on screen means more to draw and simulate; the
+  character is very small on a 32:9 screen.
+
+**B. Cap at 21:9; wider screens get bars at the sides**
+- Pro: level design only has to handle up to about 54 tiles wide; framing
+  stays close to what was designed.
+- Con: 32:9 owners see black bars on both sides; Godot has no built-in "maximum
+  aspect" setting, so the cap is custom code that changes the visible area
+  (camera behaviour, needs testing at every screen size).
+
+**C. Cap at 16:9 everywhere**
+- Pro: one framing to design for.
+- Con: contradicts the decision to support ultrawide properly; large bars on
+  21:9 and 32:9.
+
+**Recommendation:** A for now. Nothing is designed yet that a wide view could
+break. Revisit at the first level-layout work, where the camera rule for
+narrow areas is needed anyway, and both are camera behaviour for you to
+approve.

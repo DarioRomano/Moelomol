@@ -23,7 +23,7 @@ The player character does not know any of this.
 
 | The player starts out knowing | The truth |
 |---|---|
-| Everyone is gone. | Everyone is gone because of the pet (exactly how is Q13). |
+| Everyone is gone. | Everyone was taken because of the pet, town by town, as it wandered. |
 | The farm somehow escaped. | The pet likes it here. |
 | They were lucky to survive. | They were kept, for the treats. |
 | Their cat is a comfort. | Their cat is a god. It is also, genuinely, their company. |
@@ -56,8 +56,9 @@ Three stages, each tied to how far the player has travelled, so the reveal
 follows exploration rather than a script:
 
 1. **Ordinary loss.** Near the base: notes about daily life cut short; a
-   vanished village; nothing about cats beyond the normal (a lost-pet poster,
-   a child's drawing of a family cat).
+   village emptied (the first taken, so nothing yet points elsewhere);
+   nothing about cats beyond the normal (a lost-pet poster, a child's drawing
+   of a family cat).
 2. **The pattern.** Further out: accounts of a stray cat seen in a town shortly
    before it emptied; old carvings and shrines to a small, many-eyed animal
    god; recipe scraps from people trying and failing to make "the treats it
@@ -72,12 +73,26 @@ At the base, in parallel: the pet occasionally does small impossible things
 that are easy to miss (sitting somewhere it could not have reached; its shadow
 not matching it for a moment; the ambience going briefly silent around it).
 
+## What happened to the world (decided, Q13, 2026-10-09)
+
+- **People were taken over time, town by town.** Not in one night: notes can
+  witness the spread elsewhere ("the next valley went quiet last week"), which
+  is what lets the player trace it back to the cat. As before, there are no
+  bodies: the taken leave only their things.
+- **Monsters are wildlife and land changed by the god's presence.** The
+  further from the base, the stronger the change. The base, where the god is
+  content, stays untouched and peaceful. Monster drops are therefore natural
+  materials, changed, which fits farming and crafting.
+- Writers keep the timeline consistent: each area has a "taken on" point
+  relative to the others, and notes there are dated before it.
+
 ## Gameplay facts this creates (decided)
 
 - The cat treats recipe is unlocked from the start (ADR-0010).
+- **The cat treats recipe is the tutorial for the skill and crafting
+  systems** (Q14, 2026-10-09): making the first treats teaches how recipes,
+  crafting and skill progression work.
+- **Feeding the pet triggers story moments only** (Q14, option C): rare,
+  small, uncanny events at the base that carry the reveal. No stat bonuses or
+  buffs from the pet.
 - The pet lives at the base and does not join adventures (ADR-0010).
-
-## Open (see `open-questions.md`)
-
-- Q13: what the calamity looked like, and where monsters come from.
-- Q14: whether feeding the pet does anything in play.

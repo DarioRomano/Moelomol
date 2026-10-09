@@ -138,3 +138,42 @@ quits; exits non-zero on failure), `--export-release <preset> <path>`,
 - An exported Linux build ran 120 frames under Xvfb with exit code 0 and no
   errors; the build stamp was embedded.
 - Windows and macOS builds have **not** been run (no such machines here).
+
+### 2026-10-09 (input, window, frame rate), Godot 4.7.2.stable.official.ed1daf0bf
+
+Same probe method; plus a search of every class's methods.
+
+**Controller input** (`Input`, existence and signatures only; nothing tested on
+a real controller)
+- Rumble: `start_joy_vibration(device, weak_magnitude, strong_magnitude,
+  duration)`, `stop_joy_vibration`, `has_joy_vibration`, `is_joy_vibrating`,
+  `get_joy_vibration_strength/duration/remaining_duration`.
+- Light bar: `set_joy_light(device, color)`, `has_joy_light(device)`.
+- Motion: `has_joy_motion_sensors`, `set_joy_motion_sensors_enabled`,
+  `get_joy_gyroscope`, `get_joy_accelerometer`, `get_joy_gravity`, and
+  calibration functions.
+- Identity: `get_joy_name`, `get_joy_guid`, `get_joy_info`,
+  `get_connected_joypads`, `is_joy_known`.
+- **No adaptive-trigger or controller-haptics API exists:** searching every
+  class's methods for "adaptive", "trigger_effect", "haptic" and "dualsense"
+  found only XR/OpenXR haptics.
+- Setting `input_devices/joypads/ignore_joypad_on_unfocused_application`
+  (default false).
+
+**Window**
+- `display/window/size/mode`: 0 Windowed, 1 Minimized, 2 Maximized,
+  3 Fullscreen, 4 Exclusive Fullscreen (`DisplayServer.WINDOW_MODE_*` match).
+- Command-line `-f/--fullscreen`, `-m/--maximized`, `-w/--windowed`.
+- Under Xvfb **without a window manager**, `window_get_mode()` reports 0 even
+  with `--fullscreen`, and `--windowed` still fills the screen: X11 needs a
+  window manager for window modes. With openbox (CI), fullscreen reports 3.
+
+**Frame rate and physics**
+- `display/window/vsync/vsync_mode`: default 1 (Enabled); Disabled, Enabled,
+  Adaptive, Mailbox.
+- `application/run/max_fps`: default 0 (uncapped), 0–1000.
+- `physics/common/physics_ticks_per_second`: default 60.
+- `physics/common/physics_interpolation`: exists, default false.
+- `physics/common/max_physics_steps_per_frame`: default 8.
+- `physics/common/physics_jitter_fix`: default 0.5.
+
