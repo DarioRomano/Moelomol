@@ -5,19 +5,19 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-09 (second round): Q1, Q2, Q3, Q7, Q9, Q10, Q11, Q12, Q13
-and Q14 resolved. **Waiting for the lead:** Q4 (three answers), Q6 (four
-decisions), Q15 (new). Q5 and Q8 are applied as working assumptions in the
-Godot project until the lead decides.
+Status at 2026-10-09 (third round): everything resolved except **Q8**
+(approve ADR-0003; applied as a working assumption) and **Q16** (new: how to
+check performance without a minimum-spec machine, plus the macOS and Steam
+Deck targets).
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
 | Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | **Resolved** → ADR-0008 (amended: 21:9, 32:9) |
 | Q2 | Where the art comes from | M2 | **Resolved**: placeholders now, art provisioned later |
 | Q3 | Where the music and sound come from | M2 | **Resolved**: AI tools run by the lead; prompts in `audio-prompts.md` |
-| Q4 | Performance budget values (ADR-0007) | First gameplay system | **Open**: guidance added; three answers needed |
-| Q5 | Renderer | M1 | Open (working assumption: A) |
-| Q6 | Input model | Player movement, first menu | **Open**: guidance added; decisions Q6a–Q6d |
+| Q4 | Performance budget values (ADR-0007) | First gameplay system | **Resolved** → ADR-0007 (test approach: Q16) |
+| Q5 | Renderer | M1 | **Resolved**: Compatibility everywhere → ADR-0012 |
+| Q6 | Input model | Player movement, first menu | **Resolved**: all recommendations → ADR-0013 |
 | Q7 | Is the web build a shipping platform? | Nothing yet | **Resolved**: validation only, never shipped |
 | Q8 | Approve ADR-0003 (typed GDScript) | M1 | Open (working assumption: approve) |
 | Q9 | What was the calamity? | M2 art direction detail | **Resolved** → ADR-0010, `story.md` |
@@ -26,7 +26,8 @@ Godot project until the lead decides.
 | Q12 | Start fullscreen or windowed? | Release builds people judge | **Resolved**: fullscreen → ADR-0008 |
 | Q13 | What the calamity looked like; where monsters come from | Art and audio of adventure areas | **Resolved**: B + C → `story.md` |
 | Q14 | Does feeding the pet do anything in play? | Crafting/recipe design | **Resolved**: tutorial recipe; feeding = story moments → `story.md` |
-| Q15 | How much world should 32:9 screens show? | First level layout | **Open** (new) |
+| Q15 | How much world should 32:9 screens show? | First level layout | **Resolved**: show it all + UI width setting → ADR-0008 |
+| Q16 | How to check the performance budget without a minimum-spec machine | First gameplay system | **Open** (new) |
 
 ---
 
@@ -161,6 +162,11 @@ can be thinned and thickened at runtime (`AudioStreamSynchronized` and
 
 ## Q4. Performance budget values (ADR-0007)
 
+**Resolved 2026-10-09:** the lead accepted the CPU pairing (i5-7400 /
+Ryzen 5 1600) with the GTX 1050 Ti and the 120 fps target; the table below
+is now ADR-0007's values. The lead has no minimum-spec machine, which raises
+Q16; the macOS and Steam Deck rows stay unconfirmed until answered there.
+
 **Lead's direction (2026-10-09):** ideally 120 fps on a GeForce GTX 1050 Ti.
 The lead asked for more guidance before deciding. This section explains what
 that target means for this game, proposes a complete budget built around it,
@@ -240,6 +246,9 @@ display and benchmark harness when the first gameplay system lands.
 
 ## Q5. Renderer
 
+**Resolved 2026-10-09:** option A, Compatibility everywhere (ADR-0012). The
+feature check was done: six 2D features work (`renderer_features` showcase).
+
 **Working assumption since 2026-10-09:** the Godot project uses option A so it
 could be created. Switching is one setting while there is no content. The
 feature check is still to do.
@@ -269,6 +278,12 @@ desktop default is Forward+ (`forward_plus`). Both verified in 4.7.2.
 no needed 2D feature is missing.
 
 ## Q6. Input model
+
+**Resolved 2026-10-09:** the lead accepted every recommendation: Q6a B (mouse
+in menus and inventories), Q6b keyboard / Xbox / PlayStation / Nintendo
+prompts, Q6c D (rumble and light bar now, DualSense prototype later), Q6d
+menu setting plus Alt+Enter and Ctrl+Cmd+F. Recorded in ADR-0013; the
+shortcuts are implemented.
 
 **Lead's direction (2026-10-09):** support a standard keyboard and controller
 input. Controllers get haptic feedback. DualSense players get DualSense
@@ -599,6 +614,10 @@ something impossible.
 
 ## Q15. How much world should 32:9 screens show?
 
+**Resolved 2026-10-09:** option A, show it all, and UI elements can be set to
+21:9 or 16:9 widths in the settings (lead's addition). Recorded in the
+ADR-0008 amendment; implemented as the UI width setting.
+
 Found while adding super-ultrawide support (ADR-0008 amendment). With the
 display settings unchanged, 32:9 screens see 1280×360 base pixels: twice the
 width of 16:9 (80 tiles across instead of 40). 21:9 sees about 860 (54 tiles).
@@ -627,3 +646,57 @@ width of 16:9 (80 tiles across instead of 40). 21:9 sees about 860 (54 tiles).
 break. Revisit at the first level-layout work, where the camera rule for
 narrow areas is needed anyway, and both are camera behaviour for you to
 approve.
+
+## Q16. How to check the performance budget without a minimum-spec machine
+
+Found from the lead's Q4 answer (2026-10-09): there is no machine near the
+minimum spec (GTX 1050 Ti, i5-7400). The lead has a Ryzen 7 5800X with an
+RTX 4080 Super, and two lower-powered devices with the same chip (Snapdragon
+8 Gen 3): a OnePlus 12 phone and a Steam Frame, both able to run x86 builds
+through the FEX emulator. Also open from Q4: confirming the macOS (Apple M1)
+and Steam Deck targets, which the lead's answer did not mention.
+
+**What each device can tell us**
+- **The 5800X is about 1.84× faster per core than the i5-7400** (Geekbench 5
+  and 6 single-core scores, hardwaredb.net). Godot's game logic runs on one
+  main thread, so per-core speed is what matters. Rough rule: logic that takes
+  1.6 ms on the 5800X takes about 3 ms (the whole logic budget) on the
+  minimum spec. The 4080 Super says nothing useful about a 1050 Ti, but the
+  GPU is not the risk (Q4).
+- **The Snapdragon devices are a different machine, not a slower copy of the
+  target.** They are ARM chips running our x86 build through FEX, which
+  translates every instruction and costs an amount that varies by workload.
+  The GPU is a phone GPU with different drivers. A result there is "how the
+  game does on a weak, emulated device", which is useful as a stress test but
+  cannot be converted into a 1050 Ti number. The Steam Frame is also the more
+  practical of the two: it runs SteamOS (Linux) with FEX built in, while the
+  phone needs an extra compatibility layer.
+
+**A. Scaled budget on the 5800X, plus regression tracking in CI**
+- Pro: no new hardware; an in-game frame-time display and a headless
+  benchmark give numbers on every build; CI catches anything that gets slower.
+- Con: the 1.84× conversion is approximate (cache sizes, memory speed and the
+  GPU driver differ); it can say "probably fine", never "verified".
+
+**B. A plus periodic runs on the Steam Frame (x86 build through FEX)**
+- Pro: a real weak device, run at milestones; exactly what a Steam Frame
+  player would run if we only ship x86; free, you already have it.
+- Con: emulation noise makes it a stress test rather than a proxy.
+
+**C. B plus a native Linux ARM64 test build for the Steam Frame**
+- Pro: removes emulation, so the device's own speed shows; the export
+  template for Linux ARM64 is already in the official template set.
+- Con: an extra build to maintain; it measures a build no player would get
+  unless ARM64 becomes a platform (ADR-0004, your call).
+
+**D. Get a real minimum-spec PC** (a used i5-7400 / GTX 1050 Ti machine)
+- Pro: the only way to actually verify the target.
+- Con: cost and space; your decision.
+
+**Recommendation:** B now, and D before any public release. A is the
+day-to-day check (I build the frame-time display and benchmark with the first
+gameplay system); the Steam Frame run goes on milestone playtest checklists.
+Skip C unless you want ARM64 as a shipping platform.
+
+**Also needed (from Q4):** confirm or drop the macOS target (Apple M1: 120 fps
+on 120 Hz displays, 60 otherwise) and the Steam Deck target (60 / 90 fps).

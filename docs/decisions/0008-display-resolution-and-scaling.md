@@ -5,7 +5,8 @@
 - **Decided by:** Project lead (open question Q1, recommendation accepted 2026-10-09)
 - **Amended:** 2026-10-09 by the project lead: 21:9 and 32:9 screens at 1080p
   and 1440p are supported targets; the game starts fullscreen (Q12). See
-  "Amendment" below.
+  "Amendment" below. Amended again 2026-10-09 (Q15): 32:9 shows the whole
+  world; UI width setting. See "Amendment 2".
 
 ## Context
 
@@ -66,8 +67,7 @@ show:
 | 3840×1080 | 32:9, 1080p | 1280 × 360 | 3x | none |
 | 5120×1440 | 32:9, 1440p | 1280 × 360 | 4x | none |
 
-32:9 shows twice the width of 16:9 (80 tiles instead of 40). Whether that is
-wanted, or should be capped, is open question Q15.
+32:9 shows twice the width of 16:9 (80 tiles instead of 40); see Amendment 2.
 
 **The game starts fullscreen** (Q12): `display/window/size/mode = 3`
 (Fullscreen; 4 would be Exclusive Fullscreen). Fullscreen makes the window the
@@ -80,6 +80,19 @@ How the display settings behave is captured in `src/core/display_math.gd`
 (`DisplayMath`): the visible area keeps 360 (or 640) base pixels on the short
 side and grows on the long side to the screen's aspect ratio, rounded down;
 the scale is the largest whole number that fits.
+
+## Amendment 2 (2026-10-09, project lead, Q15)
+
+**The world is never capped:** 32:9 screens see the full 1280×360. Level
+layout and the camera must cope with views up to 80 tiles wide; how areas
+narrower than the view are framed is decided with the first level layout and
+camera work.
+
+**UI width setting:** HUD and menus sit in a `UiFrame` whose width the player
+sets to full (default), 21:9 or 16:9. "21:9" is 43:18 (3440×1440), the widest
+common 21:9 panel, so it changes nothing on real 21:9 monitors and on 32:9
+matches a 3440×1440 screen. Stored in `user://settings.cfg`
+(`GameSettings`). The options menu that changes it comes with the first menu.
 
 ## Verification
 

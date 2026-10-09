@@ -72,6 +72,10 @@ smoke-runs the Linux build, and publishes a GitHub release:
   release notes explain how to open them. Signing needs certificates (secrets
   the engineer does not have) and will be raised when builds go to players.
 - The export templates download is about 1.3 GB on a cache miss.
+- Build numbers can skip: GitHub keeps at most one waiting run per
+  concurrency group, so when PRs are merged seconds apart a waiting release
+  run is replaced by the newer one (seen 2026-10-09: no `build.4`). Nothing is
+  lost: the next release lists every PR merged since the previous one.
 - The engineer cannot read Actions job logs from this environment (only check
   results and annotations), so every tool prints its failures as `::error`
   annotations.
