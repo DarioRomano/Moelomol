@@ -24,6 +24,11 @@ Constraints the architecture must honour:
 
 **Code (`src/`)**
 - `Palette` (`src/art/palette.gd`): the draft palette as typed constants.
+- `WindowControls` (`src/core/window_controls.gd`, **autoload**): the
+  fullscreen shortcuts (Q6d): actions `toggle_fullscreen` (Alt+Enter, Windows
+  and Linux) and `toggle_fullscreen_macos` (Ctrl+Cmd+F) in `project.godot`.
+  Handles them in `_input` so they work over menus. No `class_name`: an
+  autoload's name must not also be a class name.
 - `BuildInfo` (`src/core/build_info.gd`): reads `res://build_stamp.json`,
   written by `tools/export.sh` before export and included through each
   preset's `include_filter`; returns `dev` values when absent.
