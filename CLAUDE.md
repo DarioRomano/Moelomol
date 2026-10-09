@@ -32,7 +32,7 @@ GODOT="$(tools/install-godot.sh --templates | tail -n 1)"     # plus export temp
 
 tools/run-tests.sh                   # full headless suite (GDScript + CI-script tests), no display
 tools/run-tests.sh --filter palette  # only tests whose "path::name" contains the text
-tools/render-showcase.sh [out_dir]   # renders showcase scenes at 6 window sizes (needs xvfb-run)
+tools/render-showcase.sh [out_dir]   # renders showcase scenes at 10 screen sizes (needs xvfb-run)
 tools/export.sh windows macos linux web   # runnable zips in dist/
 tools/smoke-run.sh dist/Moelomol-dev-linux.zip   # start the exported Linux build for 120 frames
 ```

@@ -3,6 +3,9 @@
 - **Status:** Accepted
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (open question Q1, recommendation accepted 2026-10-09)
+- **Amended:** 2026-10-09 by the project lead: 21:9 and 32:9 screens at 1080p
+  and 1440p are supported targets; the game starts fullscreen (Q12). See
+  "Amendment" below.
 
 ## Context
 
@@ -50,9 +53,41 @@ Seen in the 2026-10-09 renders (`tools/render-showcase.sh`):
   `rendering/textures/vram_compression/import_etc2_astc = true` (found when the
   first macOS export failed); it is set in `project.godot`.
 
+## Amendment (2026-10-09, project lead)
+
+**Supported screen shapes** now explicitly include ultrawide and super
+ultrawide at 1080p and 1440p. With the settings above (unchanged), the renders
+show:
+
+| Screen | Shape | Visible area | Scale | Borders |
+|---|---|---|---|---|
+| 2560×1080 | 21:9, 1080p | 853 × 360 | 3x | 1 px column |
+| 3440×1440 | 21:9, 1440p | 860 × 360 | 4x | none |
+| 3840×1080 | 32:9, 1080p | 1280 × 360 | 3x | none |
+| 5120×1440 | 32:9, 1440p | 1280 × 360 | 4x | none |
+
+32:9 shows twice the width of 16:9 (80 tiles instead of 40). Whether that is
+wanted, or should be capped, is open question Q15.
+
+**The game starts fullscreen** (Q12): `display/window/size/mode = 3`
+(Fullscreen; 4 would be Exclusive Fullscreen). Fullscreen makes the window the
+size of the screen, so every screen in the table above and every common 16:9
+monitor is shown at a whole-number scale with no bars. A way to leave
+fullscreen (options menu, shortcut) belongs with the input model (Q6).
+Developers can start windowed with Godot's `--windowed` flag.
+
+How the display settings behave is captured in `src/core/display_math.gd`
+(`DisplayMath`): the visible area keeps 360 (or 640) base pixels on the short
+side and grows on the long side to the screen's aspect ratio, rounded down;
+the scale is the largest whole number that fits.
+
 ## Verification
 
-`tests/unit/test_display_settings.gd` fails if any value in the table changes.
-`tests/unit/test_test_card.gd` checks the expected scale at common window sizes.
+`tests/unit/test_display_settings.gd` fails if any value in the table changes,
+including the fullscreen start. `tests/unit/test_display_math.gd` pins the
+visible area and scale for every screen named above.
+`tools/render_showcase.gd` checks every render's real visible area against
+`DisplayMath` (fails with exit 4) and, when a window manager runs (CI), that
+the window really is fullscreen (exit 5).
 The test card (`scenes/showcase/test_card.tscn`) is rendered on every pull
-request at six window sizes for visual review.
+request at ten screen sizes for visual review.

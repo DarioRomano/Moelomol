@@ -29,14 +29,6 @@ func _ready() -> void:
 	_refresh()
 
 
-## The whole-number scale ADR-0008 settings should produce for a window size:
-## the largest factor at which the 640x360 base still fits, never below 1.
-static func expected_scale(window_size: Vector2i) -> int:
-	var base_width: int = ProjectSettings.get_setting("display/window/size/viewport_width")
-	var base_height: int = ProjectSettings.get_setting("display/window/size/viewport_height")
-	return maxi(1, mini(window_size.x / base_width, window_size.y / base_height))
-
-
 func _make_label() -> Label:
 	var label: Label = Label.new()
 	label.add_theme_color_override("font_color", Palette.PAPER[1])
@@ -50,7 +42,7 @@ func _refresh() -> void:
 	var window_size: Vector2i = DisplayServer.window_get_size()
 	_info_label.text = "TEST CARD  view %dx%d  window %dx%d  scale %dx" % [
 		int(visible_size.x), int(visible_size.y), window_size.x, window_size.y,
-		expected_scale(window_size),
+		DisplayMath.expected_scale(window_size),
 	]
 	queue_redraw()
 

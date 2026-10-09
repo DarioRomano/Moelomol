@@ -5,6 +5,11 @@ extends SceneTree
 ##
 ##   godot --path . --resolution 1366x768 --position 0,0 \
 ##     -s res://tools/render_showcase.gd -- --scene res://... --out /abs/file.png
+##
+## It also checks that the visible game area matches DisplayMath (ADR-0008)
+## and exits 4 if it does not, so a display-setting regression fails CI even
+## if nobody looks at the image. With --check-window-mode it also checks the
+## window mode matches the project setting (exit 5), e.g. fullscreen (Q12).
 
 const SETTLE_FRAMES: int = 10
 
@@ -18,12 +23,12 @@ func _render() -> void:
 	var scene_path: String = _arg(args, "--scene")
 	var out_path: String = _arg(args, "--out")
 	if scene_path.is_empty() or out_path.is_empty():
-		printerr("render_showcase: need --scene and --out")
+		printerr("render_showcase ERROR: need --scene and --out")
 		quit(2)
 		return
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
-		printerr("render_showcase: cannot load %s" % scene_path)
+		printerr("render_showcase ERROR: cannot load %s" % scene_path)
 		quit(2)
 		return
 	root.add_child(packed.instantiate())
@@ -38,15 +43,33 @@ func _render() -> void:
 	if screen != null and not screen.is_empty():
 		image = screen.get_region(window_rect.intersection(Rect2i(Vector2i.ZERO, screen.get_size())))
 	if image == null or image.is_empty():
-		printerr("render_showcase: screen capture returned nothing")
+		printerr("render_showcase ERROR: screen capture returned nothing")
 		quit(3)
 		return
 	var error: Error = image.save_png(out_path)
 	if error != OK:
-		printerr("render_showcase: cannot save %s (%s)" % [out_path, error_string(error)])
+		printerr("render_showcase ERROR: cannot save %s (%s)" % [out_path, error_string(error)])
 		quit(3)
 		return
-	print("render_showcase: %s -> %s (%dx%d)" % [scene_path, out_path, image.get_width(), image.get_height()])
+	var view: Vector2i = Vector2i(root.get_visible_rect().size)
+	var expected: Vector2i = DisplayMath.expected_view_size(window_rect.size)
+	print("render_showcase: %s -> %s (window %dx%d, view %dx%d, mode %d)" % [
+		scene_path, out_path, image.get_width(), image.get_height(), view.x, view.y,
+		DisplayServer.window_get_mode()])
+	if view != expected:
+		printerr("render_showcase ERROR: view %dx%d at window %dx%d, DisplayMath expects %dx%d" % [
+			view.x, view.y, window_rect.size.x, window_rect.size.y, expected.x, expected.y])
+		quit(4)
+		return
+	# X11 only reports fullscreen when a window manager is running, so the
+	# shell script passes --check-window-mode only when it started one.
+	if args.has("--check-window-mode"):
+		var wanted: int = ProjectSettings.get_setting("display/window/size/mode")
+		if DisplayServer.window_get_mode() != wanted:
+			printerr("render_showcase ERROR: window mode %d, project setting is %d" % [
+				DisplayServer.window_get_mode(), wanted])
+			quit(5)
+			return
 	quit(0)
 
 
