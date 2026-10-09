@@ -38,8 +38,13 @@ Visible area always the base size (4 unit tests failed and a real 3440×1440
 render failed the area check, exit 4); zero-size guard removed; windowed
 start; window-mode check forced on without a window manager (exit 5).
 
+## Verified in CI
+
+The render job of this PR ran openbox and left the annotation "Window mode:
+checked on every render (openbox running)"; all 20 renders passed, so under a
+window manager the game reports fullscreen (mode 3) at every screen size.
+
 ## Not verified
 
 - That fullscreen works on real Windows, macOS and Linux desktops, and on real
   ultrawide monitors: playtest checklist items 5 and 6.
-- The CI window-mode check, until the first CI run of this PR.
