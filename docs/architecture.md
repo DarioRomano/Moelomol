@@ -27,6 +27,12 @@ Constraints the architecture must honour:
 - `BuildInfo` (`src/core/build_info.gd`): reads `res://build_stamp.json`,
   written by `tools/export.sh` before export and included through each
   preset's `include_filter`; returns `dev` values when absent.
+- `GameSettings` (`src/core/game_settings.gd`): player settings in
+  `user://settings.cfg`; so far only the UI width (Q15). `GameSettings.shared()`
+  is the game-wide instance (a static, not an autoload); it emits `changed`.
+- `UiFrame` (`src/ui/ui_frame.gd`): put HUD and menus inside one. Its rect is
+  the visible area narrowed to the UI width setting, centred. Its parent must
+  cover the whole view.
 
 **Tests (`tests/`)**
 - `run_tests.gd` extends `SceneTree`: discovers `test_*.gd`, runs `test_*`

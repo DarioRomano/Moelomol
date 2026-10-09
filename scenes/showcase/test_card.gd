@@ -6,19 +6,44 @@ extends Control
 ##   non-integer scaling;
 ## - a 16 px tile checkerboard: uneven squares mean non-integer scaling;
 ## - 1 px stripes: blur or uneven widths mean filtering or fractional scaling;
-## - markers anchored to each corner: they must sit in the corners at every
-##   aspect ratio (aspect = expand grows the visible area);
 ## - the draft palette, so colours can be judged on a real screen.
+## HUD parts (labels, red corner markers, teal outline) sit in a UiFrame, so
+## they follow the UI width setting (Q15): at "full" they reach the screen
+## corners; at 21:9 or 16:9 on a wider screen they stay in a centred frame
+## while the checkerboard and yellow edge (the "world") fill the screen.
 
 const TILE: int = 16
 const FIGURE_SIZE: Vector2i = Vector2i(16, 24)
 
+## Draws the HUD frame's corner markers and outline.
+class HudCorners extends Control:
+	func _ready() -> void:
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		resized.connect(queue_redraw)
+
+	func _draw() -> void:
+		var area: Vector2i = Vector2i(size)
+		var marker: int = 8
+		for corner: Vector2i in [
+				Vector2i(2, 2), Vector2i(area.x - marker - 2, 2),
+				Vector2i(2, area.y - marker - 2), Vector2i(area.x - marker - 2, area.y - marker - 2)]:
+			draw_rect(Rect2(corner, Vector2i(marker, marker)), Palette.DANGER[1])
+		# Outline 4 px inside the frame so it never hides the yellow world edge.
+		draw_rect(Rect2(4, 4, area.x - 8, area.y - 8), Palette.WATER[1], false, 1.0)
+
+
+var _hud: UiFrame
 var _info_label: Label
 var _build_label: Label
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_hud = UiFrame.new()
+	add_child(_hud)
+	_hud.add_child(HudCorners.new())
+	_hud.settings.changed.connect(_refresh)
 	_info_label = _make_label()
 	_info_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 12)
 	_build_label = _make_label()
@@ -33,16 +58,17 @@ func _make_label() -> Label:
 	var label: Label = Label.new()
 	label.add_theme_color_override("font_color", Palette.PAPER[1])
 	label.add_theme_font_size_override("font_size", 8)
-	add_child(label)
+	_hud.add_child(label)
 	return label
 
 
 func _refresh() -> void:
 	var visible_size: Vector2 = get_viewport_rect().size
 	var window_size: Vector2i = DisplayServer.window_get_size()
-	_info_label.text = "TEST CARD  view %dx%d  window %dx%d  scale %dx" % [
+	_info_label.text = "TEST CARD  view %dx%d  window %dx%d  scale %dx  ui %s" % [
 		int(visible_size.x), int(visible_size.y), window_size.x, window_size.y,
 		DisplayMath.expected_scale(window_size),
+		GameSettings.UI_WIDTH_NAMES[_hud.settings.ui_width],
 	]
 	queue_redraw()
 
@@ -53,7 +79,6 @@ func _draw() -> void:
 	_draw_palette(Vector2i(TILE, TILE))
 	_draw_stripes(Vector2i(TILE, TILE * 3))
 	_draw_figure(Vector2i(view.x / 2 - FIGURE_SIZE.x / 2, view.y / 2 - FIGURE_SIZE.y / 2))
-	_draw_corner_markers(view)
 	_draw_frame(view)
 
 
@@ -92,18 +117,6 @@ func _draw_figure(origin: Vector2i) -> void:
 	draw_rect(Rect2(origin.x + 9, origin.y + 18, 3, 6), Palette.WARMTH[0])
 	draw_rect(Rect2(origin.x + 6, origin.y + 3, 1, 1), Palette.SHADOW[0])
 	draw_rect(Rect2(origin.x + 9, origin.y + 3, 1, 1), Palette.SHADOW[0])
-
-
-func _draw_corner_markers(view: Vector2i) -> void:
-	var size: int = 8
-	var corners: Array[Vector2i] = [
-		Vector2i(2, 2),
-		Vector2i(view.x - size - 2, 2),
-		Vector2i(2, view.y - size - 2),
-		Vector2i(view.x - size - 2, view.y - size - 2),
-	]
-	for corner: Vector2i in corners:
-		draw_rect(Rect2(corner, Vector2i(size, size)), Palette.DANGER[1])
 
 
 func _draw_frame(view: Vector2i) -> void:

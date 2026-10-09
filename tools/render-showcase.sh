@@ -75,4 +75,33 @@ for scene in "${SCENES[@]}"; do
   done
 done
 
+# UI width setting (Q15): HUD frame at each width on 32:9 and 21:9 screens.
+# Format: scene size ui-width
+VARIANTS=(
+  "res://scenes/showcase/test_card.tscn 5120x1440 21:9"
+  "res://scenes/showcase/test_card.tscn 5120x1440 16:9"
+  "res://scenes/showcase/test_card.tscn 3440x1440 21:9"
+  "res://scenes/showcase/test_card.tscn 3440x1440 16:9"
+)
+for variant in "${VARIANTS[@]}"; do
+  read -r scene size ui <<<"$variant"
+  name="$(basename "$scene" .tscn)"
+  file="$OUT/${name}_${size}_ui-${ui/:/-}.png"
+  log="$(mktemp)"
+  if LIBGL_ALWAYS_SOFTWARE="${LIBGL_ALWAYS_SOFTWARE:-1}" render_one "$size" \
+      "$GODOT" --path "$ROOT" --display-driver x11 --rendering-driver opengl3 \
+      --audio-driver Dummy --resolution "$size" --position 0,0 \
+      -s res://tools/render_showcase.gd -- --scene "$scene" --out "$file" --ui-width "$ui" "${WM_CHECK[@]}" \
+      >"$log" 2>&1; then
+    grep "^render_showcase:" "$log" || true
+  else
+    cat "$log" >&2
+    reason="$(grep -m1 "^render_showcase ERROR:" "$log" || echo "no error line from render_showcase (crash?)")"
+    echo "Render failed: $scene at $size, UI $ui: $reason" >&2
+    [ "${GITHUB_ACTIONS:-}" = "true" ] && echo "::error title=Render failed::$scene at $size, UI $ui: $reason"
+    FAILED=1
+  fi
+  rm -f "$log"
+done
+
 exit "$FAILED"
