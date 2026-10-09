@@ -18,6 +18,7 @@ GODOT="${GODOT:-godot}"
 SCENES=(
   "res://scenes/showcase/test_card.tscn"
   "res://scenes/boot/boot.tscn"
+  "res://scenes/showcase/renderer_features.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:
 #   16:9 at 2x, 3x and 4x; a non-integer 16:9 laptop; 16:10 (Steam Deck,
