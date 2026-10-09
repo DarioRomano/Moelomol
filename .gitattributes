@@ -2,12 +2,29 @@
 # files (Godot scene and resource files are text and diff badly with CRLF).
 * text=auto eol=lf
 
+# Small binaries stay in plain git. Pixel-art PNGs are tiny, and Godot's
+# *.import sidecars beside every asset stay text.
 *.png binary
 *.webp binary
-*.ogg binary
-*.wav binary
-*.mp3 binary
 *.ttf binary
 *.otf binary
-*.aseprite binary
-*.ase binary
+
+# Large assets go through Git LFS (ADR-0011). Run `git lfs install` once per
+# machine before committing any of these. CI rejects any tracked file over
+# 1 MiB that is not in LFS, and any LFS-pattern file committed without LFS
+# (tools/ci/check_large_files.py).
+# Audio
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+# Art source files
+*.aseprite filter=lfs diff=lfs merge=lfs -text
+*.ase filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.kra filter=lfs diff=lfs merge=lfs -text
+*.xcf filter=lfs diff=lfs merge=lfs -text
+# Video
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.ogv filter=lfs diff=lfs merge=lfs -text

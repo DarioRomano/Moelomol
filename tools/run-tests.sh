@@ -13,6 +13,12 @@ GODOT="${GODOT:-godot}"
 
 "$ROOT/tools/check-godot-version.sh"
 
+# Repository check: large files must go through Git LFS (ADR-0011). Skipped
+# outside a git checkout (for example an unpacked source archive).
+if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  python3 "$ROOT/tools/ci/check_large_files.py" "$ROOT"
+fi
+
 # Tests for the CI helper scripts (Python standard library only).
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -q -s "$ROOT/tools/ci" -p "test_*.py"
 
