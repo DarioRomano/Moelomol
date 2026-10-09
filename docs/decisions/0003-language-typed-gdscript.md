@@ -1,8 +1,8 @@
 # ADR-0003: Language: statically typed GDScript
 
-- **Status:** Proposed (engineer's recommendation; awaiting project lead)
+- **Status:** Accepted (approved by the project lead 2026-10-09, Q8)
 - **Date:** 2026-10-09
-- **Decided by:** Engineer, pending project lead approval
+- **Decided by:** Engineer's proposal, approved by the project lead
 
 ## Context
 
@@ -25,14 +25,14 @@ used. No C#, no GDExtension native code, unless a later ADR supersedes this.
   build can export to the web in 4.7.2 was **not verified**; choosing GDScript
   removes the need to find out.
 - Static typing gives editor and parser errors for type mistakes and faster
-  execution than untyped GDScript. The project should enable the typing
-  warnings (`debug/gdscript/warnings/untyped_declaration` and related) as errors
-  in Milestone 1; those setting names must be verified against the engine at
-  that point.
+  execution than untyped GDScript. `debug/gdscript/warnings/untyped_declaration`
+  is set to Error (verified against the engine; it makes untyped code a parse
+  error, which `tests/unit/test_all_code_loads.gd` catches).
 - Weaker refactoring tools than C# IDEs. Acceptable for a project of this size.
 - Heavy simulation (for example large crop grids) may need care for
   performance; measured against ADR-0007 when it exists.
 
 ## Verification
 
-Milestone 1 adds a CI step that fails on untyped declarations.
+`tests/unit/test_project_rules.gd` checks the setting; `test_all_code_loads.gd`
+fails on any script that does not parse, including untyped declarations.

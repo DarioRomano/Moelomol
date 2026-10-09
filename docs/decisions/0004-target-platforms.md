@@ -1,7 +1,8 @@
 # ADR-0004: Target platforms
 
 - **Status:** Accepted. Q7 answered 2026-10-09 by the project lead: the web build
-  is never shipped, only built for validation.
+  is never shipped, only built for validation. Linux ARM64 added 2026-10-09 as
+  a test build only (Q16), not a shipping platform.
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (brief of 2026-10-09)
 
@@ -33,3 +34,11 @@ The brief names Windows, macOS and Linux. The brief's merge gate also includes a
   until there is something to distribute and will be raised then.
 - Real-hardware behaviour on each platform cannot be verified headlessly and
   goes on playtest checklists.
+
+## Addition (2026-10-09): Linux ARM64 test build
+
+A Linux ARM64 build is exported on every PR and attached to releases, labelled
+as a test build. It exists so the lead can measure performance natively on the
+Steam Frame (Q16 option C). It is not a supported or shipping platform; making
+it one would need the lead's decision and a new ADR.
+

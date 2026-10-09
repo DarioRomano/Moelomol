@@ -23,7 +23,8 @@ not targets.
 
 After this milestone: Q4, Q5, Q12 and Q15 decided and implemented
 (fullscreen with shortcuts, ultrawide, UI width setting, renderer feature
-check). Q8 still applied as a working assumption.
+check). Q8 and Q16 decided; full-resolution rendering, ARM64 test build and
+frame-time overlay added.
 
 ## Milestone 2: Art and audio direction slice (not started)
 
@@ -41,10 +42,12 @@ confirming the tools' licence terms.
 
 ## Later (not planned)
 
-Decided and ready for the first gameplay system: performance budget
-(ADR-0007), renderer (ADR-0012), input model (ADR-0013), display and UI width
-(ADR-0008). Still open: Q16 (how to check performance without a minimum-spec
-machine) and Q8 (approve typed GDScript, applied meanwhile).
+Decided and ready for the first gameplay system: language (ADR-0003),
+performance budget and how it is checked (ADR-0007, Q16), renderer
+(ADR-0012), input model (ADR-0013), display with full-resolution rendering
+and UI width (ADR-0008). Open: Q17 (whole-number or fractional scaling), not
+blocking. Waiting on the lead: the device performance runs
+(`docs/playtests/2026-10-09-performance-devices.md`).
 
 Farming, exploration and foraging, combat, crafting and enhancement, upgrade
 systems, skills, trinkets and artefacts, notes and story. These are named in
