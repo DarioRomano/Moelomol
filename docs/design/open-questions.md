@@ -5,9 +5,8 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: **Q18** (camera perspective) and **Q19** (one or two
-weapons equipped) are new, from the combat design; everything else is
-resolved.
+Status at 2026-10-10: **Q20** (smoothing movement at 120 fps) is new, from the
+combat arena; everything else is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -28,8 +27,9 @@ resolved.
 | Q15 | How much world should 32:9 screens show? | First level layout | **Resolved**: show it all + UI width setting → ADR-0008 |
 | Q16 | How to check the performance budget without a minimum-spec machine | First gameplay system | **Resolved**: 5800X + Steam Frame (B, C) |
 | Q17 | Whole-number or fractional scaling, now that rendering is full resolution? | Nothing urgent | **Resolved**: keep whole-number |
-| Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Open** (new) |
-| Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Open** (new) |
+| Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Resolved**: top-down ¾ → ADR-0014 |
+| Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Resolved**: two with a swap → `combat.md` |
+| Q20 | Smoothing movement at 120 fps with 60 Hz combat logic | Feel of all movement | **Open** (new) |
 
 ---
 
@@ -750,6 +750,8 @@ Revisit if playtests on real laptops show the bars bother people.
 
 ## Q18. Camera perspective: top-down or side view?
 
+**Resolved 2026-10-10:** option A, top-down ¾ view (ADR-0014).
+
 Found while designing combat (2026-10-10): the perspective was never decided,
 and it changes how every weapon plays and how every sprite is drawn. The art
 plan's placeholder ("a player character standing in four directions")
@@ -778,6 +780,9 @@ because every sprite depends on it.
 
 ## Q19. One weapon at a time, or two equipped with a swap?
 
+**Resolved 2026-10-10:** option B, two weapons equipped with a 1.5 s swap
+cooldown (`combat.md`). Built when the second weapon exists.
+
 Found while designing combat. The brief wants weapons that fit different
 playstyles and magic built on stacking; whether those can be combined in one
 fight decides how deep builds go and how much needs balancing.
@@ -801,3 +806,34 @@ fight decides how deep builds go and how much needs balancing.
   identity and mastery suffer; menus in the middle of fights.
 
 **Recommendation:** B, with a 1.5 s swap cooldown to keep swaps deliberate.
+
+## Q20. Smoothing movement at 120 fps with 60 Hz combat logic
+
+Found while building the combat arena (2026-10-10). Combat runs at a fixed
+60 ticks per second (`combat.md`, "Timing"), so its timing windows are the
+same on every machine. The screen is drawn up to 120 times per second
+(ADR-0007). Drawn as-is, a moving character holds still for every second
+frame, which can look like judder on a 120 Hz screen. Godot's built-in physics
+interpolation setting does not apply, because the combat simulation does not
+use Godot physics. The arena lets the lead compare: **F5** toggles render
+interpolation.
+
+**A. Render interpolation** (draw each character between its last two
+positions) (current default)
+- Pro: smooth on 120 Hz and higher screens; logic and timing unchanged; cheap.
+- Con: what is drawn is up to one tick (16.7 ms) behind the simulation, which
+  adds that much visual delay to every input.
+
+**B. Run the simulation at 120 ticks per second**
+- Pro: smooth with no added delay; timing windows twice as fine.
+- Con: about twice the game-logic CPU time, against a 3 ms budget on the
+  minimum spec (ADR-0007); on a 60 Hz screen, half the ticks are never seen.
+
+**C. No smoothing**
+- Pro: simplest; no added delay.
+- Con: judder on 120 Hz screens, which is the target (ADR-0007).
+
+**Recommendation:** decide after the arena playtest on a 120 Hz screen (your
+5800X): compare F5 on and off. If the delay of A cannot be felt, keep A; if it
+can, choose B and measure its CPU cost with the overlay (F3).
+

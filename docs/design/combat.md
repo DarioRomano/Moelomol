@@ -1,9 +1,10 @@
 # Combat design
 
-- **Status:** First draft, for the lead's review (2026-10-10). Nothing here is
-  built. Everything marked **Proposal** is the engineer's suggestion; all
-  numbers are starting values for tuning, and balance needs the lead's approval
-  when it is implemented.
+- **Status:** Draft approved by the lead (2026-10-10: "I approve your
+  recommendations"). Built so far: the shared foundation and the greatsword,
+  in the combat test arena (see "Built so far" at the end). Everything marked
+  **Proposal** is still open to change; all numbers are starting values for
+  tuning, and balance changes need the lead's approval.
 - **Lead's brief (2026-10-10):** combat with depth; weapons that fit different
   playstyles. Greatsword: heavy combat, lots of pushing and staggering,
   combos into different moves. Hammer: charged attacks that need precise
@@ -16,10 +17,8 @@
   ADR-0007 (120 fps budget), ADR-0013 (keyboard plays, mouse only in menus;
   rumble on all controllers; DualSense triggers later), `story.md` (monsters
   are wildlife changed by the god; no bodies), `art-direction.md`.
-- **Open questions this raises:** Q18 (camera perspective) and Q19 (one
-  weapon or two equipped). **This draft assumes the recommended answers:
-  top-down ¾ view, and two weapons equipped with a swap.** Sections that
-  depend on them say so.
+- **Decided:** top-down ¾ view (Q18, ADR-0014); two weapons equipped with a
+  swap (Q19).
 - **Art prompts** for everything here: `combat-art-prompts.md`.
 
 ## What combat should feel like
@@ -433,6 +432,21 @@ later prototype.
 | Release multiplier | +100% for a second effect, +200% for a third |
 | Weapon swap cooldown | 1.5 s |
 
+Further starting values chosen while building the arena (all in
+`src/combat/combat_tuning.gd` and `src/combat/greatsword.gd`):
+
+| Value | Start |
+|---|---|
+| Player | speed 80 px/s, health 100, poise 50, stagger 0.6 s |
+| Stamina | 100; refills 40/s after 0.6 s; light 8, heavy finishers 15–20, Follow-through 25, Brace 10, dodge 20 |
+| Poise refill | 40/s after 1.5 s without poise damage; staggered targets take ×1.5 damage |
+| Push | plays out over 0.2 s; an impact needs at least 8 px of push left: 10 damage, 30 poise |
+| Light swings | 10 / 10 / 12 damage, step forward 6 px each (so the chain follows a pushed creature) |
+| Finishers | cleave 30 dmg 60 poise (hyper-armour); shove 6 dmg, pushes 64 px, dashes 24 px; spin 14 dmg, all round; rising 20 dmg, ×2 on staggered, +0.3 s stagger |
+| Follow-through | 45 damage; staggered creature within 24 px |
+| Training creature | speed 40 px/s, health 150, poise 80, stagger 1.2 s; lunge 0.7 s telegraph, 15 damage, 30 poise; 0.8 s recovery (the punish window) |
+| Defeated creature | fades over 1 s, returns after 3 s (arena only) |
+
 ## What this draft does not decide
 
 Death and its consequences, healing, enemy roster and AI, numbers beyond
@@ -440,13 +454,24 @@ the starting values, each weapon's skill tree, enhancement recipes, which
 weapons are available when (a story and progression question), and the
 combat camera (follows Q18).
 
-## Suggested first build step (for the lead to approve)
+## Built so far (2026-10-10)
 
-A combat test arena (a showcase scene, never at the base) with: movement,
-dodge, stamina, poise and stagger, lock-on, one training creature with a
-telegraphed attack, and the **greatsword** first (it exercises poise, push
-and combos, the foundation everything else uses). Then hammer, bow and
-magic in that order, each its own PR with tests for its rules (combo
-transitions, sweet-spot windows in ticks, stack and Release arithmetic) and a
-playtest checklist for feel, which cannot be judged headlessly. Placeholder
-art from code until the AI-generated art arrives.
+**The combat test arena** (`scenes/combat/combat_arena.tscn`; F2 from the
+title, or `--start-scene combat_arena`). Never at the base.
+
+- Built: movement, dodge with invulnerable frames, stamina, poise and
+  stagger, hyper-armour, input buffer, hit-stop, soft aim, lock-on with
+  target switching, push and impacts (walls, pillars, other creatures), the
+  full greatsword (light chain, four finishers, Follow-through, Brace and its
+  counter), two training creatures with a telegraphed lunge, rumble through
+  the haptics service, and a HUD.
+- How: a deterministic simulation (`src/combat/combat_sim.gd`) stepped at
+  60 Hz; the scene only reads input and draws. 46 rule tests drive it
+  directly. Placeholder shapes from the palette stand in for art.
+- Developer keys: F5 render interpolation (Q20), F6 creatures passive (for
+  practising combos).
+- Not built yet: hammer, bow and magic (next, in that order, each its own
+  PR), weapon swap (needs a second weapon), the status-effect system (comes
+  with magic), the hold/toggle setting for lock-on (comes with the options
+  menu), DualSense triggers (later prototype), death and healing.
+- Feel can only be judged by playing: `docs/playtests/2026-10-10-combat-arena.md`.

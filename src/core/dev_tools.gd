@@ -4,11 +4,12 @@ extends Node
 ## - F3, or both stick buttons together on a controller: show or hide the
 ##   performance overlay.
 ## - F2: switch between the showcase scenes (boot, test card, renderer
-##   features), so devices can be measured on something heavier than the title.
+##   features, combat arena), so devices can be measured on something heavier
+##   than the title.
 ## - F4: V-Sync on/off. With V-Sync on, the frame rate is capped at the
 ##   screen's refresh rate; off shows the real headroom.
 ## - Launch options (after `--` on the command line, or in Steam's launch
-##   options): `--perf-overlay`, `--start-scene <boot|test_card|renderer_features>`,
+##   options): `--perf-overlay`, `--start-scene <boot|test_card|renderer_features|combat_arena>`,
 ##   `--no-vsync`. (`--scene` is already used by the render tool.)
 ##
 ## Available in every build: the lead tests release builds on real devices.
@@ -20,6 +21,7 @@ const SHOWCASE_SCENES: Dictionary = {
 	"boot": "res://scenes/boot/boot.tscn",
 	"test_card": "res://scenes/showcase/test_card.tscn",
 	"renderer_features": "res://scenes/showcase/renderer_features.tscn",
+	"combat_arena": "res://scenes/combat/combat_arena.tscn",
 }
 const REFRESH_SECONDS: float = 0.25
 

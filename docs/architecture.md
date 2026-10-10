@@ -53,6 +53,29 @@ Constraints the architecture must honour:
   failure. Exits 1 on any failure, load error, or if no tests ran.
 - `TestCase`: assertion helpers; `assert_eq` also compares types.
 
+**Combat (`src/combat/`, `scenes/combat/`)**
+- `CombatSim`: the combat rules as a deterministic simulation. `step(input)`
+  once per 60 Hz physics tick; positions in layout pixels; the arena is a
+  walkable `Rect2` with rectangular obstacles; fighters are circles with
+  hand-written collision (no Godot physics bodies). Emits `events` (hit,
+  impact, stagger, dodged, down, ...) for feedback.
+- `Fighter` (state machine data), `CombatMove` (timing in ms, converted to
+  ticks), `Greatsword` (moves and chain rules), `Poise`, `Stamina`,
+  `CombatInput`, `CombatTuning` (all starting values).
+- `CombatDrawer` draws a sim on any `CanvasItem` (placeholder shapes), with
+  optional render interpolation between ticks (Q20).
+- `scenes/combat/combat_arena.tscn`: reads InputMap actions into a
+  `CombatInput` in `_physics_process`, steps the sim, plays haptics, draws.
+  `CombatHud` sits in a `UiFrame`.
+- `scenes/showcase/combat_poses.tscn`: scripted sims frozen at telling
+  moments, for the review renders.
+- `Haptics` (`src/core/haptics.gd`): named rumble effects (ADR-0013).
+
+Why a custom simulation: every rule is testable headlessly and
+deterministically (tests call `step()` directly), timing windows are exact
+tick counts, and nothing depends on physics-engine behaviour that would need
+separate verification.
+
 **Tools and CI** are described in ADR-0009 and `CLAUDE.md`.
 
 ## Appendix: Godot APIs verified against the running engine
@@ -225,4 +248,24 @@ a real controller)
 - A rect at a fractional layout position (x + 0.5) is drawn at screen
   precision in `canvas_items` mode and snapped to whole art pixels in
   `viewport` mode (the test card's `render_checks()` relies on this).
+
+### 2026-10-10 (combat arena), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `Engine.physics_ticks_per_second` is 60; `Engine.get_physics_interpolation_fraction()`
+  exists and returns 0–1 between physics ticks (used for render interpolation).
+- Joypad constants: `JOY_BUTTON_A` 0, `B` 1, `X` 2, `Y` 3,
+  `RIGHT_SHOULDER` 10; `JOY_AXIS_LEFT_X` 0, `LEFT_Y` 1, `RIGHT_X` 2,
+  `TRIGGER_LEFT` 4, `TRIGGER_RIGHT` 5.
+- Action events created in code and saved with `ProjectSettings.save()` get
+  `"device":16` (keys) and `"device":0` (joypad); **0 means the first
+  controller only**. Set `-1` (any device); `InputMap.event_is_action` then
+  matches events from any controller (verified with devices 1, 2 and 3).
+- `InputMap.event_is_action()` matches a joypad axis at **any** value; the
+  action's deadzone only applies in `InputEvent.is_action_pressed()` /
+  `get_action_strength()`: with deadzone 0.3, trigger 0.25 is not pressed,
+  0.35 is (strength 0.07).
+- `Input.get_vector`, `Input.is_action_just_pressed`, `Input.is_action_pressed`
+  exist; `is_action_just_pressed` is called in `_physics_process`.
+- `CanvasItem.draw_set_transform(offset)` offsets later draw calls (combat
+  poses panels).
 

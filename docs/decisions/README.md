@@ -27,3 +27,4 @@ Clarifications that do not change the decision (typos, links) are fine.
 | [0011](0011-git-lfs-for-large-assets.md) | Git LFS for large assets | Accepted |
 | [0012](0012-renderer-compatibility-everywhere.md) | Renderer: Compatibility everywhere | Accepted |
 | [0013](0013-input-model.md) | Input model | Accepted |
+| [0014](0014-top-down-three-quarter-view.md) | Camera perspective: top-down ¾ view | Accepted |

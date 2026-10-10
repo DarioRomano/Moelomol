@@ -19,10 +19,12 @@ amended by ADR-0010.
 
 ## Current status
 
-Milestone 1 (project skeleton and CI). A Godot project exists with a test-card
-main scene, a headless test runner, visual review renders, PR builds and
-releases. **There is no gameplay.** Do not invent gameplay systems
-speculatively; build what the task asks for. See `docs/roadmap.md`.
+Combat prototype. Beyond the foundation (test-card title, headless tests,
+review renders, PR builds and releases), there is a **combat test arena**
+with the shared combat foundation and the greatsword (`docs/design/combat.md`).
+There is no other gameplay: no farming, exploration or story. Do not invent
+gameplay systems speculatively; build what the task asks for. See
+`docs/roadmap.md`.
 
 ## Commands
 
@@ -66,6 +68,8 @@ prints failures as `::error` annotations: read them with
 | `project.godot` | Engine settings (ADR-0008 display, Compatibility renderer, typing as errors) |
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
+| `scenes/combat/` | Combat test arena and its HUD |
+| `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
 | `tests/runner/` | Test runner and `TestCase` base class |
@@ -150,6 +154,12 @@ note of the bug it caught.
 - **Run the real export, not just the tests.** The first macOS export failed
   (Apple Silicon needs ETC2/ASTC import enabled); nothing else would have
   shown it.
+- **Render a scripted pose of every new move.** The combat poses render
+  showed the third light swing whiffing (each swing's push carried a standing
+  creature out of reach), a design flaw no rule test was written for.
+- **Controller bindings made in code must use device -1.** The engine saves
+  joypad events with device 0 (first controller only); a test with device 1
+  catches it.
 - **Use `set_anchors_and_offsets_preset`, not `set_anchors_preset`, to make a
   control fill its parent.** `set_anchors_preset` keeps the control's current
   size (a new control stays 0×0); only the renders showed it (one corner

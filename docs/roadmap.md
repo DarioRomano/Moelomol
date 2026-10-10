@@ -40,14 +40,20 @@ confirming the tools' licence terms.
 - A playtest checklist for the lead to judge the mood on real screens and
   speakers.
 
-## Combat design (draft, 2026-10-10)
+## Combat prototype (started 2026-10-10)
 
 `docs/design/combat.md` and `docs/design/combat-art-prompts.md`: four
 weapons (greatsword, hammer, bow, magic), the shared foundation (dodge,
-stamina, poise and stagger, lock-on), stacking effects and Release. Nothing is
-built. Waiting on the lead: review of the draft, Q18 (perspective), Q19 (weapon
-loadout), and approval of the suggested first build step (a combat test arena
-with the greatsword).
+stamina, poise and stagger, lock-on), stacking effects and Release. The lead
+approved the design with Q18 (top-down ¾, ADR-0014) and Q19 (two weapons with
+a swap) on 2026-10-10.
+
+- **Done:** combat test arena with the shared foundation and the greatsword
+  (2026-10-10).
+- **Next:** hammer, bow, magic (with the status-effect system), each its own
+  PR; weapon swap once a second weapon exists.
+- **Waiting on the lead:** arena playtest
+  (`docs/playtests/2026-10-10-combat-arena.md`), Q20.
 
 ## Later (not planned)
 
