@@ -6,7 +6,8 @@
 - **Amended:** 2026-10-09 by the project lead: 21:9 and 32:9 screens at 1080p
   and 1440p are supported targets; the game starts fullscreen (Q12). See
   "Amendment" below. Amended again 2026-10-09 (Q15): 32:9 shows the whole
-  world; UI width setting. See "Amendment 2".
+  world; UI width setting. See "Amendment 2". Amended a third time
+  2026-10-09: the scene renders at full screen resolution. See "Amendment 3".
 
 ## Context
 
@@ -94,6 +95,42 @@ common 21:9 panel, so it changes nothing on real 21:9 monitors and on 32:9
 matches a 3440×1440 screen. Stored in `user://settings.cfg`
 (`GameSettings`). The options menu that changes it comes with the first menu.
 
+## Amendment 3 (2026-10-09, project lead): render at full resolution
+
+**Changed requirement:** the scene is drawn at the screen's own resolution,
+not at 640×360 scaled up. The lead's reasons: text readability and clarity of
+moving objects, which should use the full resolution. The pixel style is art
+direction, not a rendering constraint.
+
+| Setting | Was | Now |
+|---|---|---|
+| `display/window/stretch/mode` | `viewport` (draw at 640×360, scale the picture up) | `canvas_items` (draw at screen resolution) |
+| Default font antialiasing / hinting / subpixel positioning | all off | engine defaults: grayscale / light / auto |
+
+**Unchanged:** 640×360 remains the layout size and the size of one art pixel;
+16 px tiles; `scale_mode = integer`; `aspect = expand`; Nearest texture
+filtering; fullscreen start; the ultrawide table and UI width setting. The
+visible area at every screen size is exactly as before (all review renders
+pass the `DisplayMath` check unchanged).
+
+Whether to switch to fractional scaling, now that rendering is full
+resolution, is open question Q17.
+
+**Consequences:**
+- Text is drawn at screen resolution: sharp at every scale. The engine's
+  default font rendering gives even letter spacing (compared on the
+  2026-10-09 renders; the old settings left gaps such as "CAR D").
+- Objects can sit and move between art pixels, so motion is smooth at full
+  resolution. Sprites keep their pixel-art look because textures use Nearest
+  filtering and whole-number scales; they can now overlap the art-pixel grid
+  ("mixels"), which the lead accepts as art direction.
+- Lights, shadows and shaders are computed per screen pixel: smoother, but
+  the GPU now works at screen resolution (about 2 million pixels at 1080p,
+  7.4 million at 5120×1440, instead of 0.23 million). Full-screen effects
+  become a GPU cost to watch on the GTX 1050 Ti (ADR-0007).
+- The `renderer_features` showcase now shows shadow edges and light falloff
+  at full resolution.
+
 ## Verification
 
 `tests/unit/test_display_settings.gd` fails if any value in the table changes,
@@ -101,6 +138,9 @@ including the fullscreen start. `tests/unit/test_display_math.gd` pins the
 visible area and scale for every screen named above.
 `tools/render_showcase.gd` checks every render's real visible area against
 `DisplayMath` (fails with exit 4) and, when a window manager runs (CI), that
-the window really is fullscreen (exit 5).
+the window really is fullscreen (exit 5). The test card's `render_checks()`
+fails the render (exit 6) unless a marker half an art pixel wide covers only
+the right half of its art pixel, which only full-resolution rendering can do;
+seen to fail at three sizes with `viewport` stretch.
 The test card (`scenes/showcase/test_card.tscn`) is rendered on every pull
 request at ten screen sizes for visual review.

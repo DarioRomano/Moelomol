@@ -6,7 +6,11 @@ extends Control
 ##   non-integer scaling;
 ## - a 16 px tile checkerboard: uneven squares mean non-integer scaling;
 ## - 1 px stripes: blur or uneven widths mean filtering or fractional scaling;
-## - the draft palette, so colours can be judged on a real screen.
+## - the draft palette, so colours can be judged on a real screen;
+## - full-resolution rendering (ADR-0008 Amendment 3): a row of squares, each
+##   a quarter of an art pixel further right than the last, should step
+##   smoothly; and a half-pixel marker that render_checks() verifies in every
+##   review render.
 ## HUD parts (labels, red corner markers, teal outline) sit in a UiFrame, so
 ## they follow the UI width setting (Q15): at "full" they reach the screen
 ## corners; at 21:9 or 16:9 on a wider screen they stay in a centred frame
@@ -14,6 +18,8 @@ extends Control
 
 const TILE: int = 16
 const FIGURE_SIZE: Vector2i = Vector2i(16, 24)
+## Art pixel whose right half the half-pixel marker covers (layout units).
+const MARKER_PIXEL: Vector2i = Vector2i(120, 52)
 
 ## Draws the HUD frame's corner markers and outline.
 class HudCorners extends Control:
@@ -78,6 +84,7 @@ func _draw() -> void:
 	_draw_checkerboard(view)
 	_draw_palette(Vector2i(TILE, TILE))
 	_draw_stripes(Vector2i(TILE, TILE * 3))
+	_draw_full_resolution_row(Vector2(TILE, TILE * 5))
 	_draw_figure(Vector2i(view.x / 2 - FIGURE_SIZE.x / 2, view.y / 2 - FIGURE_SIZE.y / 2))
 	_draw_frame(view)
 
@@ -107,6 +114,38 @@ func _draw_stripes(origin: Vector2i) -> void:
 		draw_rect(Rect2(origin.x + i, origin.y, 1, TILE), colour)
 		if i < TILE:
 			draw_rect(Rect2(origin.x + 40, origin.y + i, 32, 1), colour)
+
+
+func _draw_full_resolution_row(origin: Vector2) -> void:
+	# Eight 4x4 squares, each a quarter art pixel further right than a plain
+	# 8-pixel spacing: only full-resolution rendering can show the steps.
+	for i: int in range(8):
+		draw_rect(Rect2(origin.x + i * 8.25, origin.y, 4, 4), Palette.WARMTH[3])
+	# Background for the half-pixel marker, then the marker itself: the right
+	# half of one art pixel, 4 art pixels tall.
+	draw_rect(Rect2(MARKER_PIXEL.x - 2, MARKER_PIXEL.y - 1, 5, 6), Palette.SHADOW[0])
+	draw_rect(Rect2(MARKER_PIXEL.x + 0.5, MARKER_PIXEL.y, 0.5, 4), Palette.DANGER[1])
+
+
+## Called by tools/render_showcase.gd on every review render. Returns problems
+## (empty if fine). Checks the scene really is drawn at full resolution: the
+## marker covers only the right half of its art pixel, which the old
+## low-resolution rendering could not show. Skipped at 1x, where an art pixel
+## is a single screen pixel.
+func render_checks(image: Image, to_screen: Transform2D) -> Array[String]:
+	var scale: int = roundi(to_screen.get_scale().x)
+	if scale < 2:
+		return []
+	var left: Vector2i = Vector2i(to_screen * (Vector2(MARKER_PIXEL) + Vector2(0.0, 2.0)))
+	var right: Vector2i = left + Vector2i(scale - 1, 0)
+	var marker: Color = Palette.DANGER[1]
+	var problems: Array[String] = []
+	if image.get_pixelv(left).is_equal_approx(marker):
+		problems.append("left half of the marker's art pixel (%s) is marker colour: not full resolution" % left)
+	if not image.get_pixelv(right).is_equal_approx(marker):
+		problems.append("right half of the marker's art pixel (%s) is %s, not the marker: not full resolution"
+			% [right, image.get_pixelv(right).to_html(false)])
+	return problems
 
 
 func _draw_figure(origin: Vector2i) -> void:

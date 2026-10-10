@@ -47,8 +47,9 @@ it is a laptop screen or an external monitor.
    window is not an exact multiple. Note anything that looks wrong. Result:
 8. **Palette.** Do the 27 colours look as intended on your screen? Any that
    look too similar, or too saturated for the lonely tone? Result:
-9. **Text.** The text is readable but the letter spacing is uneven (placeholder
-   font). Tell me if it is worse than that, e.g. unreadable. Result:
+9. **Text.** Text is drawn at full screen resolution (since the
+   full-resolution change). It should be sharp, smooth-edged and evenly spaced
+   at every scale, including 1080p. The font itself is a placeholder. Result:
 10. **macOS only:** does it run natively on Apple Silicon (Activity Monitor →
     "Kind" column says Apple)? Result:
 
