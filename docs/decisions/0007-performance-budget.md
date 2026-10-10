@@ -2,6 +2,8 @@
 
 - **Status:** Accepted 2026-10-09. The proposed macOS and Steam Deck targets
   were dropped by the lead (Q16): no performance target is set for them.
+  Confirmed by the lead 2026-10-10: only the macOS performance target was
+  dropped; macOS remains a shipping platform (ADR-0004).
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (Q4: 120 fps on a GTX 1050 Ti; CPU pairing
   accepted); remaining values from the engineer's proposal

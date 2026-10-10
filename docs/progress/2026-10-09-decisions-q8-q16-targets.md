@@ -10,7 +10,8 @@ Recorded the lead's answers:
   and overlay are in their own PRs.
 - **macOS and Steam Deck performance targets dropped** from ADR-0007.
   Interpreted as the performance targets only: macOS stays a shipping
-  platform (ADR-0004) with no performance target. Asked the lead to confirm.
+  platform (ADR-0004) with no performance target. Confirmed by the lead on
+  2026-10-10.
 - ADR-0007 now notes that full-resolution rendering (ADR-0008 Amendment 3)
   makes GPU work scale with screen size (9× the 640×360 work at 1080p, 32× at
   5120×1440).
