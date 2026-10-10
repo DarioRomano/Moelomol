@@ -18,6 +18,10 @@ const EFFECTS: Dictionary = {
 	&"hammer_sweet_spot": [0.0, 0.8, 0.03],  # a sharp click
 	&"hammer_hit": [0.3, 0.8, 0.12],
 	&"hammer_perfect": [0.6, 1.0, 0.25],  # the heaviest pulse in the game
+	&"bow_stage": [0.0, 0.45, 0.03],  # a tick at each draw stage
+	&"bow_release": [0.25, 0.15, 0.05],  # the string's snap
+	&"bow_hit": [0.15, 0.3, 0.05],
+	&"bow_heavy_hit": [0.3, 0.7, 0.1],
 }
 
 const HEAVY_GREATSWORD_MOVES: Array[StringName] = [&"cleave", &"spin", &"rising", &"follow_through", &"brace_counter"]
@@ -61,6 +65,12 @@ static func effect_for_event(event: Dictionary) -> StringName:
 					return &"hammer_hit"
 				&"hammer_jab", &"ground_stamp":
 					return &"hammer_jab"
+				&"arrow_heavy":
+					return &"bow_heavy_hit"
+				&"arrow_quick", &"arrow_strong", &"arrow_piercing", &"arrow_marker":
+					return &"bow_hit"
+				&"volley_rain":
+					return &""  # many small hits at once: rumble would only blur
 			return &"greatsword_heavy_hit" if move in HEAVY_GREATSWORD_MOVES else &"greatsword_hit"
 		"impact":
 			return &"impact"
@@ -70,6 +80,11 @@ static func effect_for_event(event: Dictionary) -> StringName:
 			return &"hammer_sweet_spot"
 		"shockwave":
 			return &"hammer_perfect"
+		"draw_stage":
+			return &"bow_stage"
+		"arrow":
+			var shooter: Fighter = event["fighter"]
+			return &"bow_release" if shooter.kind == Fighter.Kind.PLAYER else &""
 		"stagger":
 			var fighter: Fighter = event["fighter"]
 			return &"stagger" if fighter.kind == Fighter.Kind.CREATURE else &""

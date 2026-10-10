@@ -9,7 +9,8 @@ extends Node2D
 ## arena (ADR-0008); camera movement is a later decision.
 ##
 ## Developer keys: F5 render interpolation on/off (Q20), F6 creatures
-## passive/active.
+## passive/active, F7 changes the weapon not in hand (greatsword, hammer,
+## bow).
 
 var sim: CombatSim = CombatSim.make_arena()
 var haptics: Haptics = Haptics.new()
@@ -21,8 +22,7 @@ var _hud: CombatHud
 
 func _ready() -> void:
 	for weapon: Weapon in sim.player.weapons:
-		if weapon is Hammer:
-			(weapon as Hammer).wide_sweet_spot = GameSettings.shared().hammer_wide_sweet_spot
+		_apply_settings(weapon)
 	var camera: Camera2D = Camera2D.new()
 	camera.position = Vector2(320, 180)
 	add_child(camera)
@@ -61,6 +61,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		for creature: Fighter in sim.creatures:
 			creature.ai_enabled = not creature.ai_enabled
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"dev_cycle_offhand_weapon", false):
+		_apply_settings(sim.cycle_offhand_weapon())
+		get_viewport().set_input_as_handled()
+
+
+## Player settings that change how a weapon plays (accessibility).
+static func _apply_settings(weapon: Weapon) -> void:
+	if weapon is Hammer:
+		(weapon as Hammer).wide_sweet_spot = GameSettings.shared().hammer_wide_sweet_spot
 
 
 ## This tick's input from the InputMap actions (ADR-0013).

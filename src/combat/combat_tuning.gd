@@ -71,8 +71,12 @@ const PLAYER_DOWN_MS: int = 2000
 # Loadout (Q19: two weapons and a swap)
 const SWAP_COOLDOWN_MS: int = 1500
 
-# Charging (hammer charge, later the bow draw): the player walks slowly
+# Charging (hammer charge; the bow's draw sets its own speed): the player walks slowly
 const CHARGE_MOVE_SPEED: float = 28.0  # layout px per second
+
+# Arrows
+const ARROW_SPEED: float = 360.0  # layout px per second
+const ARROW_RANGE: float = 260.0  # layout px; soft aim for shots reaches this far
 
 # Armour (shells, bark, stone plates): reduces damage until chipped away or
 # shattered by a perfect hammer strike

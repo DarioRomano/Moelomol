@@ -7,12 +7,16 @@ extends RefCounted
 ## and draw; tests drive step() directly.
 
 const CREATURE_LUNGE_ID: StringName = &"creature_lunge"
+## Every weapon there is, in the order the arena's loadout key cycles them.
+const WEAPON_IDS: Array[StringName] = [&"greatsword", &"hammer", &"bow"]
 
 var bounds: Rect2
 var obstacles: Array[Rect2] = []
 var player: Fighter
 var creatures: Array[Fighter] = []
 var lock_target: Fighter = null
+var projectiles: Array[Projectile] = []
+var zones: Array[Zone] = []
 var hitstop: int = 0  # ticks left in which nothing moves
 var tick_count: int = 0
 ## What happened during the last step, for feedback (haptics, effects).
@@ -47,6 +51,32 @@ func add_creature(at: Vector2) -> Fighter:
 	return creature
 
 
+static func make_weapon(weapon_id: StringName) -> Weapon:
+	match weapon_id:
+		&"greatsword":
+			return Greatsword.new()
+		&"hammer":
+			return Hammer.new()
+		&"bow":
+			return Bow.new()
+	push_error("CombatSim.make_weapon: unknown weapon %s" % weapon_id)
+	return null
+
+
+## Arena loadout key: replaces the weapon not in hand with the next one in
+## WEAPON_IDS that is not the one in hand. Returns the new weapon.
+func cycle_offhand_weapon() -> Weapon:
+	var p: Fighter = player
+	var off: int = 1 - p.weapon_index
+	var index: int = WEAPON_IDS.find(p.weapons[off].id)
+	for step: int in range(1, WEAPON_IDS.size()):
+		var candidate: StringName = WEAPON_IDS[(index + step) % WEAPON_IDS.size()]
+		if candidate != p.weapon().id:
+			p.weapons[off] = make_weapon(candidate)
+			break
+	return p.weapons[off]
+
+
 func fighters() -> Array[Fighter]:
 	var all: Array[Fighter] = [player]
 	all.append_array(creatures)
@@ -56,18 +86,20 @@ func fighters() -> Array[Fighter]:
 func step(input: CombatInput) -> void:
 	events.clear()
 	_record_buffer(input)
-	if hitstop > 0:
-		hitstop -= 1
-		for f: Fighter in fighters():
-			f.previous_position = f.position
-		return
-	tick_count += 1
 	for f: Fighter in fighters():
 		f.previous_position = f.position
+	for arrow: Projectile in projectiles:
+		arrow.previous_position = arrow.position
+	if hitstop > 0:
+		hitstop -= 1
+		return
+	tick_count += 1
 	_update_lock(input)
 	_step_player(input)
 	for creature: Fighter in creatures:
 		_step_creature(creature)
+	_step_projectiles()
+	_step_zones()
 	for f: Fighter in fighters():
 		_apply_push(f)
 		if f.is_alive() and not f.is_staggered():
@@ -75,6 +107,8 @@ func step(input: CombatInput) -> void:
 	player.stamina.tick()
 	if player.swap_cooldown > 0:
 		player.swap_cooldown -= 1
+	for weapon: Weapon in player.weapons:
+		weapon.tick(self)
 	_separate_fighters()
 
 
@@ -121,11 +155,14 @@ func _step_player(input: CombatInput) -> void:
 			if p.state_tick >= p.state_length:
 				p.enter(Fighter.State.FREE)
 		Fighter.State.DODGE:
+			if _buffer_action != &"" and p.weapon().dodge_action(self, _buffer_action):
+				_take_buffer()
 			var speed: float = CombatTuning.DODGE_DISTANCE / p.state_length
 			_move_with_collision(p, p.dodge_direction * speed)
 			p.state_tick += 1
 			if p.state_tick >= p.state_length:
 				p.enter(Fighter.State.FREE)
+				p.weapon().on_dodge_end(self)
 		Fighter.State.BRACE:
 			p.state_tick += 1
 			if p.state_tick >= p.state_length:
@@ -207,7 +244,7 @@ func _charge_move(p: Fighter, input: CombatInput) -> void:
 		p.facing = (lock_target.position - p.position).normalized()
 	elif direction.length() > 0.1:
 		p.facing = direction.normalized()
-	_move_with_collision(p, direction * CombatTuning.per_tick(CombatTuning.CHARGE_MOVE_SPEED))
+	_move_with_collision(p, direction * CombatTuning.per_tick(p.weapon().charge_move_speed()))
 
 
 ## Starts `move` for f if it can pay the stamina; returns true if it started.
@@ -239,7 +276,8 @@ func _aim_player(move: CombatMove) -> void:
 			continue
 		var offset: Vector2 = c.position - p.position
 		var gap: float = offset.length() - p.radius - c.radius
-		if gap > move.reach + CombatTuning.SOFT_AIM_EXTRA_REACH:
+		var aim_range: float = CombatTuning.ARROW_RANGE if move.arrow != null else move.reach + CombatTuning.SOFT_AIM_EXTRA_REACH
+		if gap > aim_range:
 			continue
 		if rad_to_deg(absf(p.facing.angle_to(offset))) > CombatTuning.SOFT_AIM_HALF_ANGLE_DEG:
 			continue
@@ -257,8 +295,10 @@ func _advance_attack(f: Fighter) -> void:
 		var move: CombatMove = f.move
 		if move.dash > 0.0:
 			_move_with_collision(f, f.facing * (move.dash / move.active_ticks()))
+		if move.arrow != null and f.state_tick == move.windup_ticks():
+			fire(f, move.arrow)
 		for target: Fighter in _targets_of(f):
-			if target in f.hit_this_move or not _in_sector(f, target, move):
+			if not move.melee or target in f.hit_this_move or not _in_sector(f, target, move):
 				continue
 			f.hit_this_move.append(target)
 			_hit(f, target, move)
@@ -294,8 +334,10 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if target.is_invulnerable():
 		events.append({"type": "dodged", "attacker": attacker, "target": target})
 		return
-	if target.kind == Fighter.Kind.PLAYER and target.weapon() != null:
-		target.weapon().on_owner_hit(self)
+	for weapon: Weapon in target.weapons:
+		weapon.on_owner_hit(self)
+	if attacker.kind == Fighter.Kind.PLAYER and attacker.weapon() != null:
+		attacker.weapon().on_hit_landed(self, target, move)
 	var damage: float = move.damage
 	var was_staggered: bool = target.is_staggered()
 	if was_staggered:
@@ -350,6 +392,79 @@ func _shockwave(f: Fighter, move: CombatMove) -> void:
 		if target.is_invulnerable() or target.is_staggered() or not target.is_alive():
 			continue
 		stagger(target)
+
+
+# --- Projectiles and zones ---------------------------------------------------------
+
+## Looses an arrow carrying `payload` from f, the way f faces.
+func fire(f: Fighter, payload: CombatMove) -> Projectile:
+	var arrow: Projectile = Projectile.make(f, payload, f.position + f.facing * (f.radius + 2.0), f.facing,
+		CombatTuning.per_tick(CombatTuning.ARROW_SPEED), CombatTuning.ARROW_RANGE)
+	arrow.pierce = payload.pierce
+	arrow.marker = payload.marker
+	projectiles.append(arrow)
+	events.append({"type": "arrow", "fighter": f, "move": payload.id, "position": arrow.position})
+	return arrow
+
+
+## Moves every arrow one tick. An arrow hits creatures whose circle its path
+## crosses this tick, nearest first; it stops at the first unless it
+## pierces, and at walls, obstacles and the end of its range.
+func _step_projectiles() -> void:
+	var flying: Array[Projectile] = []
+	for arrow: Projectile in projectiles:
+		var from: Vector2 = arrow.position
+		var to: Vector2 = from + arrow.velocity
+		var stopped: bool = false
+		var crossed: Array[Fighter] = []
+		for target: Fighter in _targets_of(arrow.owner):
+			if target in arrow.hit:
+				continue
+			var closest: Vector2 = Geometry2D.get_closest_point_to_segment(target.position, from, to)
+			if closest.distance_to(target.position) <= target.radius + 1.0:
+				crossed.append(target)
+		crossed.sort_custom(func(a: Fighter, b: Fighter) -> bool:
+			return a.position.distance_squared_to(from) < b.position.distance_squared_to(from))
+		for target: Fighter in crossed:
+			arrow.hit.append(target)
+			_hit(arrow.owner, target, arrow.move)
+			if not arrow.pierce:
+				to = Geometry2D.get_closest_point_to_segment(target.position, from, to)
+				stopped = true
+				break
+		arrow.position = to
+		arrow.range_left -= arrow.velocity.length()
+		if not stopped and (not bounds.has_point(to) or _in_obstacle(to) or arrow.range_left <= 0.0):
+			arrow.position = Vector2(clampf(to.x, bounds.position.x, bounds.end.x), clampf(to.y, bounds.position.y, bounds.end.y))
+			stopped = true
+		if stopped:
+			for weapon: Weapon in player.weapons:
+				weapon.on_projectile_stopped(self, arrow)
+		else:
+			flying.append(arrow)
+	projectiles = flying
+
+
+func _in_obstacle(at: Vector2) -> bool:
+	for rect: Rect2 in obstacles:
+		if rect.has_point(at):
+			return true
+	return false
+
+
+## Ages every zone a tick; on a wave, hits every creature inside.
+func _step_zones() -> void:
+	var lasting: Array[Zone] = []
+	for zone: Zone in zones:
+		if zone.wave_now():
+			events.append({"type": "wave", "kind": zone.kind, "position": zone.position, "radius": zone.radius})
+			for target: Fighter in _targets_of(zone.owner):
+				if target.position.distance_to(zone.position) - target.radius <= zone.radius:
+					_hit(zone.owner, target, zone.move)
+		zone.age += 1
+		if not zone.is_finished():
+			lasting.append(zone)
+	zones = lasting
 
 
 ## Staggers f for `ms`, or its kind's usual stagger when 0.

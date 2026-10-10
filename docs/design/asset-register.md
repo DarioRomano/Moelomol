@@ -9,7 +9,7 @@ source files and video are stored through Git LFS (ADR-0011).
 |---|---|---|---|---|
 | App icon (sprout in soil) | `icon.svg` | Hand-written SVG by the engineer, draft palette | Project-owned | **Placeholder** |
 | Test card drawing and 16×24 figure | `scenes/showcase/test_card.gd` (drawn in code) | Engineer | Project-owned | Debug only, not game content |
-| Combat placeholders (player, greatsword, hammer, charge meter, creatures and stone shell, arena, effects incl. shockwave and shell shards, HUD) | `src/combat/combat_drawer.gd`, `scenes/combat/combat_hud.gd` (drawn in code) | Engineer, draft palette | Project-owned | **Placeholder** until the AI art from `combat-art-prompts.md` |
+| Combat placeholders (player, greatsword, hammer, bow, arrows, charge meter, draw pips, Volley mark and rain, creatures and stone shell, arena, effects incl. shockwave and shell shards, HUD) | `src/combat/combat_drawer.gd`, `scenes/combat/combat_hud.gd` (drawn in code) | Engineer, draft palette | Project-owned | **Placeholder** until the AI art from `combat-art-prompts.md` |
 | UI font | none (engine built-in default font, antialiasing off) | Godot engine | Ships with the engine | **Placeholder**: uneven letter spacing at 8 px; a pixel font is needed |
 
 ## AI-generated audio

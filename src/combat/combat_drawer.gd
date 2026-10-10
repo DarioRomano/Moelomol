@@ -40,6 +40,9 @@ static func update_effects(effects: Array[Dictionary], events: Array[Dictionary]
 
 static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Array[Dictionary]) -> void:
 	_draw_arena(canvas, sim)
+	for zone: Zone in sim.zones:
+		_draw_zone(canvas, zone)
+	_draw_mark(canvas, sim)
 	var order: Array[Fighter] = sim.fighters()
 	order.sort_custom(func(a: Fighter, b: Fighter) -> bool: return a.position.y < b.position.y)
 	for f: Fighter in order:
@@ -49,6 +52,8 @@ static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Arra
 			_draw_player(canvas, f, _at(f, alpha))
 		else:
 			_draw_creature(canvas, f, _at(f, alpha))
+	for arrow: Projectile in sim.projectiles:
+		_draw_arrow(canvas, arrow, arrow.previous_position.lerp(arrow.position, clampf(alpha, 0.0, 1.0)))
 	if sim.lock_target != null:
 		_draw_lock(canvas, _at(sim.lock_target, alpha))
 	for effect: Dictionary in effects:
@@ -130,6 +135,9 @@ static func _draw_blade(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	if f.weapon() is Hammer:
 		_draw_hammer(canvas, f, at, f.weapon() as Hammer)
 		return
+	if f.weapon() is Bow:
+		_draw_bow(canvas, f, at, f.weapon() as Bow)
+		return
 	var hand: Vector2 = at + Vector2(0, -12)
 	var length: float = 26.0
 	match f.state:
@@ -207,6 +215,87 @@ static func _draw_hammer(canvas: CanvasItem, f: Fighter, at: Vector2, hammer: Ha
 			return
 	# Carried on the back.
 	_hammer_shape(canvas, hand + Vector2(-6, 6), Vector2(0.5, -1).normalized(), Palette.STONE[1])
+
+
+## The recurve: an arc across `direction`, its string pulled back by `pull`.
+static func _bow_shape(canvas: CanvasItem, grip: Vector2, direction: Vector2, pull: float) -> void:
+	var across: Vector2 = direction.orthogonal()
+	var top: Vector2 = grip + across * 8 - direction * 3
+	var bottom: Vector2 = grip - across * 8 - direction * 3
+	var points: PackedVector2Array = PackedVector2Array([top, grip + across * 4, grip, grip - across * 4, bottom])
+	canvas.draw_polyline(points, Palette.WARMTH[1], 2.0)
+	var nock: Vector2 = grip - direction * (3.0 + pull)
+	canvas.draw_line(top, nock, Palette.PAPER[0], 1.0)
+	canvas.draw_line(nock, bottom, Palette.PAPER[0], 1.0)
+	if pull > 0.0:
+		canvas.draw_line(nock, grip + direction * 4, Palette.PAPER[1], 1.0)  # the nocked arrow
+
+
+static func _draw_bow(canvas: CanvasItem, f: Fighter, at: Vector2, bow: Bow) -> void:
+	var hand: Vector2 = at + Vector2(0, -12)
+	match f.state:
+		Fighter.State.CHARGE:
+			var stage: int = bow.stage_for(f.state_tick)
+			_bow_shape(canvas, hand + f.facing * 7, f.facing, 2.0 + stage * 2.0)
+			_draw_stage_pips(canvas, at + Vector2(0, -36), stage, bow.is_clean(f.state_tick))
+			return
+		Fighter.State.ATTACK:
+			if f.move == Bow.VOLLEY_CALL:
+				_bow_shape(canvas, hand + Vector2(0, -10), Vector2.UP, 0.0)
+			else:
+				_bow_shape(canvas, hand + f.facing * 7, f.facing, 0.0)
+			return
+	# Carried across the back.
+	canvas.draw_arc(hand + Vector2(-2, 0), 9, -PI * 0.75, PI * 0.25, 8, Palette.WARMTH[1], 2.0)
+
+
+## Three pips above the player for the draw stages; white in a clean-release
+## moment.
+static func _draw_stage_pips(canvas: CanvasItem, centre: Vector2, stage: int, clean: bool) -> void:
+	for i: int in range(3):
+		var colour: Color = Palette.SHADOW[0]
+		if i < stage:
+			colour = Palette.PAPER[1] if clean and i == stage - 1 else Palette.WARMTH[3]
+		canvas.draw_rect(Rect2(centre + Vector2(-9 + i * 7, 0), Vector2(4, 3)), colour)
+
+
+static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> void:
+	var direction: Vector2 = arrow.velocity.normalized()
+	var tip: Vector2 = at + Vector2(0, -8)  # flies at chest height
+	var length: float = 8.0 if arrow.pierce else 6.0
+	var width: float = 2.0 if arrow.move.id == &"arrow_heavy" else 1.0
+	var colour: Color = Palette.WARMTH[3] if arrow.pierce else Palette.PAPER[1]
+	canvas.draw_line(tip - direction * length, tip, colour, width)
+	if arrow.marker:
+		canvas.draw_line(tip - direction * length, tip - direction * (length + 3) + direction.orthogonal() * 2,
+			Palette.DANGER[1], 1.0)
+
+
+## The Volley mark: a stuck arrow with a ring, while it waits for the rain.
+static func _draw_mark(canvas: CanvasItem, sim: CombatSim) -> void:
+	for weapon: Weapon in sim.player.weapons:
+		if weapon is Bow and (weapon as Bow).mark_ticks > 0:
+			var at: Vector2 = (weapon as Bow).mark
+			canvas.draw_arc(at, 5, 0, TAU, 16, Palette.DANGER[1], 1.0)
+			canvas.draw_line(at, at + Vector2(2, -7), Palette.PAPER[1], 1.0)
+			canvas.draw_line(at + Vector2(2, -7), at + Vector2(5, -6), Palette.DANGER[1], 1.0)
+
+
+static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:
+	var waiting: bool = zone.age < zone.delay
+	canvas.draw_circle(zone.position, zone.radius, Color(Palette.WARMTH[3], 0.08 if waiting else 0.16))
+	canvas.draw_arc(zone.position, zone.radius, 0, TAU, 32, Color(Palette.WARMTH[3], 0.7), 1.0)
+	if waiting:
+		return
+	# Falling arrows for a few ticks after each wave.
+	var since_wave: int = (zone.age - zone.delay) % zone.period
+	if since_wave > 5:
+		return
+	for i: int in range(7):
+		var angle: float = i * 2.39996  # golden angle: spread evenly
+		var spot: Vector2 = zone.position + Vector2.from_angle(angle) * zone.radius * sqrt((i + 0.5) / 7.0)
+		var fall: float = (5 - since_wave) * 3.0
+		canvas.draw_line(spot + Vector2(0, -fall - 6), spot + Vector2(0, -fall), Palette.PAPER[1], 1.0)
 
 
 ## The charge meter above the player: fill, the sweet spot marked, and how
