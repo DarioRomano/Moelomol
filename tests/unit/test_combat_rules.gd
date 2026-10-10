@@ -104,13 +104,38 @@ func test_obstacles_block_movement() -> void:
 
 # --- Dodge ---------------------------------------------------------------------------
 
-func test_dodge_costs_stamina_and_covers_two_tiles() -> void:
+func test_dodge_is_a_quick_roll_as_far_as_the_blink() -> void:
 	var sim: CombatSim = _field()
 	_press(sim, &"dodge")
 	assert_eq(sim.player.state, Fighter.State.DODGE, "dodging")
 	assert_eq(sim.player.stamina.current, CombatTuning.STAMINA_MAX - CombatTuning.DODGE_STAMINA, "stamina spent")
-	_until_free(sim)
-	assert_true(absf(sim.player.position.x - 132.0) < 0.5, "moved 32 px (x = %s)" % sim.player.position.x)
+	var ticks: int = 0
+	while sim.player.state == Fighter.State.DODGE and ticks < 100:
+		sim.step(CombatInput.new())
+		ticks += 1
+	assert_true(ticks <= CombatTuning.ticks(240), "over in 240 ms (%d ticks)" % ticks)
+	assert_true(absf(sim.player.position.x - 140.0) < 0.5, "moved 40 px (x = %s)" % sim.player.position.x)
+
+
+func test_the_roll_moves_most_of_its_distance_at_once() -> void:
+	var sim: CombatSim = _field()
+	_press(sim, &"dodge")
+	var start: Vector2 = Vector2(100, 150)
+	assert_true(sim.player.position.x > start.x + 4.0, "moving on the press tick itself (%.1f px)" % (sim.player.position.x - start.x))
+	_run(sim, 2)
+	var moved: float = sim.player.position.distance_to(start)
+	assert_true(moved > CombatTuning.DODGE_DISTANCE * 0.5, "over half the roll in its first 3 ticks, 50 ms (%.1f px)" % moved)
+
+
+func test_the_roll_s_end_cancels_into_an_attack() -> void:
+	var sim: CombatSim = _field()
+	_press(sim, &"dodge")
+	var length: int = sim.player.state_length
+	_run(sim, length - CombatTuning.ticks(CombatTuning.DODGE_CANCEL_MS) - 1)
+	assert_eq(sim.player.state, Fighter.State.DODGE, "still rolling")
+	sim.step(CombatInput.press(&"light"))
+	sim.step(CombatInput.new())
+	assert_eq(sim.player.state, Fighter.State.ATTACK, "the swing starts before the roll would have ended")
 
 
 func test_dodge_needs_stamina() -> void:
@@ -121,18 +146,24 @@ func test_dodge_needs_stamina() -> void:
 	assert_eq(_events_of(sim, "no_stamina"), 1, "the refusal is reported")
 
 
-func test_dodge_is_invulnerable_only_in_its_middle() -> void:
+func test_dodge_is_invulnerable_from_its_first_frame() -> void:
 	var sim: CombatSim = _field()
-	var iframe_start: int = CombatTuning.ticks(CombatTuning.DODGE_IFRAME_START_MS)
 	var iframe_end: int = CombatTuning.ticks(CombatTuning.DODGE_IFRAME_END_MS)
 	_press(sim, &"dodge")
 	var invulnerable: Array[int] = []
+	var vulnerable: Array[int] = []
 	while sim.player.state == Fighter.State.DODGE:
 		if sim.player.is_invulnerable():
 			invulnerable.append(sim.player.state_tick)
+		else:
+			vulnerable.append(sim.player.state_tick)
 		sim.step(CombatInput.new())
-	assert_eq(invulnerable.size(), iframe_end - iframe_start, "200 ms of invulnerability")
-	assert_eq(invulnerable[0], iframe_start, "starts after 100 ms")
+	# The press tick itself is the roll's tick 0 (it already moved), so the
+	# first tick seen here is 1, and already invulnerable.
+	assert_eq(sim.player.iframes, Vector2i(0, iframe_end), "invulnerable from tick 0 to 180 ms")
+	assert_eq(invulnerable[0], 1, "including the first tick after the press")
+	assert_eq(invulnerable.size(), iframe_end - 1, "through 180 ms")
+	assert_true(vulnerable.size() > 0, "the very end of the roll is not invulnerable")
 
 
 func test_creature_attack_misses_a_dodging_player() -> void:
@@ -384,41 +415,91 @@ func test_push_into_another_creature_hurts_both() -> void:
 
 # --- Follow-through and Brace ------------------------------------------------------------------
 
-func test_skill_next_to_a_staggered_creature_is_follow_through() -> void:
+func test_heavy_on_a_staggered_creature_is_follow_through() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	sim.stagger(sim.creatures[0])
-	_press(sim, &"skill")
+	_press(sim, &"heavy")
 	assert_eq(_move_id(sim), &"follow_through", "Follow-through")
 
 
-func test_skill_otherwise_is_brace() -> void:
+func test_heavy_on_a_far_staggered_creature_is_the_chain_finisher() -> void:
+	var sim: CombatSim = _field([Vector2(200, 150)])
+	sim.stagger(sim.creatures[0])
+	_press(sim, &"heavy")
+	assert_eq(_move_id(sim), Greatsword.FINISHERS[0].id, "too far for Follow-through")
+
+
+func test_skill_is_always_brace() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
+	sim.stagger(sim.creatures[0])
 	_press(sim, &"skill")
-	assert_eq(sim.player.state, Fighter.State.BRACE, "Brace")
+	assert_eq(sim.player.state, Fighter.State.BRACE, "Brace, even next to a staggered creature")
 	assert_true(sim.player.has_hyper_armour(), "Brace has hyper-armour")
 
 
-func test_far_staggered_creature_gives_brace_not_follow_through() -> void:
-	var sim: CombatSim = _field([Vector2(200, 150)])
-	sim.stagger(sim.creatures[0])
-	_press(sim, &"skill")
-	assert_eq(sim.player.state, Fighter.State.BRACE, "too far for Follow-through")
-
-
-func test_hit_during_brace_makes_the_next_heavy_instant() -> void:
+## A creature lunging at the player; brace so the hit lands `before_hit`
+## ticks after the guard went up.
+func _lunge_into_brace(guard_ticks_before_hit: int) -> CombatSim:
 	var sim: CombatSim = _field([Vector2(122, 150)])
 	var creature: Fighter = sim.creatures[0]
 	creature.facing = Vector2.LEFT
 	sim.start_attack(creature, sim._creature_lunge)
-	_run(sim, sim._creature_lunge.windup_ticks() - 3)
+	_run(sim, sim._creature_lunge.windup_ticks() - guard_ticks_before_hit)
 	_press(sim, &"skill")
-	_run(sim, sim._creature_lunge.active_ticks() + 2)
-	assert_true(sim.player.brace_ready, "the absorbed hit readied the counter")
-	assert_eq(sim.player.state, Fighter.State.BRACE, "not staggered while bracing")
-	_until_free(sim)
-	_press(sim, &"heavy")
-	assert_eq(_move_id(sim), &"brace_counter", "instant counter")
-	assert_eq(sim.player.attack_phase(), &"active", "no windup")
+	return sim
+
+
+func test_a_late_brace_takes_a_third_of_the_hit() -> void:
+	# The hit lands well into the guard: a guarded hit, not a perfect brace.
+	var sim: CombatSim = _lunge_into_brace(20)
+	var seen: int = 0
+	for i: int in range(sim._creature_lunge.active_ticks() + 25):
+		sim.step(CombatInput.new())
+		seen += _events_of(sim, "brace_absorb")
+	assert_eq(seen, 1, "the guard took the hit")
+	assert_eq(sim.player.health, CombatTuning.PLAYER_HEALTH - CombatTuning.CREATURE_DAMAGE * Greatsword.BRACE_DAMAGE_TAKEN,
+		"30% of the damage")
+	assert_true(sim.player.state != Fighter.State.STAGGERED, "not staggered")
+
+
+func test_a_perfect_brace_negates_the_hit_staggers_the_attacker_and_ripostes() -> void:
+	# The hit lands in the first 150 ms of the guard.
+	var sim: CombatSim = _lunge_into_brace(4)
+	var creature: Fighter = sim.creatures[0]
+	var perfect: int = 0
+	var riposte: bool = false
+	for i: int in range(20):
+		sim.step(CombatInput.new())
+		perfect += _events_of(sim, "perfect_brace")
+		riposte = riposte or _move_id(sim) == &"brace_counter"
+		if perfect > 0:
+			break
+	assert_eq(perfect, 1, "a perfect brace")
+	assert_eq(sim.player.health, CombatTuning.PLAYER_HEALTH, "no damage")
+	assert_true(creature.is_staggered(), "the attacker is staggered")
+	assert_eq(_move_id(sim), &"brace_counter", "the riposte starts at once, with no second button")
+	assert_eq(sim.player.attack_phase(), &"active", "and no windup")
+	_run(sim, 30)
+	assert_true(creature.health < CombatTuning.CREATURE_HEALTH, "the riposte lands")
+
+
+func test_the_perfect_window_is_the_guard_s_first_150_ms() -> void:
+	var sim: CombatSim = _field()
+	_press(sim, &"skill")
+	var perfect_ticks: int = 0
+	while sim.player.state == Fighter.State.BRACE:
+		if Greatsword.in_perfect_window(sim.player):
+			perfect_ticks += 1
+		sim.step(CombatInput.new())
+	assert_eq(perfect_ticks, CombatTuning.ticks(Greatsword.PERFECT_BRACE_MS), "the first 150 ms of the guard")
+
+
+func test_the_riposte_is_free() -> void:
+	var sim: CombatSim = _lunge_into_brace(4)
+	var stamina_after_brace: float = sim.player.stamina.current
+	_run(sim, 12)
+	assert_eq(_move_id(sim), &"brace_counter", "riposting")
+	assert_eq(sim.player.stamina.current, stamina_after_brace, "no stamina for the riposte")
 
 
 # --- Aim and lock-on --------------------------------------------------------------------------

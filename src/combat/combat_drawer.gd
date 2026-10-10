@@ -53,7 +53,6 @@ static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Arra
 	_draw_arena(canvas, sim)
 	for zone: Zone in sim.zones:
 		_draw_zone(canvas, zone)
-	_draw_mark(canvas, sim)
 	var order: Array[Fighter] = sim.fighters()
 	order.sort_custom(func(a: Fighter, b: Fighter) -> bool: return a.position.y < b.position.y)
 	for f: Fighter in order:
@@ -278,10 +277,7 @@ static func _draw_bow(canvas: CanvasItem, f: Fighter, at: Vector2, bow: Bow) -> 
 			_draw_stage_pips(canvas, at + Vector2(0, -36), stage, bow.is_clean(f.state_tick))
 			return
 		Fighter.State.ATTACK:
-			if f.move == Bow.VOLLEY_CALL:
-				_bow_shape(canvas, hand + Vector2(0, -10), Vector2.UP, 0.0)
-			else:
-				_bow_shape(canvas, hand + f.facing * 7, f.facing, 0.0)
+			_bow_shape(canvas, hand + f.facing * 7, f.facing, 0.0)
 			return
 	# Carried across the back.
 	canvas.draw_arc(hand + Vector2(-2, 0), 9, -PI * 0.75, PI * 0.25, 8, Palette.WARMTH[1], 2.0)
@@ -353,22 +349,12 @@ static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> v
 			canvas.draw_circle(tip, 2.0, colour)
 		return
 	var length: float = 8.0 if arrow.pierce else 6.0
-	var width: float = 2.0 if arrow.move.id == &"arrow_heavy" else 1.0
+	var width: float = 2.0 if arrow.pierce else 1.0
 	var colour: Color = Palette.WARMTH[3] if arrow.pierce else Palette.PAPER[1]
 	canvas.draw_line(tip - direction * length, tip, colour, width)
 	if arrow.marker:
 		canvas.draw_line(tip - direction * length, tip - direction * (length + 3) + direction.orthogonal() * 2,
 			Palette.DANGER[1], 1.0)
-
-
-## The Volley mark: a stuck arrow with a ring, while it waits for the rain.
-static func _draw_mark(canvas: CanvasItem, sim: CombatSim) -> void:
-	for weapon: Weapon in sim.player.weapons:
-		if weapon is Bow and (weapon as Bow).mark_ticks > 0:
-			var at: Vector2 = (weapon as Bow).mark
-			canvas.draw_arc(at, 5, 0, TAU, 16, Palette.DANGER[1], 1.0)
-			canvas.draw_line(at, at + Vector2(2, -7), Palette.PAPER[1], 1.0)
-			canvas.draw_line(at + Vector2(2, -7), at + Vector2(5, -6), Palette.DANGER[1], 1.0)
 
 
 static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:

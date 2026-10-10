@@ -38,12 +38,14 @@ var state_tick: int = 0  # ticks spent in the current state
 var state_length: int = 0  # ticks the current state lasts (0 = open-ended)
 
 var move: CombatMove = null
-var hit_this_move: Array[Fighter] = []
+## Instance ids of whatever the current move has hit. Ids, not references: a
+## player and a creature that had hit each other held each other in a cycle and
+## leaked at exit (found by the leak check in tools/run-tests.sh, 2026-10-10).
+var hit_this_move: Array[int] = []
 ## Where the current attack's hit zone starts: follows the fighter during the
 ## windup, then stays put while the attack (and any lunge) plays out.
 var attack_origin: Vector2 = Vector2.ZERO
 var chain: int = 0  # greatsword light swings done in the current chain
-var brace_ready: bool = false  # a hit landed during Brace: next heavy is instant
 
 var push_velocity: Vector2 = Vector2.ZERO  # px per tick while being shoved
 var push_ticks: int = 0

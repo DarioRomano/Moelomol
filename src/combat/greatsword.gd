@@ -1,9 +1,13 @@
 class_name Greatsword
 extends Weapon
 ## The greatsword (docs/design/combat.md, "Greatsword"): a light chain of
-## three, a heavy finisher that depends on how far into the chain the player
-## is, and the skill: Follow-through next to a staggered creature, Brace
-## otherwise. Starting values; tuning needs the lead's approval.
+## three, and a heavy finisher that depends on how far into the chain the
+## player is; heavy on a staggered creature in reach is always
+## Follow-through. The skill is Brace, a guard: hits taken while braced do
+## 30% damage; a hit in its first moment is a perfect brace that negates the
+## hit, staggers and repels the attacker and counters at once (guard and
+## riposte, lead 2026-10-10, Q30 A). Starting values; tuning needs the lead's
+## approval.
 
 ## Light swings, each faster to start than the last. Each steps forward a
 ## little (LIGHT_STEP) so the chain follows the creature its pushes move away;
@@ -26,6 +30,9 @@ static var BRACE_COUNTER: CombatMove = _brace_counter()
 const LIGHT_STEP: float = 6.0
 const BRACE_MS: int = 500
 const BRACE_STAMINA: float = 10.0
+const BRACE_DAMAGE_TAKEN: float = 0.3  # share of a hit's damage that gets through a guard
+const PERFECT_BRACE_MS: int = 150  # a hit this early in the guard is a perfect brace
+const RIPOSTE_REPEL: float = 24.0  # layout px the attacker is thrown back
 ## How close a staggered creature must be for Follow-through.
 const FOLLOW_THROUGH_REACH: float = 34.0
 
@@ -46,12 +53,8 @@ func try_action(sim: CombatSim, action: StringName, _input: CombatInput) -> bool
 				return true
 			return false
 		&"heavy":
-			var heavy: CombatMove = BRACE_COUNTER if p.brace_ready else heavy_for(p.chain)
-			if sim.start_attack(p, heavy):
-				p.chain = 0
-				return true
-			return false
-		&"skill":
+			# Heavy on a staggered creature in reach is the finisher for the
+			# stagger; otherwise the chain's finisher.
 			var target: Fighter = staggered_creature_in_reach(sim)
 			if target != null:
 				p.facing = (target.position - p.position).normalized()
@@ -59,12 +62,16 @@ func try_action(sim: CombatSim, action: StringName, _input: CombatInput) -> bool
 					p.chain = 0
 					return true
 				return false
+			if sim.start_attack(p, heavy_for(p.chain)):
+				p.chain = 0
+				return true
+			return false
+		&"skill":
 			if not p.stamina.try_spend(BRACE_STAMINA):
 				sim.events.append({"type": "no_stamina"})
 				return false
 			p.move = null
 			p.chain = 0
-			p.brace_ready = false
 			p.enter(Fighter.State.BRACE, CombatTuning.ticks(BRACE_MS))
 			sim.events.append({"type": "brace"})
 			return true
@@ -72,7 +79,12 @@ func try_action(sim: CombatSim, action: StringName, _input: CombatInput) -> bool
 
 
 func status_text(p: Fighter) -> String:
-	return "chain %d%s" % [p.chain, "   BRACE READY" if p.brace_ready else ""]
+	return "chain %d" % p.chain
+
+
+## True during the first moment of a guard, when a hit is a perfect brace.
+static func in_perfect_window(p: Fighter) -> bool:
+	return p.state == Fighter.State.BRACE and p.state_tick < CombatTuning.ticks(PERFECT_BRACE_MS)
 
 
 static func staggered_creature_in_reach(sim: CombatSim) -> Fighter:
@@ -148,11 +160,12 @@ static func _follow_through() -> CombatMove:
 	return m
 
 
-## The instant heavy after a successful Brace: an overhead cleave with no
-## windup.
+## The riposte after a perfect brace: an overhead cleave with no windup,
+## started at once.
 static func _brace_counter() -> CombatMove:
 	var m: CombatMove = _cleave()
 	m.id = &"brace_counter"
-	m.display_name = "Brace counter"
+	m.display_name = "Riposte"
+	m.stamina = 0.0  # the perfect brace already paid for it
 	m.windup_ms = 0
 	return m

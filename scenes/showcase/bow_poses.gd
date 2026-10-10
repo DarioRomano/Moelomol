@@ -1,6 +1,7 @@
 extends PoseSheet
-## Bow review poses (PoseSheet): the draw stages, a piercing arrow through a
-## line, the heavy arrow's knockback, the dodge shot, and Volley.
+## Bow review poses (PoseSheet): the draw stages, the stage-3 arrow
+## piercing a line and pushing, the dodge shot, and Volley (one press: the
+## arrow flies, the rain falls where it hits).
 
 const BOW: int = 1
 
@@ -8,11 +9,11 @@ const BOW: int = 1
 func _make_panels() -> Array[Dictionary]:
 	return [
 		_pose("Drawing: stage 2 of 3", _drawing, BOW),
-		_pose("Piercing arrow through a line", _piercing, BOW),
-		_pose("Heavy arrow: knockback and stagger", _heavy, BOW),
+		_pose("Stage 3 pierces a line", _piercing, BOW),
+		_pose("Stage 3 pushes a little back", _heavy, BOW),
 		_pose("Dodge shot as the roll ends", _dodge_shot, BOW),
-		_pose("Volley: the mark waits for the rain", _marked, BOW),
-		_pose("Volley: rain on the mark (Flow 3)", _rain, BOW),
+		_pose("Volley: the arrow flies at once", _volley_flying, BOW),
+		_pose("Volley: rain where it hit (Flow 3)", _rain, BOW),
 	]
 
 
@@ -44,7 +45,7 @@ func _piercing(sim: CombatSim, effects: Array[Dictionary]) -> void:
 	_creature(sim, Vector2(90, 80))
 	_creature(sim, Vector2(120, 82))
 	_creature(sim, Vector2(150, 78))
-	_draw_to(sim, effects, _bow(sim).stage_ticks()[1] + 8)
+	_draw_to(sim, effects, _bow(sim).stage_ticks()[2] + 8)
 	sim.step(CombatInput.new())
 	_step_until(sim, effects, func() -> bool: return sim.creatures[1].health < sim.creatures[1].max_health)
 	sim.step(CombatInput.new())
@@ -54,7 +55,7 @@ func _heavy(sim: CombatSim, effects: Array[Dictionary]) -> void:
 	_creature(sim, Vector2(110, 80))
 	_draw_to(sim, effects, _bow(sim).stage_ticks()[2] + 10)
 	sim.step(CombatInput.new())
-	_step_until(sim, effects, func() -> bool: return sim.creatures[0].is_staggered())
+	_step_until(sim, effects, func() -> bool: return sim.creatures[0].health < sim.creatures[0].max_health)
 	_step_until(sim, effects, func() -> bool: return sim.creatures[0].push_ticks == 0)
 
 
@@ -75,23 +76,19 @@ func _dodge_shot(sim: CombatSim, effects: Array[Dictionary]) -> void:
 		return not sim.projectiles.is_empty() and sim.projectiles[0].position.x > 80, lock)
 
 
-func _marked(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	_creature(sim, Vector2(130, 70))
-	_creature(sim, Vector2(140, 92))
+func _volley_flying(sim: CombatSim, effects: Array[Dictionary]) -> void:
+	_creature(sim, Vector2(150, 74))
+	_creature(sim, Vector2(160, 92))
 	sim.step(CombatInput.press(&"skill"))
-	_step_until(sim, effects, func() -> bool: return _bow(sim).mark_ticks > 0)
-	_step_until(sim, effects, func() -> bool: return sim.player.state == Fighter.State.FREE)
+	_step_until(sim, effects, func() -> bool:
+		return not sim.projectiles.is_empty() and sim.projectiles[0].position.x > 105)
 
 
 func _rain(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	_creature(sim, Vector2(130, 70))
-	_creature(sim, Vector2(140, 92))
-	_creature(sim, Vector2(118, 96))
+	_creature(sim, Vector2(130, 80))
+	_creature(sim, Vector2(140, 96))
+	_creature(sim, Vector2(126, 100))
 	_bow(sim).flow = 3
-	sim.step(CombatInput.press(&"skill"))
-	_step_until(sim, effects, func() -> bool: return _bow(sim).mark_ticks > 0)
-	_step_until(sim, effects, func() -> bool: return sim.player.state == Fighter.State.FREE)
-	_bow(sim).mark = Vector2(130, 86)  # on the group
 	sim.step(CombatInput.press(&"skill"))
 	_step_until(sim, effects, func() -> bool:
 		return not sim.zones.is_empty() and sim.zones[0].age == sim.zones[0].delay + sim.zones[0].period + 2)

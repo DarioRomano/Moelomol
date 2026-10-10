@@ -30,4 +30,19 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -q -s "$ROOT/tools/ci" -p
   exit 1
 }
 
-exec "$GODOT" --headless --path "$ROOT" -s res://tests/runner/run_tests.gd -- "$@"
+# Run the suite, then also fail on objects the engine reports as leaked at
+# exit. Those messages come after the runner has finished, so its logged-error
+# hook cannot see them (a reference cycle between two fighters was found this
+# way, 2026-10-10).
+LOG="$(mktemp)"
+trap 'rm -f "$LOG"' EXIT
+set +e
+"$GODOT" --headless --path "$ROOT" -s res://tests/runner/run_tests.gd -- "$@" 2>&1 | tee "$LOG"
+STATUS="${PIPESTATUS[0]}"
+set -e
+if grep -Eq "instances were leaked at exit|resources still in use at exit" "$LOG"; then
+  echo "Leak at exit: objects outlived the tests (see the engine's message above)." >&2
+  [ "${GITHUB_ACTIONS:-}" = "true" ] && echo "::error title=Leak at exit::objects outlived the tests; look for a reference cycle"
+  [ "$STATUS" -eq 0 ] && STATUS=1
+fi
+exit "$STATUS"

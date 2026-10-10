@@ -175,36 +175,35 @@ func test_release_before_stage_one_is_a_weak_arrow() -> void:
 	assert_eq(_hits_with(seen, &"arrow_quick"), 1, "the quick-shot arrow")
 
 
-func test_stage_one_is_a_strong_arrow() -> void:
+func test_stage_one_is_an_ordinary_arrow() -> void:
 	var sim: CombatSim = _field([Vector2(200, 150)])
 	var seen: Array[Dictionary] = _draw_and_release(sim, _bow(sim).stage_ticks()[0] + 10)
 	seen.append_array(_settle(sim))
-	assert_eq(_hits_with(seen, &"arrow_strong"), 1, "strong arrow")
-	assert_eq(sim.creatures[0].health, T.CREATURE_HEALTH - Bow.arrow(1, false).damage, "its damage")
+	assert_eq(_hits_with(seen, &"arrow_normal"), 1, "an ordinary arrow")
+	assert_eq(Bow.arrow(1, false).damage, Bow.QUICK_SHOT.arrow.damage, "as strong as a normal attack (the quick shot)")
 
 
-func test_stage_two_pierces_a_line_of_creatures() -> void:
-	var sim: CombatSim = _field([Vector2(150, 150), Vector2(185, 152), Vector2(220, 148)])
-	var seen: Array[Dictionary] = _draw_and_release(sim, _bow(sim).stage_ticks()[1] + 10)
-	seen.append_array(_settle(sim))
-	assert_eq(_hits_with(seen, &"arrow_piercing"), 3, "one arrow, three creatures")
-
-
-func test_a_strong_arrow_stops_at_the_first_creature() -> void:
+func test_stage_two_is_slightly_stronger() -> void:
+	var normal: CombatMove = Bow.arrow(1, false)
+	var strong: CombatMove = Bow.arrow(2, false)
+	assert_true(strong.damage > normal.damage and strong.damage <= normal.damage * 2.0,
+		"slightly stronger (%.0f vs %.0f)" % [strong.damage, normal.damage])
+	assert_false(strong.pierce, "and it does not pierce")
 	var sim: CombatSim = _field([Vector2(150, 150), Vector2(185, 152)])
-	var seen: Array[Dictionary] = _draw_and_release(sim, _bow(sim).stage_ticks()[0] + 10)
-	seen.append_array(_settle(sim))
-	assert_eq(sim.creatures[1].health, T.CREATURE_HEALTH, "the second creature is untouched")
+	_draw_and_release(sim, _bow(sim).stage_ticks()[1] + 10)
+	_settle(sim)
+	assert_eq(sim.creatures[1].health, T.CREATURE_HEALTH, "it stops at the first creature")
 
 
-func test_stage_three_is_a_heavy_arrow_that_staggers_and_knocks_back() -> void:
-	var sim: CombatSim = _field([Vector2(180, 150)])
+func test_stage_three_pierces_a_line_and_pushes_a_little() -> void:
+	var sim: CombatSim = _field([Vector2(150, 150), Vector2(185, 152), Vector2(220, 148)])
 	var seen: Array[Dictionary] = _draw_and_release(sim, _bow(sim).stage_ticks()[2] + 10)
 	seen.append_array(_settle(sim))
 	seen.append_array(_run(sim, T.ticks(T.PUSH_MS)))  # let the push play out
-	assert_eq(_hits_with(seen, &"arrow_heavy"), 1, "heavy arrow")
-	assert_true(sim.creatures[0].is_staggered(), "a training creature is staggered")
-	assert_true(sim.creatures[0].position.x > 195.0, "knocked back (now at x=%.0f)" % sim.creatures[0].position.x)
+	assert_eq(_hits_with(seen, &"arrow_piercing"), 3, "one arrow, three creatures")
+	var push: float = Bow.arrow(3, false).push
+	assert_true(push > Bow.arrow(2, false).push and push <= 16.0, "a little push back (%.0f px)" % push)
+	assert_true(sim.creatures[0].position.x > 155.0, "the first creature was pushed back (x=%.0f)" % sim.creatures[0].position.x)
 
 
 func test_clean_release_adds_a_bonus() -> void:
@@ -316,40 +315,57 @@ func test_a_dodge_without_heavy_shoots_nothing() -> void:
 
 # --- Volley ------------------------------------------------------------------------
 
-func test_volley_marks_then_rains_on_the_mark() -> void:
+func test_volley_fires_at_once_and_rains_where_it_hits_the_first_creature() -> void:
 	var sim: CombatSim = _field([Vector2(200, 150), Vector2(214, 160), Vector2(200, 230)])
-	sim.step(CombatInput.press(&"skill"))
-	assert_eq(sim.player.move, Bow.MARKER_SHOT, "first press: the marker arrow")
-	var seen: Array[Dictionary] = _settle(sim)
-	assert_eq(_count(seen, "mark"), 1, "the mark is set where it stopped")
 	var bow: Bow = _bow(sim)
-	assert_true(bow.mark.distance_to(Vector2(200, 150)) < 10.0, "on the creature it hit")
 	bow.flow = 2
 	sim.step(CombatInput.press(&"skill"))
-	assert_eq(sim.player.move, Bow.VOLLEY_CALL, "second press: the rain")
-	assert_eq(sim.zones.size(), 1, "a rain zone")
+	assert_eq(sim.player.move, Bow.VOLLEY_SHOT, "one press: the Volley arrow")
+	var seen: Array[Dictionary] = []
+	for i: int in range(60):
+		sim.step(CombatInput.new())
+		seen.append_array(sim.events)
+		if not sim.zones.is_empty():
+			break
+	assert_eq(_count(seen, "volley"), 1, "the rain is called by the arrow's hit, no second press")
+	assert_true(sim.zones[0].position.distance_to(Vector2(200, 150)) < 10.0, "on the first creature hit")
 	assert_eq(sim.zones[0].radius, Bow.VOLLEY_RADIUS + Bow.VOLLEY_RADIUS_PER_FLOW * 2, "wider for the Flow spent")
 	assert_eq(bow.flow, 0, "Flow spent")
 	seen = _settle(sim)
 	assert_eq(_count(seen, "wave"), Bow.VOLLEY_WAVES, "three waves")
-	assert_eq(_hits_with(seen, &"volley_rain"), Bow.VOLLEY_WAVES * 2, "both marked creatures, every wave")
+	assert_eq(_hits_with(seen, &"volley_rain"), Bow.VOLLEY_WAVES * 2, "both creatures under it, every wave")
 	assert_eq(sim.creatures[2].health, T.CREATURE_HEALTH, "the creature outside the rain is untouched")
-	assert_eq(bow.flow, 0, "rain hits build no Flow")
+
+
+func test_a_volley_that_hits_nothing_rains_where_the_arrow_stops() -> void:
+	var sim: CombatSim = _field()
+	sim.obstacles.append(Rect2(180, 130, 20, 40))
+	sim.step(CombatInput.press(&"skill"))
+	for i: int in range(60):
+		sim.step(CombatInput.new())
+		if not sim.zones.is_empty():
+			break
+	assert_eq(sim.zones.size(), 1, "it still rains")
+	assert_true(absf(sim.zones[0].position.x - 180.0) < 8.0, "at the pillar the arrow struck (x=%.0f)" % sim.zones[0].position.x)
+
+
+func test_volley_costs_its_stamina_once() -> void:
+	var sim: CombatSim = _field([Vector2(200, 150)])
+	sim.step(CombatInput.press(&"skill"))
+	assert_eq(sim.player.stamina.current, T.STAMINA_MAX - Bow.VOLLEY_STAMINA, "paid when loosed")
 
 
 func test_rain_waits_before_the_first_wave() -> void:
 	var sim: CombatSim = _field([Vector2(200, 150)])
 	var bow: Bow = _bow(sim)
-	bow.mark = Vector2(200, 150)
-	bow.mark_ticks = 100
-	sim.step(CombatInput.press(&"skill"))
+	bow._rain_at(sim, Vector2(200, 150))
 	var first: int = -1
 	for i: int in range(60):
 		sim.step(CombatInput.new())
 		if _count(sim.events, "wave") > 0:
 			first = i
 			break
-	assert_eq(first, T.ticks(Bow.VOLLEY_DELAY_MS) - 1, "the first wave after 400 ms")
+	assert_eq(first, T.ticks(Bow.VOLLEY_DELAY_MS), "the first wave 400 ms after the rain is called")
 
 
 func test_rain_zone_ends_with_its_last_wave() -> void:
@@ -369,18 +385,6 @@ func test_rain_zone_ends_with_its_last_wave() -> void:
 	assert_false(zone.wave_now(), "no fourth wave, even if it lingered")
 
 
-func test_the_mark_expires() -> void:
-	var sim: CombatSim = _field()
-	var bow: Bow = _bow(sim)
-	bow.mark = Vector2(200, 150)
-	bow.mark_ticks = T.ticks(Bow.VOLLEY_MARK_MS)
-	_run(sim, T.ticks(Bow.VOLLEY_MARK_MS))
-	sim.step(CombatInput.press(&"skill"))
-	assert_eq(sim.player.move, Bow.MARKER_SHOT, "after 4 s, skill marks again")
-
-
-# --- Loadout and feedback ----------------------------------------------------------
-
 func test_loadout_key_cycles_the_weapon_not_in_hand() -> void:
 	var sim: CombatSim = CombatSim.new(Rect2(0, 0, 400, 300), Vector2(100, 150))
 	var seen: Array[StringName] = []
@@ -396,7 +400,7 @@ func test_bow_events_map_to_haptic_effects() -> void:
 	assert_eq(Haptics.effect_for_event({"type": "draw_stage", "fighter": p, "stage": 1}), &"bow_stage", "stage tick")
 	assert_eq(Haptics.effect_for_event({"type": "arrow", "fighter": p}), &"bow_release", "release snap")
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"arrow_strong"}), &"bow_hit", "arrow hit")
-	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"arrow_heavy"}), &"bow_heavy_hit", "heavy hit")
+	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"arrow_piercing"}), &"bow_heavy_hit", "stage 3 hit")
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"volley_rain"}), &"", "no rumble per rain hit")
 	for effect: StringName in [&"bow_stage", &"bow_release", &"bow_hit", &"bow_heavy_hit"]:
 		assert_true(Haptics.EFFECTS.has(effect), "%s is defined" % effect)

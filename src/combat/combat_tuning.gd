@@ -18,10 +18,14 @@ const STAMINA_REGEN_PER_S: float = 40.0
 const STAMINA_REGEN_DELAY_MS: int = 600
 
 # Dodge
-const DODGE_MS: int = 400
-const DODGE_IFRAME_START_MS: int = 100
-const DODGE_IFRAME_END_MS: int = 300  # 200 ms invulnerable in the middle
-const DODGE_DISTANCE: float = 32.0  # two tiles
+# A quick roll (lead, 2026-10-10: dodging must feel as responsive as the
+# blink): short, most of the distance in its first frames, invulnerable from
+# the first frame, and its end can be cancelled into any action.
+const DODGE_MS: int = 240
+const DODGE_IFRAME_START_MS: int = 0
+const DODGE_IFRAME_END_MS: int = 180
+const DODGE_CANCEL_MS: int = 80  # the last part of the roll: any action may start
+const DODGE_DISTANCE: float = 40.0  # as far as the blink
 const DODGE_STAMINA: float = 20.0
 
 # Input and feedback
