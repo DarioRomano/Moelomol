@@ -27,6 +27,12 @@ const EFFECTS: Dictionary = {
 	&"release": [0.3, 0.6, 0.1],  # up to 5 stacks consumed
 	&"release_big": [0.5, 0.95, 0.2],  # more than 5
 	&"wardstep": [0.15, 0.1, 0.06],
+	# At the base (farming.md): small, soft, never a combat jolt.
+	&"farm_till": [0.1, 0.25, 0.05],
+	&"farm_water": [0.08, 0.0, 0.1],
+	&"farm_plant": [0.05, 0.1, 0.03],
+	&"farm_harvest": [0.15, 0.35, 0.07],
+	&"farm_nothing": [0.12, 0.0, 0.06],  # a dull buzz: the tool did nothing
 }
 
 const HEAVY_GREATSWORD_MOVES: Array[StringName] = [&"cleave", &"spin", &"rising", &"follow_through", &"brace_counter"]
@@ -109,4 +115,20 @@ static func effect_for_event(event: Dictionary) -> StringName:
 		"stagger":
 			var fighter: Fighter = event["fighter"]
 			return &"stagger" if fighter.kind == Fighter.Kind.CREATURE else &""
+	return &""
+
+
+## The effect for a farm event from FarmSim, or &"" for none.
+static func effect_for_farm_event(event: Dictionary) -> StringName:
+	match event["type"]:
+		"till":
+			return &"farm_till"
+		"water":
+			return &"farm_water"
+		"plant":
+			return &"farm_plant"
+		"harvest":
+			return &"farm_harvest"
+		"nothing", "no_seeds":
+			return &"farm_nothing"
 	return &""

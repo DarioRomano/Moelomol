@@ -90,6 +90,20 @@ Constraints the architecture must honour:
   extend `PoseSheet` (`pose_sheet.gd`), six panels each.
 - `Haptics` (`src/core/haptics.gd`): named rumble effects (ADR-0013).
 
+**Farming (`src/farm/`, `scenes/farm/`)**
+- `FarmSim`: the base as a deterministic 60 Hz simulation like `CombatSim`
+  (step(input) per physics tick; events for feedback). Holds `GameClock`
+  (time of day, phases, sky tint, lights), `FarmPlot` (a grid of soil
+  tiles: till, water, plant, harvest, overnight growth), `Inventory` and the
+  player. `CropKind` holds crop data (placeholder content).
+- `FarmDrawer` draws it with every world colour multiplied by the time of
+  day's tint; the base's lights and the target highlight stay untinted. No
+  Godot lights or CanvasModulate: the tint is applied per colour, so review
+  renders can show several times of day side by side.
+- `scenes/farm/farm_test.tscn` reads the farming InputMap actions; `FarmHud`
+  sits in a `UiFrame`. `scenes/showcase/farm_times.tscn` is the review
+  sheet (dawn, midday, dusk, night).
+
 Why a custom simulation: every rule is testable headlessly and
 deterministically (tests call `step()` directly), timing windows are exact
 tick counts, and nothing depends on physics-engine behaviour that would need
@@ -320,3 +334,15 @@ a real controller)
 - A `%` in a string used with the `%` operator must be written `%%`;
   otherwise the engine logs "unsupported format character" (a test message
   "60% speed" did this, and the runner's logged-error hook caught it).
+
+### 2026-10-10 (farming), Godot 4.7.2.stable.official.ed1daf0bf
+
+- Key codes: `KEY_J` 74, `KEY_SPACE` 32, `KEY_E` 69, `KEY_Q` 81, `KEY_F8`
+  4194339, `KEY_F9` 4194340; `JOY_BUTTON_LEFT_SHOULDER` 9. The binding test
+  checks each against its action with controller 1.
+- `Color * Color` multiplies per channel (alpha too), so the drawer builds
+  the tinted colour channel by channel and keeps the original alpha.
+- `posmod(-1, 4)` is 3 (tool switching wraps backwards); `Rect2i.has_point`
+  excludes the far edge.
+- `Color.get_luminance()` exists (the night-darkness test).
+- `seed` is a built-in GDScript function, so the crop field is `seed_item`.

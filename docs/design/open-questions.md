@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: every question so far is resolved.
+Status at 2026-10-10: Q21–Q27 (farming and the day–night cycle) are open; everything before is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -29,6 +29,13 @@ Status at 2026-10-10: every question so far is resolved.
 | Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Resolved**: top-down ¾ → ADR-0014 |
 | Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Resolved**: two with a swap → `combat.md` |
 | Q20 | Smoothing movement at 120 fps with 60 Hz combat logic | Feel of all movement | **Resolved**: A, fixed 60 Hz + render interpolation |
+| Q21 | How the game clock runs (pace, during adventures, seasons) | Farming, adventuring, story pacing | Open (working assumption: A) |
+| Q22 | How a day ends (sleep, staying up, falling asleep) | Farming slice | Open (working assumption: A) |
+| Q23 | How crops grow with the day–night cycle | Farming slice | Open (working assumption: A) |
+| Q24 | What neglect costs (dry soil, unharvested crops) | Farming slice, tone | Open (working assumption: A) |
+| Q25 | Where seeds come from without shops | Farming, exploration rewards | Open (working assumption: A) |
+| Q26 | Controls and targeting at the base | Input model (ADR-0013) | Open (working assumption: A) |
+| Q27 | Does farming use an energy bar? | Farming slice, upgrades | Open (working assumption: A) |
 
 ---
 
@@ -893,3 +900,170 @@ smoothness that A already provides. In the arena playtest on your 120 Hz
 screen, compare F5 on (A) and off (C): if A feels smooth and you cannot feel
 its delay, keep it; if you can, switch to B (a one-line change to the tick
 rate plus re-checking the tick counts in the tests).
+
+## Q21. How the game clock runs
+
+Found while drafting `farming.md` (2026-10-10). The day–night cycle drives
+crop growth, so its pace sets how often the player farms and how much an
+adventure costs at home.
+
+**A. One clock, running everywhere: 15-minute days (6:00–2:00), no seasons
+yet** (recommended)
+- Pro: the day has a shape everywhere (dusk is the cue to come home); an
+  expedition has a real cost in farm days, which makes planning part of
+  the play; one simple rule; 15 minutes leaves room for both farming and
+  a trip out.
+- Con: some pressure on adventuring (crops wait unwatered while the player
+  is away; Q24 keeps that cost small); the pace needs tuning by playing.
+
+**B. Time passes only at the base; adventures cost a fixed slice of time**
+(for example, every trip out ends at dusk)
+- Pro: no pressure while exploring; farming and adventuring stay neatly
+  separate.
+- Con: adventures lose the day–night cycle (no "come home at dusk"); the
+  world outside feels timeless; trips are forced into a fixed shape.
+
+**C. No running clock: a day lasts until the player sleeps**
+- Pro: no pressure at all; simplest; fits "unhurried".
+- Con: dusk and night become a choice rather than an event, so the art
+  direction's emotional peak may never happen; no rhythm to the day.
+
+On seasons: none in the first version under any option. They multiply crop
+content and art (every crop per season, every area per season) and are
+better decided once crops and areas exist. A broken or stuck season could
+also be a story element.
+
+**Recommendation:** A, with the pace (0.75 s per game minute) tuned in
+playtests.
+
+## Q22. How a day ends
+
+**A. Sleep in the bed at any time; at 2:00 the player falls asleep wherever
+they are and wakes at home at 6:00, with no penalty** (recommended)
+- Pro: never punishing (fits the tone); always a clear end to the day; the
+  wake-up is a natural story beat: the cat curled on the bed, as if it
+  brought the player home (Q14's story moments, never explained).
+- Con: no reason to fear staying out late, so night has no tension of its
+  own (adventuring may add some later).
+
+**B. As A, but falling asleep outside costs something** (dropped
+materials, a slow start the next day)
+- Pro: night outside has stakes.
+- Con: punishment where the tone asks for gentleness; losing materials
+  feels arbitrary in a world with no one to take them.
+
+**C. No forced end: stay up as long as wanted**
+- Pro: total freedom.
+- Con: long nights become a way to cheat time; the day loses its shape;
+  harder to balance growth (Q23).
+
+**Recommendation:** A, and the lead's call on the cat-on-the-bed touch.
+
+## Q23. How crops grow with the day–night cycle
+
+**A. Overnight: each crop watered that day grows one day when the next day
+starts; ripe after a set number of grown days** (recommended)
+- Pro: dawn is when the farm changes, which is the lead's "day / night
+  mechanic that progresses crop growth"; simple to read (one step a day);
+  simple to test; adventures and sleep never break growth.
+- Con: nothing visibly grows while the player watches.
+
+**B. Continuously, through the game hours of watered soil**
+- Pro: the farm changes during the day.
+- Con: growth depends on when in the day the player watered, which is hard
+  to read; small stage changes are easy to miss; more balancing.
+
+**C. Overnight, without watering**
+- Pro: the simplest possible farming.
+- Con: removes the daily care that makes the farm feel tended, and the main
+  hook for farming upgrades (bigger cans, sprinklers).
+
+**Recommendation:** A.
+
+## Q24. What neglect costs
+
+**A. Nothing but time: an unwatered crop simply does not grow that day; a
+ripe crop waits** (recommended)
+- Pro: the tone asks for unhurried; a long expedition never wipes out the
+  farm; still a clear incentive to water (faster harvests).
+- Con: less tension; nothing makes the player come home except wanting to.
+
+**B. Crops wither after several dry days** (for example 3)
+- Pro: the farm needs the player; coming home matters.
+- Con: punishes exploring, which drives the story; a lonely player losing
+  their crops reads as cruel rather than meaningful.
+
+**C. Ripe crops rot if left too long**
+- Pro: rewards timely harvesting.
+- Con: the same punishment problem as B, for less gain.
+
+**Recommendation:** A.
+
+## Q25. Where seeds come from without shops
+
+ADR-0005 rules out merchants and any character to trade with.
+
+**A. A starting seed tin, seeds back from every harvest, new kinds found on
+adventures** (recommended)
+- Pro: no characters needed; the farm is self-sustaining; new crops become
+  exploration rewards (abandoned gardens, seed packets beside notes), which
+  ties farming to the story; the tin is a quiet environmental hint (someone
+  left it).
+- Con: harvest yields must be balanced so the farm grows, but not
+  explosively.
+
+**B. Seeds only found, never returned by harvests**
+- Pro: every seed is precious; strong pull to explore.
+- Con: one bad run starves the farm; replanting the treats' catmint
+  depends on luck; frustrating.
+
+**C. An impersonal machine or shrine that trades produce for seeds**
+- Pro: a steady supply and a use for surplus.
+- Con: a shop in disguise; bends ADR-0005's "no trading" and would need the
+  lead's design change; it also needs a story reason to exist.
+
+**Recommendation:** A, with harvests returning 2 seeds for now (placeholder
+balance).
+
+## Q26. Controls and targeting at the base
+
+The base has no combat (ADR-0005), so it can reuse the combat buttons with
+farming meanings. ADR-0013 requires actions, rebindable, and no mouse aiming.
+
+**A. Act on the tile in front of the player (highlighted); Use tool on the
+light-attack button (J / X), Interact on the dodge button (Space / A),
+switch tools with E / Q and RB / LB** (recommended)
+- Pro: no new buttons to learn; A is the usual "interact" button on
+  controllers; the target is always visible; works with eight keyboard
+  directions.
+- Con: sometimes the player must step to aim at a diagonal tile; one button
+  meaning two things in two places must be clear in the controls screen.
+
+**B. A free cursor moved with the right stick or arrow keys**
+- Pro: precise; act without walking.
+- Con: two things to steer at once on a controller; slower on keyboard;
+  close to mouse-style aiming, which ADR-0013 avoids.
+
+**C. Separate dedicated farming buttons**
+- Pro: no double meanings.
+- Con: more buttons than a controller comfortably has; nothing gained,
+  since combat and farming never happen together.
+
+**Recommendation:** A (the bindings are built that way as a working
+assumption; they are separate InputMap actions, so changing them later costs
+nothing).
+
+## Q27. Does farming use an energy bar?
+
+**A. No: time is the only budget at home** (recommended)
+- Pro: unhurried; one less bar; farming upgrades (bigger cans, multi-tile
+  hoe) save time rather than energy, which is easy to understand.
+- Con: an all-day farming session has no limit except the clock.
+
+**B. An energy bar spent by tool use, refilled by sleep and food**
+- Pro: gives food from the farm a use; a familiar genre rule.
+- Con: a second budget alongside time; adds a chore; food and healing are
+  not designed yet (`combat.md` leaves healing open).
+
+**Recommendation:** A. If food later needs a use, healing on adventures is a
+better home for it than farming energy.
