@@ -67,13 +67,14 @@ jobs:
       windows: ${{ steps.windows.outputs.artifact-url }}
       macos: ${{ steps.macos.outputs.artifact-url }}
       linux: ${{ steps.linux.outputs.artifact-url }}
+      linux_arm64: ${{ steps.linux_arm64.outputs.artifact-url }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/lfs-pull
       - uses: ./.github/actions/setup-godot
         with:
           templates: "true"
-      - run: tools/export.sh windows macos linux
+      - run: tools/export.sh windows macos linux linux-arm64
       - name: Install a virtual display
         run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri
       - name: Smoke-run the Linux build
@@ -94,6 +95,12 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           path: dist/Moelomol-${{ env.BUILD_LABEL }}-linux.zip
+          archive: false
+          retention-days: 14
+      - id: linux_arm64
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/Moelomol-${{ env.BUILD_LABEL }}-linux-arm64.zip
           archive: false
           retention-days: 14
 
@@ -137,6 +144,7 @@ jobs:
           URL_WINDOWS: ${{ needs.desktop.outputs.windows }}
           URL_MACOS: ${{ needs.desktop.outputs.macos }}
           URL_LINUX: ${{ needs.desktop.outputs.linux }}
+          URL_LINUX_ARM64: ${{ needs.desktop.outputs.linux_arm64 }}
           URL_WEB: ${{ needs.web.outputs.url }}
           URL_RENDERS: ${{ needs.renders.outputs.url }}
         run: tools/ci/post-build-comment.sh

@@ -14,7 +14,7 @@ runs:
       with:
         path: ~/.cache/moelomol-godot
         # Bump the suffix if tools/install-godot.sh changes what it keeps.
-        key: godot-4.7.2-${{ inputs.templates == 'true' && 'templates' || 'editor' }}-v1
+        key: godot-4.7.2-${{ inputs.templates == 'true' && 'templates' || 'editor' }}-v2
     - name: Install Godot
       shell: bash
       run: |

@@ -8,6 +8,7 @@ const REQUIRED_PRESETS: Dictionary = {
 	"macOS": "macOS",
 	"Linux": "Linux",
 	"Web": "Web",
+	"Linux ARM64": "Linux",
 }
 
 
