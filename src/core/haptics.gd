@@ -40,6 +40,12 @@ const EFFECTS: Dictionary = {
 	&"armour_break": [0.5, 0.8, 0.15],
 	&"swap": [0.05, 0.2, 0.04],
 	&"no_stamina": [0.25, 0.0, 0.1],  # a dull buzz: nothing happened
+	# At the base (farming.md): small, soft, never a combat jolt.
+	&"farm_till": [0.1, 0.25, 0.05],
+	&"farm_water": [0.08, 0.0, 0.1],
+	&"farm_plant": [0.05, 0.1, 0.03],
+	&"farm_harvest": [0.15, 0.35, 0.07],
+	&"farm_nothing": [0.12, 0.0, 0.06],  # a dull buzz: the tool did nothing
 }
 
 ## How long each refresh of the sustained rumble lasts; refreshed every tick,
@@ -167,4 +173,20 @@ static func effect_for_event(event: Dictionary) -> StringName:
 		"stagger":
 			var fighter: Fighter = event["fighter"]
 			return &"stagger" if fighter.kind == Fighter.Kind.CREATURE else &""
+	return &""
+
+
+## The effect for a farm event from FarmSim, or &"" for none.
+static func effect_for_farm_event(event: Dictionary) -> StringName:
+	match event["type"]:
+		"till":
+			return &"farm_till"
+		"water":
+			return &"farm_water"
+		"plant":
+			return &"farm_plant"
+		"harvest":
+			return &"farm_harvest"
+		"nothing", "no_seeds":
+			return &"farm_nothing"
 	return &""

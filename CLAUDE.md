@@ -24,7 +24,9 @@ review renders, PR builds and releases), there is a **combat test arena**
 with the shared combat foundation, all four weapons (greatsword, hammer, bow,
 magic), the status-effect system, armour and the two-weapon swap
 (`docs/design/combat.md`).
-There is no other gameplay: no farming, exploration or story. Do not invent
+There is also a **farm test scene** with the game clock, the day–night tint
+and the farming core (`docs/design/farming.md`; Q21–Q27 open, built on
+working assumption A). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -71,6 +73,8 @@ prints failures as `::error` annotations: read them with
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
 | `scenes/combat/` | Combat test arena and its HUD |
+| `scenes/farm/` | Farm test scene and its HUD |
+| `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), drawing |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |

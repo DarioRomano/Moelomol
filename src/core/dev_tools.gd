@@ -9,7 +9,7 @@ extends Node
 ## - F4: V-Sync on/off. With V-Sync on, the frame rate is capped at the
 ##   screen's refresh rate; off shows the real headroom.
 ## - Launch options (after `--` on the command line, or in Steam's launch
-##   options): `--perf-overlay`, `--start-scene <boot|test_card|renderer_features|combat_arena>`,
+##   options): `--perf-overlay`, `--start-scene <boot|test_card|renderer_features|combat_arena|farm_test>`,
 ##   `--no-vsync`. (`--scene` is already used by the render tool.)
 ##
 ## Available in every build: the lead tests release builds on real devices.
@@ -22,6 +22,7 @@ const SHOWCASE_SCENES: Dictionary = {
 	"test_card": "res://scenes/showcase/test_card.tscn",
 	"renderer_features": "res://scenes/showcase/renderer_features.tscn",
 	"combat_arena": "res://scenes/combat/combat_arena.tscn",
+	"farm_test": "res://scenes/farm/farm_test.tscn",
 }
 const REFRESH_SECONDS: float = 0.25
 

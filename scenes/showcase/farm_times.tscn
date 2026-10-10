@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/showcase/farm_times.gd" id="1_farm_times"]
+
+[node name="FarmTimes" type="Node2D"]
+script = ExtResource("1_farm_times")

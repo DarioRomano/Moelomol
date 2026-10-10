@@ -10,6 +10,7 @@ source files and video are stored through Git LFS (ADR-0011).
 | App icon (sprout in soil) | `icon.svg` | Hand-written SVG by the engineer, draft palette | Project-owned | **Placeholder** |
 | Test card drawing and 16×24 figure | `scenes/showcase/test_card.gd` (drawn in code) | Engineer | Project-owned | Debug only, not game content |
 | Combat placeholders (player, greatsword, hammer, bow, arrows, lantern, spell bolts, Rot and Chill pools, effect pips, charge meter, draw pips, Volley mark and rain, creatures and stone shell, arena, effects incl. shockwave and shell shards, HUD) | `src/combat/combat_drawer.gd`, `scenes/combat/combat_hud.gd` (drawn in code) | Engineer, draft palette | Project-owned | **Placeholder** until the AI art from `combat-art-prompts.md` |
+| Farm placeholders (grass, path, fence, tilled and watered soil, catmint and radish in four stages, farmhouse with lit windows, farmer and tools, target highlight, HUD) | `src/farm/farm_drawer.gd`, `scenes/farm/farm_hud.gd` (drawn in code) | Engineer, draft palette | Project-owned | **Placeholder** until the provisioned base art |
 | UI font | none (engine built-in default font, antialiasing off) | Godot engine | Ships with the engine | **Placeholder**: uneven letter spacing at 8 px; a pixel font is needed |
 
 ## AI-generated audio

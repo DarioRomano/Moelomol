@@ -63,6 +63,21 @@ a swap) on 2026-10-10.
   `docs/playtests/2026-10-10-bow.md`, `docs/playtests/2026-10-10-magic.md`),
   combat feel changes (`docs/playtests/2026-10-10-combat-feel.md`).
 
+## Farming and the day–night cycle (started 2026-10-10)
+
+`docs/design/farming.md`: the clock and its phases, overnight crop growth,
+soil and tools, seeds without shops, controls at the base. Q21–Q27 wait for
+the lead; a first slice is built on the recommended options as working
+assumptions.
+
+- **Done:** farm test scene with the clock, the day–night tint, sleeping,
+  tilling, watering, planting, overnight growth, harvesting and seeds back
+  (2026-10-10).
+- **Waiting on the lead:** Q21–Q27; farming playtest
+  (`docs/playtests/2026-10-10-farming.md`).
+- **Next (once decided):** saving, the pet at the farm, the cat treats
+  recipe (the crafting tutorial), farming upgrades.
+
 ## Later (not planned)
 
 Decided and ready for the first gameplay system: language (ADR-0003),
@@ -71,6 +86,6 @@ performance budget and how it is checked (ADR-0007, Q16), renderer
 and UI width (ADR-0008). Q17 decided: keep whole-number scaling. Waiting on the lead: the device performance runs
 (`docs/playtests/2026-10-09-performance-devices.md`).
 
-Farming, exploration and foraging, combat, crafting and enhancement, upgrade
-systems, skills, trinkets and artefacts, notes and story. These are named in
+Exploration and foraging, crafting and enhancement, upgrade systems, skills,
+trinkets and artefacts, notes and story, animals. These are named in
 ADR-0005 but are not scheduled and are not to be built speculatively.
