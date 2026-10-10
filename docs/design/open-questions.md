@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: Q28 (where farming magic comes from) is open; everything before is resolved.
+Status at 2026-10-10: Q28 (where farming magic comes from), Q29 (magic's weapon skill) and Q30 (the greatsword's weapon skill) are open; everything before is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -37,6 +37,8 @@ Status at 2026-10-10: Q28 (where farming magic comes from) is open; everything b
 | Q26 | Controls and targeting at the base | Input model (ADR-0013) | **Resolved**: A |
 | Q27 | Does farming use an energy bar? | Farming slice, upgrades | **Resolved**: farming is magic and costs Mana (sleep, food); enhanced weapon skills cost Mana too |
 | Q28 | Where does farming magic come from, and how does it look? | Farming spell art, story notes | Open (working assumption: C) |
+| Q29 | A more satisfying weapon skill for magic | Magic feel (lead's playtest) | Open |
+| Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | Open |
 
 ---
 
@@ -1127,3 +1129,136 @@ advances, a thread of violet shows in them.
 
 **Recommendation:** C. The farm test scene draws farming spells in warm
 green and gold as a working assumption; nothing violet yet.
+
+## Q29. A more satisfying weapon skill for magic
+
+Raised by the lead after playing (2026-10-10): the skill "is not quite
+satisfying… too similar to the ice AoE left by blinking".
+
+**What it is now:** Release, a 90° cone reaching 28 px. It consumes every
+stack on the creatures it hits and turns them into one burst, plus Shatter,
+Blight bloom or Brittle for mixed effects.
+
+**Why it falls flat** (checked in the simulation, 2026-10-10):
+- **On a creature without stacks it does nothing.** 0 damage, just a violet
+  cone, so pressing it early feels broken.
+- **Its payoff is drawn as a ring.** Magic already draws two circles, the
+  Rot pool and Wardstep's Chill pool, so a successful Release looks like
+  another pool.
+- **The burst lands all at once.** Five stacks of three effects hit as one
+  number and one flash; the build-up is not paid off visibly.
+
+**A. Unravel: a chained, per-creature detonation** (recommended)
+- **How it works:** hold the lantern up for 0.2 s; then every stacked
+  creature within about 64 px (not a cone) is detonated in turn, nearest
+  first, 0.1 s apart, each with its own hit-stop and rumble.
+  - Each effect bursts in its own shape: Smoulder as an ember flare upward,
+    Chill as ice shards outward, Rot as a sinking violet bloom.
+  - Mixed effects play their combination on that creature (Shatter, Blight
+    bloom, Brittle), so the order is readable.
+  - With no stacks anywhere, it fizzles with a clear "nothing to release"
+    puff and costs no Focus.
+- Pro: a big stack count becomes a long, visible chain, which is the
+  payoff the stacking builds towards; nothing is round and on the floor,
+  so it can't be confused with a pool; keeps the design's core (stack,
+  then cash in) and the step-in risk (64 px is close).
+- Con: one more piece of sequencing in the simulation; a long chain needs
+  a cap so it doesn't freeze the fight with hit-stop.
+
+**B. Siphon: drain one target, then fire**
+- **How it works:** hold the skill on the locked or nearest creature in
+  front to pull its stacks into the lantern over up to 1 s; the lantern
+  fills with their colours.
+  - Release the button to fire a beam whose strength and kind come from
+    what was drained (Smoulder burns along the line, Chill pierces and
+    freezes, Rot spreads to anything the beam crosses).
+  - A hit while draining interrupts it, like a cast.
+- Pro: active and skilful; distinctive (a line, not a circle); the
+  drain-then-fire rhythm matches the hammer and bow's hold-and-release
+  identity.
+- Con: one target at a time, which weakens magic against groups; the
+  channel adds a third hold to the heavy button's tap/hold.
+
+**C. Ignite the mark: a thrown orb**
+- **How it works:** throw the lantern's flame as a slow orb (about 120 px/s
+  for 1 s). It collects stacks from every creature it passes through and
+  detonates where it stops, all collected stacks at once, in a radius.
+- Pro: lets magic stay at range; aiming the orb through a line of
+  creatures is a skill.
+- Con: removes the "step in close" risk the design gave magic; a round
+  detonation is the same shape problem again.
+
+**Also possible with any option:** make Wardstep's leftover distinct, for
+example a frost afterimage that creatures attack and that shatters into
+Chill, instead of a pool. Then magic has one pool (Rot) and nothing else on
+the floor.
+
+**Recommendation:** A, with the chain capped at 6 creatures and hit-stop
+shortened after the third.
+
+## Q30. A clearer weapon skill for the greatsword
+
+Raised by the lead after playing (2026-10-10): the skill "is hard to
+understand: does it even work?"
+
+**What it is now:** one button with two meanings.
+- **Follow-through:** a big hit if a staggered creature is within 34 px.
+- **Brace:** otherwise, a 0.5 s stance. A hit taken during it arms an
+  instant heavy (Brace counter).
+
+**What a probe showed** (simulation, 2026-10-10: a creature lunging, the
+player bracing at different moments):
+- **Brace does work.** Bracing at ticks 20–40 of the creature's 42-tick
+  telegraph catches the lunge and arms the counter.
+- **But the player takes the full 15 damage either way.**
+- **A single lunge never staggers the player anyway** (30 poise damage
+  against 50 poise), so the stagger protection is invisible.
+- **The only payoff** is that the next heavy is instant, and the only sign
+  of it is the text "BRACE READY" in the debug HUD.
+- **The hidden switch:** whether the button means Follow-through or Brace
+  depends on a hidden condition (a staggered creature within 34 px), so the
+  same press does two unrelated things.
+
+**A. Guard and riposte: one meaning, with clear feedback** (recommended)
+- **Brace becomes a real guard.**
+  - Hits during its 0.5 s deal 30% damage and cannot stagger.
+  - A hit in its first 0.15 s is a **perfect brace**: no damage, the
+    attacker is **repelled and staggered**, and the counter-cleave comes
+    out **at once**, without a second button.
+  - A visible guard pose, a bright flash and a heavy rumble mark the
+    perfect brace.
+- **Follow-through moves to the heavy button:** heavy on a staggered
+  creature in reach is always Follow-through, the finisher for a stagger
+  (the chain finishers otherwise).
+- Pro: each button has one meaning; the skill is a learnable parry with an
+  obvious reward; it uses the greatsword's stagger identity; Follow-through
+  is easier to find.
+- Con: the parry window is a new timing to tune (needs playtesting);
+  heavy's meaning now depends on whether the target is staggered, which is
+  visible (grey, stars) but still a context switch.
+
+**B. Bull rush: a shoulder charge**
+- **How it works:** dash 48 px with the shoulder, carrying every creature
+  in front along and slamming them into walls, pillars and each other (the
+  existing impact rules); creatures that hit something are staggered.
+  - Follow-through moves to heavy on a staggered creature, as in A.
+- Pro: the clearest possible skill; it leans fully into "lots of pushing";
+  impacts are already the greatsword's most satisfying moment.
+- Con: close to the shoulder-shove finisher (a heavy after one light); the
+  greatsword loses its only defensive tool.
+
+**C. Keep both meanings, but show them**
+- **How it works:** keep the current rules and add feedback.
+  - A "Follow-through" prompt and highlight on a staggered creature in
+    reach.
+  - A visible guard pose.
+  - Damage reduction while braced.
+  - A flash and rumble when Brace catches a hit.
+  - The armed counter glowing on the blade.
+- Pro: least change; the current design becomes readable.
+- Con: still two unrelated moves on one button; the payoff still needs a
+  second press.
+
+**Recommendation:** A. It answers "does it work?" with a hit that visibly
+does nothing to you and staggers the attacker, and it gives each button one
+job.
