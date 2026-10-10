@@ -58,8 +58,11 @@ static func _describe(p: Fighter) -> String:
 		Fighter.State.DODGE:
 			return "Dodge" + (" (invulnerable)" if p.is_invulnerable() else "")
 		Fighter.State.BRACE:
-			return "Brace"
+			return "Brace (perfect)" if Greatsword.in_perfect_window(p) else "Brace"
 		Fighter.State.CHARGE:
+			var magic: Magic = p.weapon() as Magic
+			if magic != null and magic.is_siphoning(p):
+				return "Siphon (%d drained)" % magic.drained_total()
 			return "Charging"
 		Fighter.State.STAGGERED:
 			return "Staggered"

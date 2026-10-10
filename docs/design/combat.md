@@ -89,9 +89,11 @@ directions:
 
 ### Dodge
 
-- A quick roll, about 2 art tiles, with a brief invulnerable window in the
-  middle. Costs stamina. Can cancel the recovery of most attacks, not their
-  wind-up.
+- A quick roll, about 2.5 art tiles, that answers the press at once: it
+  moves on the press tick, covers most of its distance in its first frames
+  and is invulnerable from its first frame (lead, 2026-10-10: "as responsive
+  as the blink"). Its last 80 ms can be cancelled into any action. Costs
+  stamina. Can cancel the recovery of most attacks, not their wind-up.
 - Weapons hook into it: the bow's dodge shot, magic's Wardstep.
 
 ### Poise and stagger (the backbone)
@@ -165,16 +167,18 @@ This is "combo into different moves":
 creature takes an **impact**: extra damage and poise damage. Fights become
 about position: herd creatures into corners, knock them into each other.
 
-**Stagger payoff: Follow-through.** Pressing the weapon skill next to a
-staggered creature performs a heavy two-handed finisher that deals large
-damage. It costs stamina and leaves the player briefly open.
+**Stagger payoff: Follow-through.** Heavy next to a staggered creature
+performs a heavy two-handed finisher that deals large damage, instead of the
+chain's finisher. It costs stamina and leaves the player briefly open.
 
-**Weapon skill (when nothing is staggered): Brace.** Plant the blade and take
-the next hit without being staggered (hyper-armour for a moment); if a hit
-lands during Brace, the next heavy attack comes out instantly.
+**Weapon skill: Brace, a guard (lead, 2026-10-10, Q30 A).** Plant the blade
+for 0.5 s: hits taken during it do 30% damage. A hit in the guard's first
+0.15 s is a **perfect brace**: no damage, the attacker is staggered and
+thrown back, and the **Riposte** (an overhead cleave with no windup) comes
+out at once, without another press.
 
 **Mastery:** reading which finisher the moment needs; using walls; timing
-Brace on a big creature's charge; chaining shoves into impacts.
+a perfect brace on a big creature's charge; chaining shoves into impacts.
 
 **Weaknesses:** slow wind-ups get interrupted by fast creatures; heavy
 stamina use; poor against anything flying or far away.
@@ -247,14 +251,17 @@ time:
 
 | Stage | Arrow | Notes |
 |---|---|---|
-| 1 | Strong arrow | Fast to reach |
-| 2 | **Piercing arrow:** passes through and hits everything in a line | Lines of creatures |
-| 3 | **Heavy arrow:** big damage and knockback, staggers small creatures | Holding costs stamina each second |
+| 1 | An ordinary arrow (the quick shot's) | Fast to reach |
+| 2 | **Strong arrow:** slightly stronger | |
+| 3 | **Piercing arrow:** passes through everything in a line and pushes a little back | Holding costs stamina each second |
+
+(Lead, 2026-10-10: the stages had been "a bit too different"; before, they
+were strong, piercing, and a heavy arrow that staggered.)
 
 Releasing in the brief flash as a stage is reached ("clean release") adds a
 small bonus. Drawing slows movement but does not stop it.
 
-**Dodge shot.** Pressing heavy during a dodge looses a stage-2 piercing arrow
+**Dodge shot.** Pressing heavy during a dodge looses a stage-3 piercing arrow
 instantly as the roll ends. Dodging *towards* danger and shooting out of it
 is the bow's signature move.
 
@@ -262,10 +269,10 @@ is the bow's signature move.
 each makes drawing faster. Getting hit loses all Flow. The bow at full Flow
 is very strong; the skill is staying untouched.
 
-**Weapon skill: Volley (multi-stage).**
-1. Tap: fire a **marker arrow** at the target.
-2. Within a few seconds, press again: arrows **rain** on the marked spot.
-3. The rain's size grows with Flow stacks spent.
+**Weapon skill: Volley.** One press looses an arrow at once; arrows **rain**
+where it hits the first creature (or where it stops). The rain's size grows
+with Flow stacks spent. (Lead, 2026-10-10; it used to take two presses, a
+marker arrow and then the call.)
 
 **Arrows: Proposal.** Basic arrows are unlimited (ammo collecting would fight
 the flow and the lonely, unhurried tone). **Crafted arrowheads** (farm and
@@ -316,13 +323,21 @@ through and each button is a different tactic:
 |---|---|---|
 | Light | **Ember bolt:** fast projectile, 1 Smoulder stack | Steady pressure on one target |
 | Heavy (tap) | **Frost shard:** slower projectile, 2 Chill stacks | Slowing the one that is closing in |
-| Heavy (hold) | **Rot pool:** a patch on the ground; anything standing in it gains Rot stacks | Area denial, kiting creatures through it |
-| Skill | **Release:** cash in every stack on creatures in a short cone in front | The payoff |
+| Heavy (hold) | **Siphon:** a tether to the creature in front drains its stacks into the lantern; letting go fires a beam | The payoff |
+| Skill | **Rot pool** (interim): a patch on the ground; anything standing in it gains Rot stacks | Area denial, until its rework (Q31) |
 
-### Release: cashing in
+(Lead, 2026-10-10, Q29: the Siphon goes on the heavy button; the Rot pool
+it replaced there is "rather boring" and is to be reworked; Q31 has the
+options. Until then it sits on the skill button, and Release, the old
+skill, is gone.)
 
-**Release** consumes all stacks of every effect on the creatures it hits and
-turns them into one burst:
+### Siphon: cashing in
+
+Holding heavy past the Frost shard's tap forms a **tether** to the lock
+target, or else the nearest creature in front. Every 0.2 s it pulls one
+stack of each effect off the creature into the lantern, for up to 1.5 s.
+Letting go (or the 1.5 s running out) fires a **beam** along the line. The
+first creature on the beam takes everything drained as one burst:
 
 - Damage grows with the number of stacks consumed (each stack worth more than
   the last), so waiting for full stacks pays.
@@ -337,10 +352,17 @@ turns them into one burst:
 | Chill + Rot | **Brittle:** massive poise damage; the target is staggered |
 | All three | All of the above |
 
+What each drained effect adds to the beam: **Smoulder** sets every creature
+it hits smouldering; **Chill** (3 or more) freezes the first creature;
+**Rot** rots the creatures behind it. Creatures behind the first take half
+the burst. A beam with nothing drained is a weak hit.
+
 ### Risk and avoidance (the brief's "while avoiding damage")
 
-- **Release is short range.** Stacks are applied from a distance; cashing in
-  means stepping in close. That is the risk.
+- **The Siphon is a channel.** Stacks are applied from a distance; cashing
+  in means standing within the tether's reach (96 px) for up to 1.5 s while
+  slowed, and a hit breaks the tether and loses what was drained. That is
+  the risk.
 - **Casting slows but never roots** the player: dodging is always possible.
 - **Wardstep (magic's dodge):** with the lantern equipped, the dodge becomes a
   short blink that leaves a small Chill pool behind. Escaping *is* applying.
@@ -362,11 +384,11 @@ become parts of one kit:
 
 - **Magic + greatsword:** Rot to soften, then shoves and Follow-through.
 - **Magic + hammer:** Chill to slow, then a perfect strike on a frozen,
-  stationary target; a perfect strike counts as a Release for the effects on
-  the creatures it hits (**Proposal**).
+  stationary target; a perfect strike cashes in the effects on the creatures
+  it hits, as the Siphon beam does (**Proposal**).
 - **Bow + hammer:** Volley pins a group in place; a perfect strike's
   shockwave catches them all.
-- **Bow + magic:** crafted arrowheads apply stacks at range; Release up close.
+- **Bow + magic:** crafted arrowheads apply stacks at range; the Siphon cashes them in.
 
 Swapping has a short cooldown so swaps are a decision, not a spam.
 
@@ -393,7 +415,7 @@ Named so later systems fit; each is its own design pass.
 
 - **Fighting skills** (ADR-0005): one skill tree per weapon. Examples:
   greatsword "impacts chain into a second impact"; hammer "Rhythm keeps 1
-  stack after a miss"; bow "dodge shot can be stage 3"; magic "Release
+  stack after a miss"; bow "Flow survives one hit"; magic "the beam
   leaves 1 stack of each effect behind".
 - **Enhancement** (ADR-0005): each weapon is enhanced with farmed materials
   and monster drops; enhancements can add effects (a Smoulder-edged
@@ -416,25 +438,25 @@ later prototype.
 | Hammer sweet spot | (the level-3 click above) | Trigger "gives" at the sweet spot |
 | Hammer perfect strike | Heaviest pulse in the game | — |
 | Bow draw stages | A tick at each stage | Tension rising per stage, release snap |
-| Spell cast | Faint buzz | Light resistance on the Pool hold |
-| Release | Pulse scaled by stacks consumed | — |
+| Spell cast | Faint buzz; the Siphon's held pull grows with what it has drained, with a tug at each pull | Light resistance on the Siphon hold |
+| Siphon beam | Pulse scaled by stacks drained | — |
 | Player hit | Medium, sharp | — |
 | Dodge; an attack passing through it | Light pulse; a tick | — |
-| Brace taking a hit; armour breaking | Firm pulse; strong pulse | — |
+| Brace taking a hit; perfect brace; armour breaking | Firm pulse; heavier pulse; strong pulse | — |
 | Swap; out of stamina | Tiny tick; dull buzz | — |
 
 ## Proposed starting values (Proposal; tuning needs the lead's approval)
 
 | Value | Start |
 |---|---|
-| Dodge invulnerable window | 200 ms (12 ticks) of a 400 ms roll |
+| Dodge | 240 ms roll of 40 px, invulnerable for its first 180 ms, last 80 ms cancellable (was 400 ms of 32 px, invulnerable 100–300 ms) |
 | Input buffer | 100 ms |
-| Hit-stop | 40 ms light, 80 ms heavy, 120 ms perfect hammer / Release |
+| Hit-stop | 40 ms light, 80 ms heavy, 120 ms perfect hammer / Siphon beam / perfect brace |
 | Hammer charge to sweet spot | 900 ms; sweet spot 150 ms; narrows by 25 ms per Rhythm stack |
 | Bow draw stages | 300 / 700 / 1200 ms; clean-release window 80 ms |
 | Flow | max 5 stacks; draw time −8% per stack |
 | Effect stacks | max 5; duration 6 s, refreshed per application; one stack lost per second after it runs out |
-| Release multiplier | +100% for a second effect, +200% for a third |
+| Burst multiplier (Siphon beam) | +100% for a second effect, +200% for a third |
 | Weapon swap cooldown | 1.5 s |
 
 Further starting values chosen while building the arena (all in
@@ -467,8 +489,8 @@ title, or `--start-scene combat_arena`). Never at the base.
 - Built: movement, dodge with invulnerable frames, stamina, poise and
   stagger, hyper-armour, input buffer, hit-stop, soft aim, lock-on with
   target switching, push and impacts (walls, pillars, other creatures), the
-  full greatsword (light chain, four finishers, Follow-through, Brace and its
-  counter), the hammer, the bow and magic with the status-effect system
+  full greatsword (light chain, four finishers, Follow-through, Brace with
+  the perfect brace and Riposte), the hammer, the bow and magic with the status-effect system
   (below), armour, the two-weapon loadout with swap,
   three training creatures with a telegraphed lunge (one with a stone
   shell), rumble through the haptics service, and a HUD.
@@ -534,25 +556,22 @@ Starting values (in `src/combat/bow.gd`; arrow speed and range in
 | Arrows | 360 px/s, up to 260 px; stop at walls, pillars and the first creature (piercing arrows fly on); soft aim for shots reaches the full range in the 30° cone |
 | Quick shot | 80 ms windup, 5 damage, 8 poise, 4 stamina |
 | Draw | 8 stamina when it starts; walk at 48 px/s (60%) |
-| Stages | 300 / 700 / 1200 ms (at Flow 0). Released before stage 1: the quick-shot arrow. Stage 1 strong: 12 damage, 20 poise. Stage 2 piercing: 16 damage, 25 poise, through every creature on its line. Stage 3 heavy: 30 damage, 80 poise (staggers a training creature), 24 px knockback |
+| Stages | 300 / 700 / 1200 ms (at Flow 0). Released before stage 1, or at stage 1: the quick-shot arrow, 5 damage, 8 poise, 2 px push. Stage 2: 8 damage, 14 poise, 3 px push. Stage 3: 12 damage, 20 poise, pierces every creature on its line, 12 px push (before 2026-10-10: 12 / 16 piercing / 30 damage with 80 poise) |
 | Clean release | within 80 ms of reaching a stage: +25% damage |
 | Holding stage 3 | 15 stamina/s; the arrow flies by itself when stamina runs out |
-| Dodge shot | heavy during a dodge: a stage-2 piercing arrow as the roll ends; costs a draw (8 stamina) |
+| Dodge shot | heavy during a dodge: a stage-3 piercing arrow as the roll ends; costs a draw (8 stamina) |
 | Flow | +1 per arrow that hits (max 5); each stack makes every stage 8% faster; lost entirely when hit, whichever weapon is in hand |
-| Volley | marker arrow (8 stamina) marks where it stops, for 4 s; skill again calls the rain (10 stamina): radius 20 px + 6 px per Flow spent (all Flow is spent), first wave after 0.4 s, 3 waves 0.3 s apart, each 6 damage and 20 poise per creature inside |
+| Volley | one press, 15 stamina: an arrow (120 ms windup, 2 damage) flies at once; the rain falls where it hits the first creature or where it stops: radius 20 px + 6 px per Flow spent (all Flow is spent), first wave after 0.4 s, 3 waves 0.3 s apart, each 6 damage and 20 poise per creature inside |
 
 Readings of the design taken while building (say if any is wrong):
 
 - **Only arrows build Flow:** quick shots, drawn arrows, dodge shots. The
   marker and the rain do not (the rain spends Flow; building it back from
   the rain would loop).
-- **"Staggers small creatures"** is done with poise: the heavy arrow's 80
-  poise breaks a training creature's 80. Creatures have no size classes yet;
-  bigger ones will simply have more poise.
 - **"Volley pins a group in place"** is done with the rain's poise damage:
   three waves (60 poise) plus any other hit stagger a training creature.
-- **The mark stays where the marker stopped** (on the creature it hit, or at
-  a wall or the end of its range); it does not follow a creature.
+- **The rain stays where the Volley arrow stopped** (on the creature it hit,
+  or at a wall or the end of its range); it does not follow a creature.
 
 ### Magic and status effects as built
 
@@ -567,12 +586,13 @@ needs the lead's approval):
 | Rot | 1 damage per second per stack; +5% damage taken from everything and −15% poise refill per stack; reaching 5 halves armour |
 | Ember bolt (light) | 150 ms cast, 300 px/s, 3 damage, 1 Smoulder, 5 Focus |
 | Frost shard (heavy, released within 250 ms) | 100 ms cast, 200 px/s, 4 damage, 2 Chill, 12 Focus |
-| Rot pool (heavy, held 250 ms) | 40 px in front, 22 px radius, 4 s; 1 Rot as it lands and every 0.5 s to each creature inside (not a hit); 20 Focus |
-| Release (skill) | 200 ms cast, cone 90° reaching 28 px, 10 Focus; consumes all stacks: each stack is worth 4, 6, 8, 10, 12; ×2 for two effects, ×3 for three (5/5/5 = 360) |
+| Siphon (heavy, held 250 ms) | 10 Focus as the tether forms; to the lock target within 96 px, else the nearest creature within 96 px and 60° of the facing; pulls one stack of each kind at once and every 0.2 s; up to 1.5 s; the tether snaps beyond 144 px (what was drained is kept); walk at 48 px/s |
+| Siphon beam (letting go) | 160 px line, hits at once, 250 ms recovery. First creature: the burst (each drained stack worth 4, 6, 8, 10, 12; ×2 for two effects, ×3 for three), 20 poise, the combinations below; others on the line half. Drained Smoulder: 1 Smoulder to each creature hit; 3+ Chill: the first is Frozen; Rot: 2 Rot to the others. Nothing drained: 4 damage |
+| Rot pool (skill, interim until Q31) | 40 px in front, 22 px radius, 4 s; 1 Rot as it lands and every 0.5 s to each creature inside (not a hit); 20 Focus |
 | Shatter (Smoulder + Chill) | 20 damage, 30 poise to every creature within 36 px of the target |
 | Blight bloom (Smoulder + Rot) | 3 Rot to every creature within 48 px |
 | Brittle (Chill + Rot) | the target is staggered |
-| Perfect hammer strike | counts as a Release on the creatures it hits (the combinations included) |
+| Perfect hammer strike | consumes the stacks of the creatures it hits as a burst, combinations included (the old Release rule, kept) |
 | Casting | the player walks at 48 px/s (60%) during a cast; a hit during a cast's windup or the heavy hold interrupts it (Focus is lost) |
 | Focus | 100; refills 6/s, 20/s after 3 s without being hit |
 | Wardstep (magic's dodge) | 40 px blink at once (stopped by walls), invulnerable for its 200 ms, 20 stamina; leaves an 18 px Chill pool for 2 s (1 Chill every 0.5 s) |
@@ -582,12 +602,15 @@ Readings of the design taken while building (say if any is wrong):
 - **Full stacks act once**, on reaching 5: staying at 5 does not keep
   spreading or re-freezing. Freezing does not consume the Chill, so Chill +
   Rot (Brittle) still works on a Frozen creature.
-- **Release's burst ignores Rot's +damage taken**: the Rot is consumed by
-  the same Release.
+- **The beam's burst ignores the drained Rot's +damage taken**: those stacks
+  are no longer on the creature.
+- **The combinations bloom even when the burst kills** the first creature,
+  as Release's did (found in the review render, 2026-10-10).
+- **The Siphon is a hit taken in the open**: being hit while holding it
+  loses the drained stacks (they were already taken off the creature).
 - **Brittle is a stagger** (the "massive poise damage" breaks poise at
   once); it does nothing extra to a creature that is already staggered.
-- **Pools are not hits**: they add stacks without hit-stop, rumble or
-  breaking a Brace.
+- **Pools are not hits**: they add stacks without hit-stop or rumble.
 - **Effects only land on creatures** for now: no creature applies effects to
   the player yet.
 
@@ -651,13 +674,14 @@ Readings taken (say if any is wrong):
 - **Mana is the player's magic pool, shared by farming and fighting.**
   Farming spells cost it (`farming.md`). **Enhanced weapon skills consume
   Mana. Basic attacks, including magic's basic spells (Ember bolt, Frost
-  shard, Rot pool), do not.** This keeps magic a viable fighting style when
+  shard, Siphon), do not.** This keeps magic a viable fighting style when
   farming has spent Mana.
 - Mana refills from sleep and food only.
 - **Reading R1** (`farming.md`): "enhanced weapon skills" are the improved
   skills that the weapon skill trees will give (progression hooks, above).
   None exist yet, so no combat move costs Mana today. Brace and
-  Follow-through, Ground stamp, Volley and Release stay free. Magic's Focus
+  Follow-through, Ground stamp, Volley, the Siphon and the Rot pool stay
+  free. Magic's Focus
   stays: it is the fight-paced resource of the magic weapon, separate from
   Mana. If the lead meant the current skill-button moves, each gets a Mana
   cost instead.

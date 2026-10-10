@@ -13,7 +13,7 @@ const TILE: float = 16.0
 ## How long each effect plays, in ticks.
 const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6, "shockwave": 18, "armour_break": 16,
 	"release": 14, "shatter": 16, "blight_bloom": 18, "brittle": 14, "frozen": 14, "spread": 12,
-	"wardstep": 12}
+	"wardstep": 12, "beam": 12, "perfect_brace": 16, "brace_absorb": 10}
 ## Effect colours (docs/design/combat.md, "The three effects").
 const EFFECT_COLOURS: Dictionary = {
 	StatusEffects.SMOULDER: Color("#e0a95b"),
@@ -53,7 +53,6 @@ static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Arra
 	_draw_arena(canvas, sim)
 	for zone: Zone in sim.zones:
 		_draw_zone(canvas, zone)
-	_draw_mark(canvas, sim)
 	var order: Array[Fighter] = sim.fighters()
 	order.sort_custom(func(a: Fighter, b: Fighter) -> bool: return a.position.y < b.position.y)
 	for f: Fighter in order:
@@ -183,8 +182,16 @@ static func _draw_blade(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	var length: float = 32.0  # longer with the 40% reach (2026-10-10)
 	match f.state:
 		Fighter.State.BRACE:
-			canvas.draw_line(hand + f.facing * 6, hand + f.facing * 6 + Vector2(0, 14), Palette.STONE[2], 3.0)
-			canvas.draw_arc(at, 14, 0, TAU, 24, Palette.STONE[2], 1.0)
+			# The guard: the blade held flat across the body, facing the
+			# threat, behind a half-ring; white and bright in the perfect
+			# window, stone grey after it.
+			var across: Vector2 = f.facing.orthogonal()
+			var guard_at: Vector2 = hand + f.facing * 7
+			var perfect: bool = Greatsword.in_perfect_window(f)
+			var colour: Color = Palette.PAPER[1] if perfect else Palette.STONE[2]
+			canvas.draw_line(guard_at - across * 10, guard_at + across * 10, Palette.STONE[2], 3.0)
+			canvas.draw_line(guard_at - across * 10, guard_at + across * 10, Palette.PAPER[1], 1.0)
+			canvas.draw_arc(at, 16, f.facing.angle() - 1.2, f.facing.angle() + 1.2, 16, colour, 2.0 if perfect else 1.0)
 			return
 		Fighter.State.ATTACK:
 			match f.attack_phase():
@@ -278,10 +285,7 @@ static func _draw_bow(canvas: CanvasItem, f: Fighter, at: Vector2, bow: Bow) -> 
 			_draw_stage_pips(canvas, at + Vector2(0, -36), stage, bow.is_clean(f.state_tick))
 			return
 		Fighter.State.ATTACK:
-			if f.move == Bow.VOLLEY_CALL:
-				_bow_shape(canvas, hand + Vector2(0, -10), Vector2.UP, 0.0)
-			else:
-				_bow_shape(canvas, hand + f.facing * 7, f.facing, 0.0)
+			_bow_shape(canvas, hand + f.facing * 7, f.facing, 0.0)
 			return
 	# Carried across the back.
 	canvas.draw_arc(hand + Vector2(-2, 0), 9, -PI * 0.75, PI * 0.25, 8, Palette.WARMTH[1], 2.0)
@@ -296,21 +300,43 @@ static func _draw_lantern(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	match f.state:
 		Fighter.State.CHARGE:
 			lantern = hand + f.facing * 8
-			glow = 5.0 + f.state_tick * 0.4
-			# Where the Rot pool will go if the hold continues.
-			var progress: float = minf(1.0, f.state_tick / float(CombatTuning.ticks(Magic.POOL_HOLD_MS)))
-			canvas.draw_arc(at + f.facing * Magic.POOL_DISTANCE, Magic.POOL_RADIUS * progress, 0, TAU, 24,
-				Color(EFFECT_COLOURS[StatusEffects.ROT], 0.8), 1.0)
+			var magic: Magic = f.weapon() as Magic
+			if magic != null and magic.is_siphoning(f):
+				glow = 5.0 + minf(6.0, magic.drained_total() * 0.6)
+				_draw_siphon(canvas, f, magic, at, lantern)
+			else:
+				# Filling towards the Siphon: a ring closes round the lantern.
+				var progress: float = minf(1.0, f.state_tick / float(CombatTuning.ticks(Magic.SIPHON_HOLD_MS)))
+				glow = 5.0 + progress * 2.0
+				canvas.draw_arc(lantern, 7.0, -PI / 2, -PI / 2 + TAU * progress, 16, Color(Palette.CHANGED[2], 0.9), 1.0)
 		Fighter.State.ATTACK:
 			lantern = hand + f.facing * 8
 			var phase: StringName = f.attack_phase()
 			glow = 6.0 if phase == &"windup" else 4.0
-			if f.move == Magic.RELEASE and phase != &"windup":
-				var alpha: float = 0.5 if phase == &"active" else 0.15
-				_zone(canvas, f, phase != &"active", Color(Palette.CHANGED[1], alpha))
 	canvas.draw_circle(lantern, glow, Color(Palette.CHANGED[1], 0.35))
 	canvas.draw_rect(Rect2(lantern - Vector2(2, 3), Vector2(4, 6)), Palette.CHANGED[0])
 	canvas.draw_rect(Rect2(lantern - Vector2(1, 2), Vector2(2, 3)), Palette.CHANGED[2])
+
+
+## The Siphon: where the beam will go (faint), the tether to the creature
+## being drained, and beads of what has been drained in the lantern's glow.
+static func _draw_siphon(canvas: CanvasItem, f: Fighter, magic: Magic, at: Vector2, lantern: Vector2) -> void:
+	var aim_end: Vector2 = at + f.facing * Magic.BEAM_LENGTH
+	canvas.draw_line(lantern, aim_end + Vector2(0, -8), Color(Palette.CHANGED[1], 0.18), 1.0)
+	var target: Fighter = magic.siphon_target
+	if target != null:
+		var to: Vector2 = target.position + Vector2(0, -10)
+		canvas.draw_line(to, lantern, Color(Palette.CHANGED[1], 0.8), 1.0)
+		# Motes travelling down the tether towards the lantern.
+		for i: int in range(3):
+			var t: float = fmod(magic.siphon_ticks / 12.0 + i / 3.0, 1.0)
+			canvas.draw_circle(to.lerp(lantern, t), 1.5, Palette.CHANGED[2])
+	var bead: int = 0
+	for kind: StringName in StatusEffects.KINDS:
+		for i: int in range(int(magic.drained.get(kind, 0))):
+			var angle: float = bead * TAU / 10.0 + magic.siphon_ticks * 0.08
+			canvas.draw_circle(lantern + Vector2.from_angle(angle) * 8.0, 1.5, (EFFECT_COLOURS[kind] as Color).lightened(0.25))
+			bead += 1
 
 
 ## Up to five pips per effect above a creature, one row per effect present.
@@ -353,22 +379,12 @@ static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> v
 			canvas.draw_circle(tip, 2.0, colour)
 		return
 	var length: float = 8.0 if arrow.pierce else 6.0
-	var width: float = 2.0 if arrow.move.id == &"arrow_heavy" else 1.0
+	var width: float = 2.0 if arrow.pierce else 1.0
 	var colour: Color = Palette.WARMTH[3] if arrow.pierce else Palette.PAPER[1]
 	canvas.draw_line(tip - direction * length, tip, colour, width)
 	if arrow.marker:
 		canvas.draw_line(tip - direction * length, tip - direction * (length + 3) + direction.orthogonal() * 2,
 			Palette.DANGER[1], 1.0)
-
-
-## The Volley mark: a stuck arrow with a ring, while it waits for the rain.
-static func _draw_mark(canvas: CanvasItem, sim: CombatSim) -> void:
-	for weapon: Weapon in sim.player.weapons:
-		if weapon is Bow and (weapon as Bow).mark_ticks > 0:
-			var at: Vector2 = (weapon as Bow).mark
-			canvas.draw_arc(at, 5, 0, TAU, 16, Palette.DANGER[1], 1.0)
-			canvas.draw_line(at, at + Vector2(2, -7), Palette.PAPER[1], 1.0)
-			canvas.draw_line(at + Vector2(2, -7), at + Vector2(5, -6), Palette.DANGER[1], 1.0)
 
 
 static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:
@@ -532,6 +548,23 @@ static func _draw_effect(canvas: CanvasItem, effect: Dictionary) -> void:
 			for i: int in range(5):
 				var direction: Vector2 = Vector2.from_angle(i * TAU / 5.0 - PI / 2)
 				canvas.draw_line(at + Vector2(0, -8) + direction * 3, at + Vector2(0, -8) + direction * (6 + t * 6), Color(colour, 1.0 - t), 1.0)
+		"perfect_brace":
+			# A white flash and sparks thrown forward from the guard.
+			var t: float = age / float(EFFECT_TICKS["perfect_brace"])
+			canvas.draw_arc(at + Vector2(0, -10), 10.0 + t * 14.0, 0, TAU, 24, Color(Palette.PAPER[1], 1.0 - t), 3.0 * (1.0 - t) + 1.0)
+			for i: int in range(8):
+				var direction: Vector2 = Vector2.from_angle(i * TAU / 8.0)
+				canvas.draw_line(at + Vector2(0, -10) + direction * (8 + t * 10), at + Vector2(0, -10) + direction * (12 + t * 16),
+					Color(Palette.WARMTH[3], 1.0 - t), 1.0)
+		"brace_absorb":
+			var t: float = age / float(EFFECT_TICKS["brace_absorb"])
+			canvas.draw_arc(at + Vector2(0, -10), 14.0, 0, TAU, 20, Color(Palette.STONE[2], 1.0 - t), 2.0)
+		"beam":
+			var t: float = age / float(EFFECT_TICKS["beam"])
+			var from: Vector2 = effect.get("from", at) + Vector2(0, -10)
+			var to: Vector2 = at + Vector2(0, -10)
+			canvas.draw_line(from, to, Color(Palette.CHANGED[1], 0.6 * (1.0 - t)), 5.0 * (1.0 - t) + 1.0)
+			canvas.draw_line(from, to, Color(Palette.PAPER[1], 1.0 - t), 1.0)
 		"wardstep":
 			var t: float = age / float(EFFECT_TICKS["wardstep"])
 			var from: Vector2 = effect.get("from", at)

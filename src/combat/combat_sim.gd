@@ -161,12 +161,15 @@ func _step_player(input: CombatInput) -> void:
 		Fighter.State.DODGE:
 			if _buffer_action != &"" and p.weapon().dodge_action(self, _buffer_action):
 				_take_buffer()
-			var speed: float = CombatTuning.DODGE_DISTANCE / p.state_length
-			_move_with_collision(p, p.dodge_direction * speed)
-			p.state_tick += 1
-			if p.state_tick >= p.state_length:
+			if _buffer_action != &"" and p.state_tick >= p.state_length - CombatTuning.ticks(CombatTuning.DODGE_CANCEL_MS):
+				# The end of the roll cancels into any action.
+				var action: StringName = _take_buffer()
 				p.enter(Fighter.State.FREE)
 				p.weapon().on_dodge_end(self)
+				if p.state == Fighter.State.FREE:
+					_try_action(action, input)
+				return
+			_roll_tick(p)
 		Fighter.State.BRACE:
 			p.state_tick += 1
 			if p.state_tick >= p.state_length:
@@ -216,7 +219,6 @@ func _try_action(action: StringName, input: CombatInput) -> bool:
 				return false
 			p.move = null
 			p.chain = 0
-			p.brace_ready = false
 			var direction: Vector2 = input.move.limit_length(1.0)
 			p.dodge_direction = direction.normalized() if direction.length() > 0.1 else p.facing
 			if lock_target == null:
@@ -228,6 +230,7 @@ func _try_action(action: StringName, input: CombatInput) -> bool:
 				CombatTuning.ticks(CombatTuning.DODGE_IFRAME_END_MS))
 			p.enter(Fighter.State.DODGE, CombatTuning.ticks(CombatTuning.DODGE_MS))
 			events.append({"type": "dodge"})
+			_roll_tick(p)  # the roll moves on the press tick
 			return true
 		&"swap":
 			if p.weapons.size() < 2:
@@ -239,12 +242,28 @@ func _try_action(action: StringName, input: CombatInput) -> bool:
 			p.swap_cooldown = CombatTuning.ticks(CombatTuning.SWAP_COOLDOWN_MS)
 			p.move = null
 			p.chain = 0
-			p.brace_ready = false
 			p.enter(Fighter.State.FREE)
 			events.append({"type": "swap", "weapon": p.weapon().id})
 			return true
 	var weapon: Weapon = p.weapon()
 	return weapon != null and weapon.try_action(self, action, input)
+
+
+## One tick of the roll: most of the distance in the first frames (a cubic
+## ease-out), so the dodge answers the press at once.
+func _roll_tick(p: Fighter) -> void:
+	_move_with_collision(p, p.dodge_direction * roll_step(p.state_tick, p.state_length, CombatTuning.DODGE_DISTANCE))
+	p.state_tick += 1
+	if p.state_tick >= p.state_length:
+		p.enter(Fighter.State.FREE)
+		p.weapon().on_dodge_end(self)
+
+
+## Distance the roll covers on tick k of n.
+static func roll_step(k: int, n: int, distance: float) -> float:
+	var before: float = 1.0 - pow(1.0 - float(k) / n, 3.0)
+	var after: float = 1.0 - pow(1.0 - float(k + 1) / n, 3.0)
+	return (after - before) * distance
 
 
 ## Magic's dodge: a blink of WARDSTEP_DISTANCE (stopped by walls), leaving
@@ -296,7 +315,6 @@ func start_attack(f: Fighter, move: CombatMove, aim: bool = true) -> bool:
 	if aim and f.kind == Fighter.Kind.PLAYER:
 		_aim_player(move)
 	f.move = move
-	f.brace_ready = false
 	f.hit_this_move.clear()
 	f.attack_origin = f.position
 	f.enter(Fighter.State.ATTACK, move.windup_ticks() + move.active_ticks() + move.recovery_ticks())
@@ -344,9 +362,9 @@ func _advance_attack(f: Fighter) -> void:
 			fire(f, move.arrow)
 		var zone: Dictionary = attack_zone(f)
 		for target: Fighter in _targets_of(f):
-			if not move.melee or target in f.hit_this_move or not in_zone(zone, target):
+			if not move.melee or target.get_instance_id() in f.hit_this_move or not in_zone(zone, target):
 				continue
-			f.hit_this_move.append(target)
+			f.hit_this_move.append(target.get_instance_id())
 			_hit(f, target, move)
 		if move.shockwave_radius > 0.0 and f.state_tick == move.windup_ticks():
 			_shockwave(f, move)
@@ -411,6 +429,9 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if attacker.kind == Fighter.Kind.PLAYER and attacker.weapon() != null:
 		attacker.weapon().on_hit_landed(self, target, move)
 	_interrupt_cast(target)
+	if Greatsword.in_perfect_window(target):
+		_riposte(target, attacker)
+		return
 	var damage: float = move.damage
 	var consumed: Dictionary = {}
 	if move.releases_effects and target.effects.total() > 0:
@@ -424,15 +445,16 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if move.breaks_armour and target.armour > 0.0:
 		target.armour = 0.0
 		events.append({"type": "armour_break", "fighter": target, "position": target.position})
+	if target.state == Fighter.State.BRACE:
+		damage *= Greatsword.BRACE_DAMAGE_TAKEN  # the guard takes most of it
 	damage = _apply_damage(target, damage)
 	hitstop = maxi(hitstop, CombatTuning.ticks(move.hitstop_ms))
 	events.append({"type": "hit", "attacker": attacker, "target": target, "move": move.id,
 		"damage": damage, "position": target.position})
 	if target.state == Fighter.State.BRACE:
-		target.brace_ready = true
-		events.append({"type": "brace_absorb", "fighter": target})
+		events.append({"type": "brace_absorb", "fighter": target, "position": target.position})
 	if not consumed.is_empty():
-		_release_combinations(attacker, target, consumed)
+		release_combinations(attacker, target, consumed)
 	if target.health <= 0.0:
 		_defeat(target)
 		return
@@ -450,6 +472,21 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		direction = direction.normalized() if direction.length() > 0.001 else attacker.facing
 		target.push_ticks = CombatTuning.ticks(CombatTuning.PUSH_MS)
 		target.push_velocity = direction * (move.push / target.push_ticks)
+
+
+## A perfect brace (Greatsword.PERFECT_BRACE_MS): the hit does nothing, the
+## attacker is staggered and thrown back, and the guard ripostes at once.
+func _riposte(guard: Fighter, attacker: Fighter) -> void:
+	events.append({"type": "perfect_brace", "fighter": guard, "attacker": attacker, "position": guard.position})
+	hitstop = maxi(hitstop, CombatTuning.ticks(CombatTuning.HITSTOP_BIG_MS))
+	if not attacker.is_staggered():
+		stagger(attacker)
+	var direction: Vector2 = attacker.position - guard.position
+	direction = direction.normalized() if direction.length() > 0.001 else guard.facing
+	attacker.push_ticks = CombatTuning.ticks(CombatTuning.PUSH_MS)
+	attacker.push_velocity = direction * (Greatsword.RIPOSTE_REPEL / attacker.push_ticks)
+	guard.facing = direction
+	start_attack(guard, Greatsword.BRACE_COUNTER, false)
 
 
 ## Takes `amount` off target's health: more with Rot, less while it has
@@ -507,7 +544,7 @@ func apply_effect(target: Fighter, kind: StringName, stacks: int) -> void:
 
 
 ## What releasing two or three effects together adds (combat.md, "Release").
-func _release_combinations(attacker: Fighter, target: Fighter, consumed: Dictionary) -> void:
+func release_combinations(attacker: Fighter, target: Fighter, consumed: Dictionary) -> void:
 	var smoulder: bool = consumed.has(StatusEffects.SMOULDER)
 	var chill: bool = consumed.has(StatusEffects.CHILL)
 	var rot: bool = consumed.has(StatusEffects.ROT)

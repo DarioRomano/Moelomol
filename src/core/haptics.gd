@@ -31,12 +31,14 @@ const EFFECTS: Dictionary = {
 	&"bow_heavy_hit": [0.3, 0.7, 0.1],
 	&"spell_cast": [0.1, 0.0, 0.05],  # a faint buzz
 	&"spell_hit": [0.1, 0.2, 0.04],
-	&"release": [0.3, 0.6, 0.1],  # up to 5 stacks consumed
+	&"siphon_drain": [0.0, 0.3, 0.03],  # a tug each time the tether pulls stacks
+	&"release": [0.3, 0.6, 0.1],  # the Siphon beam: up to 5 stacks drained
 	&"release_big": [0.5, 0.95, 0.2],  # more than 5
 	&"wardstep": [0.15, 0.1, 0.06],
 	&"dodge": [0.12, 0.05, 0.05],
 	&"evaded": [0.0, 0.4, 0.05],  # an attack passed through the dodge
 	&"brace_absorb": [0.35, 0.75, 0.12],
+	&"perfect_brace": [0.6, 0.9, 0.18],  # the guard holds and throws the attacker back
 	&"armour_break": [0.5, 0.8, 0.15],
 	&"swap": [0.05, 0.2, 0.04],
 	&"no_stamina": [0.25, 0.0, 0.1],  # a dull buzz: nothing happened
@@ -120,15 +122,15 @@ static func effect_for_event(event: Dictionary) -> StringName:
 					return &"hammer_hit"
 				&"hammer_jab", &"ground_stamp":
 					return &"hammer_jab"
-				&"arrow_heavy":
-					return &"bow_heavy_hit"
-				&"arrow_quick", &"arrow_strong", &"arrow_piercing", &"arrow_marker":
+				&"arrow_piercing":
+					return &"bow_heavy_hit"  # stage 3: pierces and pushes
+				&"arrow_quick", &"arrow_normal", &"arrow_strong", &"arrow_marker":
 					return &"bow_hit"
 				&"volley_rain":
 					return &""  # many small hits at once: rumble would only blur
 				&"ember", &"frost":
 					return &"spell_hit"
-				&"release", &"shatter":
+				&"siphon_beam", &"release", &"shatter":
 					return &""  # the release event plays the pulse
 			return &"greatsword_heavy_hit" if move in HEAVY_GREATSWORD_MOVES else &"greatsword_hit"
 		"impact":
@@ -146,6 +148,8 @@ static func effect_for_event(event: Dictionary) -> StringName:
 			return &"evaded" if dodger.kind == Fighter.Kind.PLAYER else &""
 		"brace_absorb":
 			return &"brace_absorb"
+		"perfect_brace":
+			return &"perfect_brace"
 		"armour_break":
 			return &"armour_break"
 		"swap":
@@ -156,8 +160,10 @@ static func effect_for_event(event: Dictionary) -> StringName:
 			return &"hammer_perfect"
 		"draw_stage":
 			return &"bow_stage"
-		"cast":
+		"cast", "siphon":
 			return &"spell_cast"
+		"siphon_drain":
+			return &"siphon_drain"
 		"wardstep":
 			return &"wardstep"
 		"frozen":

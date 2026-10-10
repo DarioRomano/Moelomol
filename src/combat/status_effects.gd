@@ -82,6 +82,16 @@ func consume() -> Dictionary:
 	return taken
 
 
+## Removes up to n stacks of kind (the Siphon draining them); returns how
+## many were taken.
+func take(kind: StringName, n: int) -> int:
+	var taken: int = mini(n, int(stacks[kind]))
+	stacks[kind] = int(stacks[kind]) - taken
+	if int(stacks[kind]) == 0:
+		_timers[kind] = 0
+	return taken
+
+
 func clear() -> void:
 	consume()
 	_dot_wait = 0

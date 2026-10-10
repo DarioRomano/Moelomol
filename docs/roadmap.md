@@ -44,7 +44,7 @@ confirming the tools' licence terms.
 
 `docs/design/combat.md` and `docs/design/combat-art-prompts.md`: four
 weapons (greatsword, hammer, bow, magic), the shared foundation (dodge,
-stamina, poise and stagger, lock-on), stacking effects and Release. The lead
+stamina, poise and stagger, lock-on), stacking effects and the Siphon. The lead
 approved the design with Q18 (top-down ¾, ADR-0014) and Q19 (two weapons with
 a swap) on 2026-10-10.
 
@@ -54,14 +54,18 @@ a swap) on 2026-10-10.
   weapons exist. Combat feel changes from the lead's first play: stagger
   resets attacks, +40% melee reach, held charge rumble, three-level hammer
   charge with a cone shockwave, telegraphs that match the hit zone
+  (2026-10-10). Second round: quick roll, guard and riposte (Q30), bow
+  stages and one-press Volley, Siphon on magic's heavy hold (Q29)
   (2026-10-10).
-- **Next:** tuning from the lead's playtests; then the lead decides what
+- **Next:** the Rot rework once the lead answers Q31; tuning from the
+  lead's playtests; then the lead decides what
   follows (the combat prototype has no further planned step).
 - **Waiting on the lead:** arena playtest
   (`docs/playtests/2026-10-10-combat-arena.md`), hammer, bow and magic
   playtests (`docs/playtests/2026-10-10-hammer.md`,
   `docs/playtests/2026-10-10-bow.md`, `docs/playtests/2026-10-10-magic.md`),
-  combat feel changes (`docs/playtests/2026-10-10-combat-feel.md`).
+  combat feel changes (`docs/playtests/2026-10-10-combat-feel.md`), round
+  two (`docs/playtests/2026-10-10-combat-feedback-round-two.md`); Q31.
 
 ## Farming and the day–night cycle (started 2026-10-10)
 
