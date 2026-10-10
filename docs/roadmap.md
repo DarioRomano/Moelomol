@@ -51,13 +51,17 @@ a swap) on 2026-10-10.
 - **Done:** combat test arena with the shared foundation and the greatsword
   (2026-10-10); hammer, armour and the two-weapon swap (2026-10-10); bow
   (2026-10-10); magic and the status-effect system (2026-10-10). All four
-  weapons exist.
+  weapons exist. Combat feel changes from the lead's first play: stagger
+  resets attacks, +40% melee reach, held charge rumble, three-level hammer
+  charge with a cone shockwave, telegraphs that match the hit zone
+  (2026-10-10).
 - **Next:** tuning from the lead's playtests; then the lead decides what
   follows (the combat prototype has no further planned step).
 - **Waiting on the lead:** arena playtest
   (`docs/playtests/2026-10-10-combat-arena.md`), hammer, bow and magic
   playtests (`docs/playtests/2026-10-10-hammer.md`,
-  `docs/playtests/2026-10-10-bow.md`, `docs/playtests/2026-10-10-magic.md`).
+  `docs/playtests/2026-10-10-bow.md`, `docs/playtests/2026-10-10-magic.md`),
+  combat feel changes (`docs/playtests/2026-10-10-combat-feel.md`).
 
 ## Farming and the day–night cycle (started 2026-10-10)
 

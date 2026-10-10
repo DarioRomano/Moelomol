@@ -135,45 +135,71 @@ func test_charging_walks_slowly() -> void:
 	assert_eq(sim.player.facing, Vector2.DOWN, "turns with the movement")
 
 
-func test_sweet_spot_is_announced_when_it_starts() -> void:
+func test_each_charge_level_is_announced_as_it_is_reached() -> void:
 	var sim: CombatSim = _field()
 	sim.step(CombatInput.press(&"heavy"))
-	var at: int = -1
+	var levels: Array[int] = []
+	var at: Array[int] = []
+	var overcharged_at: int = -1
 	for i: int in range(80):
 		sim.step(CombatInput.hold_heavy())
-		if _count(sim.events, "sweet_spot") > 0:
-			at = i
-	assert_eq(at, _perfect_ticks(), "sweet_spot event after 900 ms of holding")
+		for e: Dictionary in sim.events:
+			if e["type"] == "charge_level":
+				levels.append(int(e["level"]))
+				at.append(i)
+			elif e["type"] == "overcharge":
+				overcharged_at = i
+	assert_eq(levels, [1, 2, 3] as Array[int], "three levels, in order")
+	assert_eq(at, [T.ticks(300), T.ticks(600), T.ticks(900)] as Array[int], "after 300, 600 and 900 ms")
+	assert_eq(overcharged_at, _hammer(sim).sweet_spot_ticks().y, "overcharge when the sweet spot ends")
 
 
 # --- Hammer: release grades --------------------------------------------------------
 
-func test_release_grades_follow_the_sweet_spot() -> void:
+func test_release_grades_follow_the_three_levels() -> void:
 	var hammer: Hammer = Hammer.new()
+	var levels: Array[int] = hammer.level_ticks()
 	var window: Vector2i = hammer.sweet_spot_ticks()
-	assert_eq(window, Vector2i(54, 63), "900 ms start, 150 ms wide at 60 Hz")
-	assert_eq(hammer.grade_for(window.x - 1), Hammer.STRIKE_EARLY, "one tick early")
-	assert_eq(hammer.grade_for(window.x), Hammer.STRIKE_PERFECT, "first tick of the sweet spot")
+	assert_eq(window, Vector2i(54, 63), "level 3 at 900 ms, 150 ms wide at 60 Hz")
+	assert_eq(levels[2], window.x, "level 3 is the sweet spot")
+	assert_eq(hammer.grade_for(levels[0] - 1), Hammer.STRIKE_TAP, "before level 1: a tap")
+	assert_eq(hammer.grade_for(levels[0]), Hammer.STRIKE_LEVEL_1, "level 1")
+	assert_eq(hammer.grade_for(levels[1] - 1), Hammer.STRIKE_LEVEL_1, "still level 1")
+	assert_eq(hammer.grade_for(levels[1]), Hammer.STRIKE_LEVEL_2, "level 2")
+	assert_eq(hammer.grade_for(window.x - 1), Hammer.STRIKE_LEVEL_2, "one tick before level 3")
+	assert_eq(hammer.grade_for(window.x), Hammer.STRIKE_PERFECT, "first tick of level 3: perfect")
 	assert_eq(hammer.grade_for(window.y - 1), Hammer.STRIKE_PERFECT, "last tick of the sweet spot")
-	assert_eq(hammer.grade_for(window.y), Hammer.STRIKE_LATE, "one tick late")
+	assert_eq(hammer.grade_for(window.y), Hammer.STRIKE_LATE, "one tick later: overcharged")
 
 
-func test_early_release_scales_with_the_charge() -> void:
+func test_lower_levels_do_less_damage() -> void:
 	var hammer: Hammer = Hammer.new()
-	var at_once: float = hammer.strike_for(0).damage
-	var halfway: float = hammer.strike_for(_perfect_ticks() / 2).damage
-	var almost: float = hammer.strike_for(_perfect_ticks() - 1).damage
-	assert_true(at_once < halfway and halfway < almost, "more charge, more damage")
-	assert_true(almost < hammer.strike_for(_perfect_ticks()).damage, "early never matches perfect")
-	assert_eq(at_once, Hammer.STRIKE_DAMAGE * Hammer.EARLY_MIN, "a tap does the minimum")
+	var levels: Array[int] = hammer.level_ticks()
+	var tap: float = hammer.strike_for(0).damage
+	var one: float = hammer.strike_for(levels[0]).damage
+	var two: float = hammer.strike_for(levels[1]).damage
+	var perfect: float = hammer.strike_for(levels[2]).damage
+	assert_true(tap < one and one < two and two < perfect, "tap < 1 < 2 < perfect (%.0f %.0f %.0f %.0f)" % [tap, one, two, perfect])
+	assert_eq(tap, Hammer.STRIKE_DAMAGE * Hammer.TAP_SHARE, "a tap")
+	assert_eq(one, Hammer.STRIKE_DAMAGE * Hammer.LEVEL_1_SHARE, "level 1")
+	assert_eq(two, Hammer.STRIKE_DAMAGE * Hammer.LEVEL_2_SHARE, "level 2")
+	assert_eq(hammer.strike_for(levels[1] - 1).damage, one, "damage steps by level, not by tick")
+	assert_true(hammer.strike_for(hammer.sweet_spot_ticks().y).damage < perfect, "overcharged is weaker")
+	for held: int in [0, levels[0], levels[1], hammer.sweet_spot_ticks().y]:
+		assert_eq(hammer.strike_for(held).shockwave_radius, 0.0, "no shockwave below a perfect level 3")
 
 
-func test_perfect_strike_shockwave_staggers_everything_near() -> void:
-	# In front (hit by the strike), behind (only the shockwave) and too far.
-	var sim: CombatSim = _field([Vector2(125, 150), Vector2(75, 150), Vector2(100, 220)])
-	var front: Fighter = sim.creatures[0]
-	var behind: Fighter = sim.creatures[1]
-	var far: Fighter = sim.creatures[2]
+func test_perfect_level_three_sends_a_cone_shockwave_forward() -> void:
+	# Ahead in the cone (beyond the strike's reach), behind, to the side, and
+	# ahead but past the cone's reach.
+	var reach: float = Hammer.SHOCKWAVE_REACH
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(100 + reach - 2, 150), Vector2(75, 150),
+		Vector2(100, 190), Vector2(100 + reach + 14, 150)])
+	var target: Fighter = sim.creatures[0]
+	var ahead: Fighter = sim.creatures[1]
+	var behind: Fighter = sim.creatures[2]
+	var side: Fighter = sim.creatures[3]
+	var beyond: Fighter = sim.creatures[4]
 	_charge_and_release(sim, _perfect_ticks() + 1)
 	assert_eq(sim.player.move.id, Hammer.STRIKE_PERFECT, "perfect strike")
 	var seen: Array[Dictionary] = []
@@ -183,12 +209,22 @@ func test_perfect_strike_shockwave_staggers_everything_near() -> void:
 		if _count(seen, "shockwave") > 0:
 			break
 	assert_eq(_count(seen, "shockwave"), 1, "one shockwave when the hammer lands")
-	assert_eq(front.health, T.CREATURE_HEALTH - Hammer.STRIKE_DAMAGE, "full damage on the target")
-	assert_true(front.is_staggered(), "target staggered")
-	assert_true(behind.is_staggered(), "creature behind staggered by the shockwave")
-	assert_eq(behind.health, T.CREATURE_HEALTH, "the shockwave itself does no damage")
-	assert_false(far.is_staggered(), "creature out of the shockwave untouched")
-	assert_eq(sim.hitstop, T.ticks(T.HITSTOP_BIG_MS) - 0, "the biggest hit-stop")
+	assert_eq(target.health, T.CREATURE_HEALTH - Hammer.STRIKE_DAMAGE, "full damage on the target")
+	assert_true(target.is_staggered(), "target staggered")
+	assert_true(ahead.is_staggered(), "a creature far ahead in the cone is staggered")
+	assert_eq(ahead.health, T.CREATURE_HEALTH, "the shockwave itself does no damage")
+	assert_false(behind.is_staggered(), "not behind the player")
+	assert_false(side.is_staggered(), "not to the side")
+	assert_false(beyond.is_staggered(), "not past the cone's reach")
+	assert_eq(sim.hitstop, T.ticks(T.HITSTOP_BIG_MS), "the biggest hit-stop")
+
+
+func test_level_two_strike_has_no_shockwave() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(150, 150)])
+	var seen: Array[Dictionary] = _strike(sim, _hammer(sim).level_ticks()[1] + 2)
+	assert_eq(_count(seen, "shockwave"), 0, "no shockwave")
+	assert_false(sim.creatures[1].is_staggered(), "nothing beyond the strike is touched")
+	assert_eq(sim.creatures[0].health, T.CREATURE_HEALTH - Hammer.STRIKE_DAMAGE * Hammer.LEVEL_2_SHARE, "level 2 damage")
 
 
 func test_late_release_is_overstrain() -> void:
@@ -388,17 +424,46 @@ func test_light_during_a_charge_is_ignored() -> void:
 
 # --- Feedback ----------------------------------------------------------------------
 
+func test_charge_rumble_rises_then_hums_then_turns_rough() -> void:
+	var sim: CombatSim = _field()
+	var hammer: Hammer = _hammer(sim)
+	var window: Vector2i = hammer.sweet_spot_ticks()
+	assert_eq(sim.player_rumble(), Vector2.ZERO, "nothing while standing")
+	sim.step(CombatInput.press(&"heavy"))
+	var weak: Array[float] = []
+	for i: int in range(window.x):
+		weak.append(sim.player_rumble().x)
+		sim.step(CombatInput.hold_heavy())
+	for i: int in range(1, weak.size()):
+		assert_true(weak[i] >= weak[i - 1], "rises with the charge (tick %d)" % i)
+	assert_true(weak[0] > 0.0, "from the first tick")
+	var hum: Vector2 = sim.player_rumble()
+	assert_true(hum.y > 0.0 and hum.x > weak[weak.size() - 1] * 0.9, "both motors in the sweet spot (%s)" % hum)
+	_run(sim, window.y - window.x, CombatInput.hold_heavy())
+	var rough: Array[Vector2] = []
+	for i: int in range(8):
+		rough.append(sim.player_rumble())
+		sim.step(CombatInput.hold_heavy())
+	assert_true(rough.count(rough[0]) < rough.size(), "overcharged: a pulsing, uneven rumble (%s)" % [rough])
+	sim.step(CombatInput.new())
+	assert_eq(sim.player_rumble(), Vector2.ZERO, "stops with the release")
+
 func test_hammer_events_map_to_haptic_effects() -> void:
 	var p: Fighter = Fighter.make_player(Vector2.ZERO)
 	var c: Fighter = Fighter.make_creature(Vector2.ZERO)
 	assert_eq(Haptics.effect_for_event({"type": "charge_start", "fighter": p}), &"hammer_charge", "charge")
-	assert_eq(Haptics.effect_for_event({"type": "sweet_spot", "fighter": p}), &"hammer_sweet_spot", "sweet spot click")
+	assert_eq(Haptics.effect_for_event({"type": "charge_level", "fighter": p, "level": 1}), &"hammer_level", "level 1 click")
+	assert_eq(Haptics.effect_for_event({"type": "charge_level", "fighter": p, "level": 2}), &"hammer_level", "level 2 click")
+	assert_eq(Haptics.effect_for_event({"type": "charge_level", "fighter": p, "level": 3}), &"hammer_sweet_spot",
+		"a sharper click at level 3")
+	assert_eq(Haptics.effect_for_event({"type": "overcharge", "fighter": p}), &"hammer_overcharge", "overcharge jolt")
 	assert_eq(Haptics.effect_for_event({"type": "shockwave", "fighter": p}), &"hammer_perfect", "perfect strike")
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": Hammer.STRIKE_PERFECT}), &"",
 		"no second pulse for the perfect strike's hit")
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": Hammer.STRIKE_LATE}), &"hammer_hit", "strike")
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"hammer_jab"}), &"hammer_jab", "jab")
-	for effect: StringName in [&"hammer_charge", &"hammer_sweet_spot", &"hammer_perfect", &"hammer_hit", &"hammer_jab"]:
+	for effect: StringName in [&"hammer_charge", &"hammer_level", &"hammer_sweet_spot", &"hammer_overcharge",
+			&"hammer_perfect", &"hammer_hit", &"hammer_jab"]:
 		assert_true(Haptics.EFFECTS.has(effect), "%s is defined" % effect)
 	# Heaviest: the strongest motor setting for the longest time (the charge
 	# hum lasts longer but is faint).

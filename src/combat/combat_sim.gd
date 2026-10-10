@@ -263,6 +263,14 @@ func _wardstep(p: Fighter) -> void:
 	events.append({"type": "wardstep", "from": from, "position": p.position})
 
 
+## How hard the controller should rumble right now for something held (a
+## charge): (weak, strong), zero when nothing is held.
+func player_rumble() -> Vector2:
+	if player.state == Fighter.State.CHARGE and player.weapon() != null:
+		return player.weapon().charge_rumble(player)
+	return Vector2.ZERO
+
+
 ## Walking slowly while holding a charge, facing the lock target or the way
 ## the player moves.
 func _charge_move(p: Fighter, input: CombatInput) -> void:
@@ -290,6 +298,7 @@ func start_attack(f: Fighter, move: CombatMove, aim: bool = true) -> bool:
 	f.move = move
 	f.brace_ready = false
 	f.hit_this_move.clear()
+	f.attack_origin = f.position
 	f.enter(Fighter.State.ATTACK, move.windup_ticks() + move.active_ticks() + move.recovery_ticks())
 	events.append({"type": "attack", "fighter": f, "move": move.id})
 	return true
@@ -309,7 +318,7 @@ func _aim_player(move: CombatMove) -> void:
 			continue
 		var offset: Vector2 = c.position - p.position
 		var gap: float = offset.length() - p.radius - c.radius
-		var aim_range: float = CombatTuning.ARROW_RANGE if move.arrow != null else move.reach + CombatTuning.SOFT_AIM_EXTRA_REACH
+		var aim_range: float = CombatTuning.ARROW_RANGE if move.arrow != null else move.reach + move.dash + CombatTuning.SOFT_AIM_EXTRA_REACH
 		if gap > aim_range:
 			continue
 		if rad_to_deg(absf(p.facing.angle_to(offset))) > CombatTuning.SOFT_AIM_HALF_ANGLE_DEG:
@@ -324,14 +333,18 @@ func _aim_player(move: CombatMove) -> void:
 # --- Attacks (shared by player and creatures) ------------------------------------
 
 func _advance_attack(f: Fighter) -> void:
-	if f.attack_phase() == &"active":
+	var phase: StringName = f.attack_phase()
+	if phase == &"windup":
+		f.attack_origin = f.position  # the telegraph moves with a shoved creature
+	if phase == &"active":
 		var move: CombatMove = f.move
 		if move.dash > 0.0:
 			_move_with_collision(f, f.facing * (move.dash / move.active_ticks()))
 		if move.arrow != null and f.state_tick == move.windup_ticks():
 			fire(f, move.arrow)
+		var zone: Dictionary = attack_zone(f)
 		for target: Fighter in _targets_of(f):
-			if not move.melee or target in f.hit_this_move or not _in_sector(f, target, move):
+			if not move.melee or target in f.hit_this_move or not in_zone(zone, target):
 				continue
 			f.hit_this_move.append(target)
 			_hit(f, target, move)
@@ -354,13 +367,39 @@ func _targets_of(f: Fighter) -> Array[Fighter]:
 	return targets
 
 
-static func _in_sector(attacker: Fighter, target: Fighter, move: CombatMove) -> bool:
-	var offset: Vector2 = target.position - attacker.position
-	if offset.length() - attacker.radius - target.radius > move.reach:
+## The area f's current attack covers, as one sector: the same shape decides
+## hits and is drawn as the telegraph, so what the player sees is what hits.
+## A lunge or step (dash) is part of it: the sector reaches the full distance
+## the attack travels, measured from where the attack started. During the
+## active part it fills out as the attacker travels (`reach`); `full_reach`
+## is the whole projection. Radii are from the origin to the target's edge.
+## Returns {origin, facing, arc, reach, full_reach}, or {} when not attacking.
+static func attack_zone(f: Fighter) -> Dictionary:
+	var phase: StringName = f.attack_phase()
+	if phase == &"":
+		return {}
+	var move: CombatMove = f.move
+	var full: float = f.radius + move.reach + move.dash
+	var reach: float = full
+	if phase == &"windup":
+		reach = 0.0
+	elif phase == &"active" and move.dash > 0.0:
+		var progress: float = float(f.state_tick - move.windup_ticks() + 1) / move.active_ticks()
+		reach = f.radius + move.reach + move.dash * minf(progress, 1.0)
+	return {"origin": f.position if phase == &"windup" else f.attack_origin, "facing": f.facing,
+		"arc": move.arc_deg, "reach": reach, "full_reach": full}
+
+
+## True if the target's circle touches the zone's current reach.
+static func in_zone(zone: Dictionary, target: Fighter) -> bool:
+	var origin: Vector2 = zone["origin"]
+	var offset: Vector2 = target.position - origin
+	if offset.length() - target.radius > float(zone["reach"]):
 		return false
-	if move.arc_deg >= 360.0 or offset.length() < 0.001:
+	if float(zone["arc"]) >= 360.0 or offset.length() < 0.001:
 		return true
-	return rad_to_deg(absf(attacker.facing.angle_to(offset))) <= move.arc_deg / 2.0
+	var facing: Vector2 = zone["facing"]
+	return rad_to_deg(absf(facing.angle_to(offset))) <= float(zone["arc"]) / 2.0
 
 
 func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
@@ -506,9 +545,11 @@ func _tick_effects(c: Fighter) -> void:
 ## attacker's centre to the target's edge) is staggered.
 func _shockwave(f: Fighter, move: CombatMove) -> void:
 	events.append({"type": "shockwave", "fighter": f, "position": f.position,
-		"radius": move.shockwave_radius})
+		"radius": move.shockwave_radius, "facing": f.facing, "arc": move.shockwave_arc_deg})
+	var zone: Dictionary = {"origin": f.position, "facing": f.facing, "arc": move.shockwave_arc_deg,
+		"reach": move.shockwave_radius}
 	for target: Fighter in _targets_of(f):
-		if target.position.distance_to(f.position) - target.radius > move.shockwave_radius:
+		if not in_zone(zone, target):
 			continue
 		if target.is_invulnerable() or target.is_staggered() or not target.is_alive():
 			continue
@@ -600,6 +641,12 @@ func stagger(f: Fighter, ms: int = 0) -> void:
 	f.move = null
 	f.chain = 0
 	f.enter(Fighter.State.STAGGERED, CombatTuning.ticks(ms))
+	if f.kind == Fighter.Kind.CREATURE:
+		# The interrupted attack is gone: after the stagger the creature waits
+		# its cooldown, then starts a new attack with its full telegraph. (It
+		# used to lunge again the tick the stagger ended, which read as the
+		# old attack carrying on.)
+		f.cooldown = CombatTuning.ticks(CombatTuning.CREATURE_COOLDOWN_MS)
 	events.append({"type": "stagger", "fighter": f})
 
 

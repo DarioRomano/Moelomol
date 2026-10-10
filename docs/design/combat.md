@@ -190,14 +190,16 @@ mediocre.
 **Light attack:** short, quick jabs with the hammer's head. Low damage; for
 interrupting small creatures and building Rhythm (below).
 
-**Heavy attack: the charge.** Hold to raise the hammer; a charge meter fills.
-Near the top of the charge is a short **sweet spot**:
+**Heavy attack: the charge.** Hold to raise the hammer; the charge passes
+three levels (lead, 2026-10-10). Level 3 is a short **sweet spot**, and
+holding past it overcharges:
 
 | Release | Result |
 |---|---|
-| Early | Partial damage, scaled by how full the charge was |
-| **In the sweet spot** | **Perfect strike:** full damage, a shockwave that staggers everything nearby, and armour break (below) |
-| Late (held past the sweet spot) | **Overstrain:** the strike lands weak and the player loses extra stamina; holding forever is never safe |
+| Before level 1 | A tap: a weak strike |
+| Level 1, level 2 | Stronger strikes, still well short of full damage |
+| **Level 3 (the sweet spot)** | **Perfect strike:** full damage, a **cone-shaped shockwave forward** that staggers what it reaches, and armour break (below) |
+| Overcharged (held past level 3) | **Overstrain:** the strike lands weak and the player loses extra stamina; holding forever is never safe |
 
 The sweet spot is signalled three ways, so it never depends on one sense: the
 hammer head flashes, a rising tone peaks, and the controller gives a click
@@ -410,13 +412,16 @@ later prototype.
 |---|---|---|
 | Greatsword hit | Strong, short, low | — |
 | Greatsword impact (wall) | Strong double pulse | — |
-| Hammer charge | Rising weak motor | Resistance rises with the charge |
-| Hammer sweet spot | Sharp click | Trigger "gives" at the sweet spot |
+| Hammer charge | Held rumble: rises through levels 1 and 2, a steady hum at level 3, a rough pulse when overcharged; a click at each level, a sharper one at level 3, a jolt on overcharge | Resistance rises with the charge |
+| Hammer sweet spot | (the level-3 click above) | Trigger "gives" at the sweet spot |
 | Hammer perfect strike | Heaviest pulse in the game | — |
 | Bow draw stages | A tick at each stage | Tension rising per stage, release snap |
 | Spell cast | Faint buzz | Light resistance on the Pool hold |
 | Release | Pulse scaled by stacks consumed | — |
 | Player hit | Medium, sharp | — |
+| Dodge; an attack passing through it | Light pulse; a tick | — |
+| Brace taking a hit; armour breaking | Firm pulse; strong pulse | — |
+| Swap; out of stamina | Tiny tick; dull buzz | — |
 
 ## Proposed starting values (Proposal; tuning needs the lead's approval)
 
@@ -443,7 +448,7 @@ Further starting values chosen while building the arena (all in
 | Push | plays out over 0.2 s; an impact needs at least 8 px of push left: 10 damage, 30 poise |
 | Light swings | 10 / 10 / 12 damage, step forward 6 px each (so the chain follows a pushed creature) |
 | Finishers | cleave 30 dmg 60 poise (hyper-armour); shove 6 dmg, pushes 64 px, dashes 24 px; spin 14 dmg, all round; rising 20 dmg, ×2 on staggered, +0.3 s stagger |
-| Follow-through | 45 damage; staggered creature within 24 px |
+| Follow-through | 45 damage; staggered creature within 34 px (24 before 2026-10-10's +40% reach) |
 | Training creature | speed 40 px/s, health 150, poise 80, stagger 1.2 s; lunge 0.7 s telegraph, 15 damage, 30 poise; 0.8 s recovery (the punish window) |
 | Defeated creature | fades over 1 s, returns after 3 s (arena only) |
 
@@ -495,13 +500,14 @@ needs the lead's approval):
 | Value | Start |
 |---|---|
 | Loadout | greatsword and hammer; swap (Tab / RB) from standing or an attack's recovery; 1.5 s cooldown; a swap ends the greatsword chain |
-| Jab | 150 ms windup, 6 damage, 12 poise, 5 stamina, reach 24 px |
+| Jab | 150 ms windup, 6 damage, 12 poise, 5 stamina, reach 34 px (was 24) |
 | Charge | 15 stamina when it starts; walk at 28 px/s (35%); no stamina refill while holding |
-| Sweet spot | starts after 900 ms held, 150 ms wide; each Rhythm stack shortens it by 25 ms from its end (150, 125, 100, 75 ms) |
-| Early release | 20% of full damage at once, rising to 60% just before the sweet spot |
-| Perfect strike | 40 damage, 70 poise, +25% damage per Rhythm stack (Rhythm counts strikes before this one); shatters armour; shockwave 36 px (+8 px per Rhythm) that staggers but does no damage; 120 ms hit-stop |
-| Overstrain | 40% damage, 15 extra stamina; holding past the sweet spot drains 25 stamina/s, and the hammer comes down by itself when stamina runs out |
-| Ground stamp | 100 ms windup, all round within 12 px, 4 damage, a certain 0.4 s stagger, 12 stamina |
+| Charge levels | level 1 after 300 ms held, level 2 after 600 ms, level 3 (the sweet spot) after 900 ms |
+| Sweet spot (level 3) | 150 ms wide; each Rhythm stack shortens it by 25 ms from its end (150, 125, 100, 75 ms); past it the charge is overcharged |
+| Strike by level | all strikes reach 42 px (was 30): tap 20% of full damage and poise, level 1 35%, level 2 60% |
+| Perfect strike (level 3) | 40 damage, 70 poise, +25% damage per Rhythm stack (Rhythm counts strikes before this one); shatters armour; a **70° cone shockwave forward reaching 64 px** (+8 px per Rhythm) that staggers but does no damage; 120 ms hit-stop |
+| Overcharged (Overstrain) | 40% damage, 15 extra stamina; holding past level 3 drains 25 stamina/s, and the hammer comes down by itself when stamina runs out |
+| Ground stamp | 100 ms windup, all round within 17 px (was 12), 4 damage, a certain 0.4 s stagger, 12 stamina |
 | Armour | the shelled creature's shell absorbs 60 damage; 40% of a hit gets through while it lasts; each hit chips it by its full damage; returns on respawn |
 | Wide sweet spot (accessibility) | 300 ms, no narrowing; `hammer_wide_sweet_spot=true` in `[accessibility]` of `user://settings.cfg` until the options menu exists |
 
@@ -584,3 +590,58 @@ Readings of the design taken while building (say if any is wrong):
   breaking a Brace.
 - **Effects only land on creatures** for now: no creature applies effects to
   the player yet.
+
+### Combat feel changes (lead, 2026-10-10)
+
+After playing the arena, the lead asked for five changes. As built:
+
+1. **A stagger resets an attack, it does not pause it.** A creature that is
+   staggered (or Frozen) mid-attack loses the attack. When the stagger ends
+   it waits its normal cooldown (0.6 s) and then starts a new attack with
+   its full telegraph. Before, it started a new lunge the moment it
+   recovered, which read as the old attack carrying on.
+2. **Greatsword and hammer reach about 40% further.**
+   - Greatsword: light swings 39 px (was 28), cleave 45 (32), shove 28 (20),
+     spin 42 (30), rising slash 39 (28), Follow-through 39 (28) and
+     qualifies from 34 px (24).
+   - Hammer: jab 34 (24), all strikes 42 (30), Ground stamp 17 (12).
+   - The blade and hammer drawings are longer to match.
+3. **More rumble.**
+   - The hammer charge holds a rumble while the button is held (see the
+     haptics table), with a click at each level.
+   - The bow's draw tightens per stage and strains at stage 3; magic's
+     heavy hold hums faintly.
+   - New one-shot pulses: dodge, an attack passing through a dodge, Brace
+     taking a hit, armour breaking, swap, out of stamina.
+   - The held rumble is refreshed every tick and never cuts a one-shot
+     short. Intensity scales and switches off both.
+4. **Hammer charge in three levels**, the last one overchargeable; lower
+   levels do less damage; a perfect level 3 sends a cone-shaped shockwave
+   forward. Values in the hammer table above.
+   - The charge meter has notches at levels 1 and 2, the sweet spot marked,
+     and three level pips above it, red when overcharged.
+5. **The telegraph is the hit zone.** Every attack hits inside one sector,
+   and that sector is what the telegraph draws.
+   - **The sector includes the attack's lunge or step.** The creature lunge
+     covers 7 + 18 + 28 = 53 px from where the lunge starts.
+   - **During the windup** the zone follows the creature, so a shoved
+     creature takes its telegraph along.
+   - **From the lunge on** the zone stays where the lunge began, and fills
+     as the lunge travels.
+   - **Before**, hits were measured from the creature's moving body, so a
+     lunge reached 28 px past what the telegraph showed.
+   - The red outline marks the zone's far edge.
+   - The same rule covers the player's own stepping attacks, which changes
+     nothing they can reach.
+
+Readings taken (say if any is wrong):
+
+- **The shockwave's reach is longer than 40% more.** The old all-round
+  shockwave reached 36 px. A 70° cone reaching only 50 px (36 + 40%) would
+  barely pass the strike's own 42 px reach, so it would add almost nothing;
+  64 px makes the cone the reason to hit perfectly. This is a balance number
+  for your approval.
+- **"Overcharged" is the old Overstrain**, with the same weak strike,
+  stamina cost and drain.
+- **Level 3 has no "imperfect" release.** Releasing anywhere in the level-3
+  window is perfect; the window is what narrows with Rhythm.

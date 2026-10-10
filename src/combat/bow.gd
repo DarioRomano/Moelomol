@@ -75,6 +75,12 @@ func charge_move_speed() -> float:
 	return DRAW_MOVE_SPEED
 
 
+## The string's tension: a little more at each stage, a strain at stage 3.
+func charge_rumble(p: Fighter) -> Vector2:
+	var stage: int = stage_for(p.state_tick)
+	return Vector2(0.04 + 0.07 * stage, 0.12 if stage == 3 else 0.0)
+
+
 func step_charge(sim: CombatSim, input: CombatInput) -> void:
 	var p: Fighter = sim.player
 	var held: int = p.state_tick

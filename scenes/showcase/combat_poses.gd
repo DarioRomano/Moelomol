@@ -8,7 +8,7 @@ func _make_panels() -> Array[Dictionary]:
 		_pose("Overhead cleave: hyper-armour windup", _cleave_windup),
 		_pose("Shove into a pillar: impact", _shove_impact),
 		_pose("Spin sweep hits all around", _spin),
-		_pose("Creature telegraph, locked on", _telegraph),
+		_pose("Lunge ends at its telegraph's edge", _telegraph),
 		_pose("Follow-through on a staggered creature", _follow_through),
 	]
 
@@ -54,11 +54,21 @@ func _spin(sim: CombatSim, effects: Array[Dictionary]) -> void:
 	_step_until(sim, effects, func() -> bool: return sim.player.attack_phase() == &"active" and sim.hitstop > 0)
 
 
+## The projection is the hit zone (lead, 2026-10-10): freeze on the lunge's
+## last active tick, the body forward, the outline still where the lunge
+## began, the player standing just outside it.
 func _telegraph(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	var c: Fighter = sim.add_creature(Vector2(120, 80))
+	var c: Fighter = sim.add_creature(Vector2(130, 80))
+	c.ai_enabled = false
+	var reach: float = c.radius + CombatTuning.CREATURE_LUNGE_REACH + CombatTuning.CREATURE_LUNGE_DISTANCE
+	sim.player.position = Vector2(130 - reach - sim.player.radius - 2.0, 80)
+	sim.player.previous_position = sim.player.position
+	c.facing = Vector2.LEFT
+	sim.start_attack(c, sim._creature_lunge)
+	var last: int = c.move.windup_ticks() + c.move.active_ticks() - 1
 	var hold: CombatInput = CombatInput.new()
 	hold.lock_held = true
-	_step_until(sim, effects, func() -> bool: return c.attack_phase() == &"windup" and c.state_tick == 20, hold)
+	_step_until(sim, effects, func() -> bool: return c.state_tick >= last, hold)
 
 
 func _follow_through(sim: CombatSim, effects: Array[Dictionary]) -> void:

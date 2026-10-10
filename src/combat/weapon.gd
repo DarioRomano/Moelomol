@@ -27,6 +27,12 @@ func charge_move_speed() -> float:
 	return CombatTuning.CHARGE_MOVE_SPEED
 
 
+## Controller rumble (weak, strong motor 0..1) while charging with this
+## weapon; sustained by the scene every tick.
+func charge_rumble(_p: Fighter) -> Vector2:
+	return Vector2.ZERO
+
+
 ## True if a hit stops this weapon's charge (magic's casts).
 func charge_interruptible() -> bool:
 	return false

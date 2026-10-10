@@ -75,6 +75,13 @@ Constraints the architecture must honour:
   live in `CombatSim.apply_effect` / `_release_combinations`, because they
   reach other fighters. Any `CombatMove` can carry an `effect`, so crafted
   arrowheads and enhancements can apply effects later.
+- `CombatSim.attack_zone(f)` is the one sector an attack hits: from where
+  the attack started, reaching its reach plus any lunge or step, filling
+  as the lunge travels. `in_zone` tests it and `CombatDrawer` draws it as
+  the telegraph, so what is shown is what hits (lead, 2026-10-10).
+- `Haptics` plays one-shot effects and a sustained rumble that the arena
+  refreshes every tick from `CombatSim.player_rumble()` (the weapon's
+  `charge_rumble` while charging).
 - `Projectile` (arrows: straight flight, hit test against the path swept
   each tick, piercing, the Volley marker) and `Zone` (an area that hits in
   timed waves: the Volley rain, magic's Rot and Chill pools) are stepped by
@@ -334,6 +341,17 @@ a real controller)
 - A `%` in a string used with the `%` operator must be written `%%`;
   otherwise the engine logs "unsupported format character" (a test message
   "60% speed" did this, and the runner's logged-error hook caught it).
+
+### 2026-10-10 (combat feel changes), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `Input.stop_joy_vibration(device)` and `Input.start_joy_vibration` exist;
+  the sustained rumble refreshes a 0.1 s vibration each tick and stops it
+  when nothing is held.
+- `Input.action_press(action)` / `action_release(action)` set the action
+  state seen by `Input.is_action_pressed` (verified with a probe), so a
+  scene test can hold the heavy button.
+- `Vector2` stores 32-bit floats: `Vector2(0.2, 0.1).x == 0.2` is false.
+  Compare components with a tolerance (two haptics tests did not, at first).
 
 ### 2026-10-10 (farming), Godot 4.7.2.stable.official.ed1daf0bf
 
