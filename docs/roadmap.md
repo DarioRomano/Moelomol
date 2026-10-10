@@ -50,11 +50,14 @@ a swap) on 2026-10-10.
 
 - **Done:** combat test arena with the shared foundation and the greatsword
   (2026-10-10); hammer, armour and the two-weapon swap (2026-10-10); bow
-  (2026-10-10).
-- **Next:** magic (with the status-effect system).
+  (2026-10-10); magic and the status-effect system (2026-10-10). All four
+  weapons exist.
+- **Next:** tuning from the lead's playtests; then the lead decides what
+  follows (the combat prototype has no further planned step).
 - **Waiting on the lead:** arena playtest
-  (`docs/playtests/2026-10-10-combat-arena.md`), hammer and bow playtests
-  (`docs/playtests/2026-10-10-hammer.md`, `docs/playtests/2026-10-10-bow.md`).
+  (`docs/playtests/2026-10-10-combat-arena.md`), hammer, bow and magic
+  playtests (`docs/playtests/2026-10-10-hammer.md`,
+  `docs/playtests/2026-10-10-bow.md`, `docs/playtests/2026-10-10-magic.md`).
 
 ## Later (not planned)
 

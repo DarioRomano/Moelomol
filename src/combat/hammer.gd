@@ -151,6 +151,7 @@ func strike_for(held: int) -> CombatMove:
 	if grade == STRIKE_PERFECT:
 		m.hitstop_ms = CombatTuning.HITSTOP_BIG_MS
 		m.breaks_armour = true
+		m.releases_effects = true  # a perfect strike cashes in magic's stacks
 		m.shockwave_radius = SHOCKWAVE_RADIUS + SHOCKWAVE_RADIUS_PER_RHYTHM * rhythm
 	return m
 

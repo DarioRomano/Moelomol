@@ -45,6 +45,13 @@ var brace_ready: bool = false  # a hit landed during Brace: next heavy is instan
 var push_velocity: Vector2 = Vector2.ZERO  # px per tick while being shoved
 var push_ticks: int = 0
 var dodge_direction: Vector2 = Vector2.ZERO
+## Ticks of the dodge that are invulnerable: [first, first after]. The roll
+## sets the shared window; Wardstep is invulnerable throughout.
+var iframes: Vector2i = Vector2i(CombatTuning.ticks(CombatTuning.DODGE_IFRAME_START_MS),
+	CombatTuning.ticks(CombatTuning.DODGE_IFRAME_END_MS))
+var effects: StatusEffects = StatusEffects.new()
+var resists: Array[StringName] = []  # effects this creature ignores
+var tempo: float = 0.0  # Chill: time owed before the next slowed tick
 var cooldown: int = 0  # creature: ticks until it may attack again
 var ai_enabled: bool = true  # creature: false = a passive training dummy
 
@@ -116,9 +123,7 @@ func attack_phase() -> StringName:
 
 ## True while the player cannot be hurt: the middle of a dodge.
 func is_invulnerable() -> bool:
-	return state == State.DODGE \
-		and state_tick >= CombatTuning.ticks(CombatTuning.DODGE_IFRAME_START_MS) \
-		and state_tick < CombatTuning.ticks(CombatTuning.DODGE_IFRAME_END_MS)
+	return state == State.DODGE and state_tick >= iframes.x and state_tick < iframes.y
 
 
 ## True while hits cannot stagger this fighter.

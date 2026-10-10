@@ -6,6 +6,7 @@ extends Control
 
 var _health: float = 1.0
 var _stamina: float = 1.0
+var _focus: float = -1.0  # < 0: no magic in hand, no bar
 var _label: Label
 var _help: Label
 
@@ -14,7 +15,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label = _make_label()
-	_label.position = Vector2(8, 22)
+	_label.position = Vector2(8, 24)
 	_help = _make_label()
 	_help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -38,6 +39,7 @@ func show_state(sim: CombatSim, interpolation: bool) -> void:
 	var p: Fighter = sim.player
 	_health = p.health / p.max_health
 	_stamina = p.stamina.current / p.stamina.maximum
+	_focus = (p.weapon() as Magic).focus / Magic.FOCUS_MAX if p.weapon() is Magic else -1.0
 	var doing: String = _describe(p)
 	var passive: bool = not sim.creatures.is_empty() and not sim.creatures[0].ai_enabled
 	var weapon: Weapon = p.weapon()
@@ -71,3 +73,6 @@ func _draw() -> void:
 	draw_rect(Rect2(8, 8, 96 * _health, 4), Palette.DANGER[1])
 	draw_rect(Rect2(8, 14, 96, 3), Palette.SHADOW[0])
 	draw_rect(Rect2(8, 14, 96 * _stamina, 3), Palette.WARMTH[3])
+	if _focus >= 0.0:
+		draw_rect(Rect2(8, 19, 96, 2), Palette.SHADOW[0])
+		draw_rect(Rect2(8, 19, 96 * _focus, 2), Palette.CHANGED[1])
