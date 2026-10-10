@@ -1,6 +1,6 @@
 extends PoseSheet
-## Magic review poses (PoseSheet): spells, effect stacks, Frozen, the Rot
-## pool, Release with its combinations, and Wardstep.
+## Magic review poses (PoseSheet): spells, effect stacks, Frozen, the
+## Siphon's tether and beam, the Rot pool (skill, interim) and Wardstep.
 
 const MAGIC: int = 1
 
@@ -9,9 +9,9 @@ func _make_panels() -> Array[Dictionary]:
 	return [
 		_pose("Ember bolt on a smouldering creature", _ember, MAGIC),
 		_pose("Frost shard: five Chill, Frozen", _frozen, MAGIC),
-		_pose("Rot pool: creatures in it gain Rot", _pool, MAGIC),
-		_pose("Release, three effects: Shatter + Blight", _release_all, MAGIC),
-		_pose("Release, Chill + Rot: Brittle", _brittle, MAGIC),
+		_pose("Siphon: the tether drains stacks", _siphon_draining, MAGIC),
+		_pose("Siphon beam, three effects: Shatter + Blight", _beam_all, MAGIC),
+		_pose("Skill (interim): Rot pool", _pool, MAGIC),
 		_pose("Wardstep: blink, leave a Chill pool", _wardstep, MAGIC),
 	]
 
@@ -43,28 +43,35 @@ func _frozen(sim: CombatSim, effects: Array[Dictionary]) -> void:
 func _pool(sim: CombatSim, effects: Array[Dictionary]) -> void:
 	_creature(sim, Vector2(100, 74))
 	_creature(sim, Vector2(110, 92))
-	sim.step(CombatInput.press(&"heavy"))
-	_step_until(sim, effects, func() -> bool: return not sim.zones.is_empty(), CombatInput.hold_heavy())
+	sim.step(CombatInput.press(&"skill"))
 	_step_until(sim, effects, func() -> bool: return sim.zones[0].age >= 70)
 
 
-func _release_all(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	var c: Fighter = _creature(sim, Vector2(84, 80))
-	var near: Fighter = _creature(sim, Vector2(108, 66))
-	_creature(sim, Vector2(104, 100))
+## Holding heavy on a creature carrying all three effects, part-way through:
+## the tether, its motes and the drained beads round the lantern.
+func _siphon_draining(sim: CombatSim, effects: Array[Dictionary]) -> void:
+	var c: Fighter = _creature(sim, Vector2(110, 80))
 	for kind: StringName in StatusEffects.KINDS:
 		sim.apply_effect(c, kind, 4)
-	sim.apply_effect(near, StatusEffects.CHILL, 1)
-	sim.step(CombatInput.press(&"skill"))
-	_step_until(sim, effects, func() -> bool: return _effect_age(effects, "blight_bloom") >= 6)
+	sim.step(CombatInput.press(&"heavy"))
+	var magic: Magic = sim.player.weapon() as Magic
+	_step_until(sim, effects, func() -> bool: return magic.drained_total() >= 6, CombatInput.hold_heavy())
 
 
-func _brittle(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	var c: Fighter = _creature(sim, Vector2(84, 80))
-	sim.apply_effect(c, StatusEffects.CHILL, 3)
-	sim.apply_effect(c, StatusEffects.ROT, 3)
-	sim.step(CombatInput.press(&"skill"))
-	_step_until(sim, effects, func() -> bool: return _effect_age(effects, "brittle") >= 5)
+## The beam on release: the first creature takes the burst, the one behind
+## takes half, and the combinations bloom.
+func _beam_all(sim: CombatSim, effects: Array[Dictionary]) -> void:
+	var c: Fighter = _creature(sim, Vector2(96, 80))
+	_creature(sim, Vector2(136, 82))
+	_creature(sim, Vector2(110, 104))
+	for kind: StringName in StatusEffects.KINDS:
+		sim.apply_effect(c, kind, 4)
+	sim.step(CombatInput.press(&"heavy"))
+	var magic: Magic = sim.player.weapon() as Magic
+	_step_until(sim, effects, func() -> bool: return magic.drained_total() >= 9, CombatInput.hold_heavy())
+	sim.step(CombatInput.new())
+	CombatDrawer.update_effects(effects, sim.events)
+	_step_until(sim, effects, func() -> bool: return _effect_age(effects, "blight_bloom") >= 4)
 
 
 func _wardstep(sim: CombatSim, effects: Array[Dictionary]) -> void:

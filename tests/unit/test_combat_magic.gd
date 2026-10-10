@@ -50,6 +50,24 @@ func _count(events: Array[Dictionary], type: String) -> int:
 	return n
 
 
+## Presses heavy and holds until the Siphon forms (its first pull lands),
+## then for `periods` more pulls, then lets go and lets the beam play out.
+func _siphon(sim: CombatSim, periods: int, release: bool = true) -> Array[Dictionary]:
+	sim.step(CombatInput.press(&"heavy"))
+	var seen: Array[Dictionary] = sim.events.duplicate()
+	for i: int in range(60):
+		if _magic(sim).siphoning:
+			break
+		sim.step(CombatInput.hold_heavy())
+		seen.append_array(sim.events)
+	seen.append_array(_run(sim, T.ticks(Magic.SIPHON_PERIOD_MS) * periods, CombatInput.hold_heavy()))
+	if release:
+		sim.step(CombatInput.new())
+		seen.append_array(sim.events)
+		seen.append_array(_settle(sim))
+	return seen
+
+
 # --- The effect system --------------------------------------------------------------
 
 func test_stacks_cap_at_five_and_refresh_their_duration() -> void:
@@ -127,12 +145,13 @@ func test_heavy_tap_is_a_frost_shard_with_two_chill() -> void:
 	assert_eq(sim.creatures[0].effects.count(C), 2, "two Chill stacks")
 
 
-func test_heavy_hold_places_a_rot_pool_that_gives_rot_without_hitting() -> void:
+func test_skill_places_a_rot_pool_that_gives_rot_without_hitting() -> void:
 	var sim: CombatSim = _field([Vector2(140, 150), Vector2(220, 150)])
-	sim.step(CombatInput.press(&"heavy"))
-	var seen: Array[Dictionary] = _run(sim, T.ticks(Magic.POOL_HOLD_MS) + 1, CombatInput.hold_heavy())
-	assert_eq(_count(seen, "pool"), 1, "a pool after holding 250 ms")
+	sim.step(CombatInput.press(&"skill"))
+	var seen: Array[Dictionary] = sim.events.duplicate()
+	assert_eq(_count(seen, "pool"), 1, "a pool at once")
 	assert_eq(sim.player.move, Magic.ROT_POOL, "the cast's recovery")
+	assert_true(absf(_magic(sim).focus - (Magic.FOCUS_MAX - Magic.POOL_FOCUS)) < 0.5, "Focus spent")
 	assert_true(sim.zones[0].position.distance_to(Vector2(140, 150)) < 1.0, "40 px in front")
 	seen = _run(sim, T.ticks(Magic.POOL_PERIOD_MS) * 3)
 	assert_eq(sim.creatures[0].effects.count(R), 4, "a Rot stack as it lands, then one every half second")
@@ -153,8 +172,8 @@ func test_casting_slows_but_never_roots() -> void:
 
 func test_a_hit_during_the_windup_interrupts_the_cast() -> void:
 	var sim: CombatSim = _field([Vector2(250, 150)])
-	sim.step(CombatInput.press(&"skill"))
-	assert_eq(sim.player.move, Magic.RELEASE, "Release winding up")
+	sim.step(CombatInput.press(&"light"))
+	assert_eq(sim.player.move, Magic.EMBER_BOLT, "Ember bolt winding up")
 	var lunge: CombatMove = sim._creature_lunge
 	lunge.poise_damage = 0.0  # no stagger: the interruption alone
 	sim._hit(sim.creatures[0], sim.player, lunge)
@@ -171,7 +190,7 @@ func test_a_hit_while_holding_heavy_interrupts_too() -> void:
 	lunge.poise_damage = 0.0
 	sim._hit(sim.creatures[0], sim.player, lunge)
 	lunge.poise_damage = T.CREATURE_POISE_DAMAGE
-	assert_eq(sim.player.state, Fighter.State.FREE, "no pool, no shard")
+	assert_eq(sim.player.state, Fighter.State.FREE, "no Siphon, no shard")
 
 
 # --- Full stacks ----------------------------------------------------------------------
@@ -251,47 +270,147 @@ func test_effects_are_cleared_when_a_creature_returns() -> void:
 	assert_eq(c.effects.total(), 0, "a clean start")
 
 
-# --- Release ---------------------------------------------------------------------------
+# --- Siphon (heavy hold) and its beam ----------------------------------------------------
 
-func test_release_consumes_every_stack_into_one_burst() -> void:
+func test_holding_heavy_siphons_the_creature_in_front() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	var c: Fighter = sim.creatures[0]
 	sim.apply_effect(c, S, 3)
 	sim.apply_effect(c, R, 2)
+	var seen: Array[Dictionary] = _siphon(sim, 0, false)
+	var magic: Magic = _magic(sim)
+	assert_eq(_count(seen, "siphon"), 1, "the Siphon forms")
+	assert_eq(magic.siphon_target, c, "tethered to the creature in front")
+	assert_eq(magic.drained, {S: 1, R: 1}, "the first pull: one of each kind")
+	assert_eq([c.effects.count(S), c.effects.count(R)], [2, 1], "taken off the creature")
+	assert_true(absf(magic.focus - (Magic.FOCUS_MAX - Magic.SIPHON_FOCUS)) < 1.0, "Focus spent (%.1f)" % magic.focus)
+	assert_eq(sim.player.state, Fighter.State.CHARGE, "still holding")
+
+
+func test_the_siphon_pulls_one_of_each_kind_every_200_ms() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
+	var c: Fighter = sim.creatures[0]
+	sim.apply_effect(c, S, 3)
+	sim.apply_effect(c, C, 1)
+	_siphon(sim, 1, false)
+	assert_eq(_magic(sim).drained, {S: 2, C: 1}, "two pulls; Chill ran out after one")
+	_run(sim, T.ticks(Magic.SIPHON_PERIOD_MS) - 1, CombatInput.hold_heavy())
+	assert_eq(_magic(sim).drained, {S: 2, C: 1}, "not before the next 200 ms")
+	_run(sim, 1, CombatInput.hold_heavy())
+	assert_eq(_magic(sim).drained, {S: 3, C: 1}, "then the third")
+	assert_eq(c.effects.total(), 0, "drained dry")
+
+
+func test_letting_go_fires_a_beam_with_the_drained_burst() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
+	var c: Fighter = sim.creatures[0]
+	sim.apply_effect(c, S, 3)
+	sim.apply_effect(c, R, 2)
+	var seen: Array[Dictionary] = _siphon(sim, 2)
 	var expected: float = StatusEffects.release_damage({S: 3, R: 2})
-	sim.step(CombatInput.press(&"skill"))
-	var seen: Array[Dictionary] = _settle(sim)
-	assert_eq(_count(seen, "release"), 1, "one release")
-	assert_eq(c.effects.total(), 0, "all stacks consumed")
+	assert_eq(_count(seen, "beam"), 1, "one beam")
+	assert_eq(_count(seen, "release"), 1, "one burst")
 	assert_true(absf(c.health - (T.CREATURE_HEALTH - expected)) < 0.01,
 		"the burst (%.1f expected, %.1f taken)" % [expected, T.CREATURE_HEALTH - c.health])
+	assert_eq(c.effects.count(S), 1, "drained Smoulder sets what it hits smouldering again")
+	assert_false(_magic(sim).siphoning, "the lantern is empty")
 
 
-func test_release_is_short_range() -> void:
-	var sim: CombatSim = _field([Vector2(160, 150)])
+func test_the_beam_fires_by_itself_after_a_second_and_a_half() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
+	sim.apply_effect(sim.creatures[0], S, 5)
+	var seen: Array[Dictionary] = _siphon(sim, 0, false)
+	seen.append_array(_run(sim, T.ticks(Magic.SIPHON_MAX_MS) - 1, CombatInput.hold_heavy()))
+	assert_eq(_count(seen, "beam"), 0, "not yet")
+	seen.append_array(_run(sim, 1, CombatInput.hold_heavy()))
+	assert_eq(_count(seen, "beam"), 1, "fired while still held")
+
+
+func test_the_beam_hits_the_line_behind_for_half() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(200, 152), Vector2(200, 190)])
+	sim.apply_effect(sim.creatures[0], S, 2)
+	_siphon(sim, 1)
+	var burst: float = StatusEffects.release_damage({S: 2})
+	assert_true(absf(sim.creatures[1].health - (T.CREATURE_HEALTH - burst * Magic.BEAM_SPLASH_SHARE)) < 0.01,
+		"the creature behind takes half (%.1f)" % (T.CREATURE_HEALTH - sim.creatures[1].health))
+	assert_eq(sim.creatures[2].health, T.CREATURE_HEALTH, "one off the line is untouched")
+
+
+func test_a_beam_with_nothing_drained_is_weak() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
+	var seen: Array[Dictionary] = _siphon(sim, 1)
+	assert_eq(_count(seen, "beam"), 1, "the beam still fires")
+	assert_eq(sim.creatures[0].health, T.CREATURE_HEALTH - Magic.BEAM_WEAK_DAMAGE, "a weak hit")
+
+
+func test_the_siphon_takes_the_lock_target_or_the_nearest_in_front() -> void:
+	var sim: CombatSim = _field([Vector2(60, 150), Vector2(170, 150), Vector2(140, 150)])
+	assert_eq(Magic.siphon_target_for(sim), sim.creatures[2], "the nearest in front, not the one behind")
+	sim.lock_target = sim.creatures[1]
+	assert_eq(Magic.siphon_target_for(sim), sim.creatures[1], "the lock target when in range")
+	sim.lock_target = null
+	sim.creatures[2].position = Vector2(100 + T.PLAYER_RADIUS + T.CREATURE_RADIUS + Magic.SIPHON_RANGE + 1.0, 150)
+	sim.creatures[1].position = Vector2(300, 150)
+	assert_eq(Magic.siphon_target_for(sim), null, "nothing beyond the range")
+
+
+func test_a_hit_while_siphoning_loses_what_was_drained() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
 	sim.apply_effect(sim.creatures[0], S, 3)
-	sim.step(CombatInput.press(&"skill"))
-	_settle(sim)
-	assert_eq(sim.creatures[0].effects.count(S), 3, "a creature 60 px away keeps its stacks")
+	_siphon(sim, 1, false)
+	var lunge: CombatMove = sim._creature_lunge
+	lunge.poise_damage = 0.0
+	sim._hit(sim.creatures[0], sim.player, lunge)
+	lunge.poise_damage = T.CREATURE_POISE_DAMAGE
+	assert_eq(sim.player.state, Fighter.State.FREE, "interrupted")
+	assert_true(_magic(sim).drained.is_empty(), "the lantern is empty")
+	var seen: Array[Dictionary] = _run(sim, 30)
+	assert_eq(_count(seen, "beam"), 0, "no beam")
+
+
+func test_the_tether_snaps_when_the_creature_gets_too_far() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
+	sim.apply_effect(sim.creatures[0], S, 5)
+	_siphon(sim, 0, false)
+	sim.creatures[0].position = Vector2(100 + Magic.SIPHON_BREAK_RANGE + 10.0, 150)
+	var seen: Array[Dictionary] = _run(sim, T.ticks(Magic.SIPHON_PERIOD_MS), CombatInput.hold_heavy())
+	assert_eq(_count(seen, "siphon_snap"), 1, "snapped")
+	assert_eq(_magic(sim).drained, {S: 1}, "keeps what it had, drains no more")
+
+
+func test_drained_chill_freezes_the_first_creature() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150)])
+	sim.apply_effect(sim.creatures[0], C, 3)
+	var seen: Array[Dictionary] = _siphon(sim, 2, false)
+	sim.step(CombatInput.new())
+	seen.append_array(sim.events)
+	assert_eq(_count(seen, "frozen"), 1, "Frozen")
+	assert_true(sim.creatures[0].is_staggered(), "and staggered")
+
+
+func test_drained_rot_rots_the_others_on_the_line() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(230, 150)])
+	sim.apply_effect(sim.creatures[0], R, 1)
+	_siphon(sim, 0)
+	assert_eq(sim.creatures[1].effects.count(R), Magic.BEAM_ROT_STACKS, "the one behind gains Rot")
+	assert_eq(sim.creatures[0].effects.count(R), 0, "not the first")
 
 
 func test_smoulder_and_chill_shatter_onto_creatures_around() -> void:
-	var sim: CombatSim = _field([Vector2(125, 150), Vector2(150, 170), Vector2(200, 150)])
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(150, 170), Vector2(200, 190)])
 	sim.apply_effect(sim.creatures[0], S, 2)
 	sim.apply_effect(sim.creatures[0], C, 2)
-	sim.step(CombatInput.press(&"skill"))
-	var seen: Array[Dictionary] = _settle(sim)
+	var seen: Array[Dictionary] = _siphon(sim, 1)
 	assert_eq(_count(seen, "shatter"), 1, "Shatter")
 	assert_eq(sim.creatures[1].health, T.CREATURE_HEALTH - Magic.SHATTER.damage, "the neighbour is hit")
 	assert_eq(sim.creatures[2].health, T.CREATURE_HEALTH, "a creature beyond the blast is not")
 
 
 func test_smoulder_and_rot_bloom_rot_onto_creatures_nearby() -> void:
-	var sim: CombatSim = _field([Vector2(125, 150), Vector2(160, 160), Vector2(240, 150)])
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(160, 170), Vector2(240, 200)])
 	sim.apply_effect(sim.creatures[0], S, 2)
 	sim.apply_effect(sim.creatures[0], R, 2)
-	sim.step(CombatInput.press(&"skill"))
-	var seen: Array[Dictionary] = _settle(sim)
+	var seen: Array[Dictionary] = _siphon(sim, 1)
 	assert_eq(_count(seen, "blight_bloom"), 1, "Blight bloom")
 	assert_eq(sim.creatures[1].effects.count(R), Magic.BLIGHT_ROT_STACKS, "Rot spreads to the neighbour")
 	assert_eq(sim.creatures[2].effects.count(R), 0, "not to a distant creature")
@@ -301,8 +420,9 @@ func test_chill_and_rot_make_the_target_brittle() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	sim.apply_effect(sim.creatures[0], C, 1)
 	sim.apply_effect(sim.creatures[0], R, 1)
-	sim.step(CombatInput.press(&"skill"))
-	var seen: Array[Dictionary] = _settle(sim)
+	var seen: Array[Dictionary] = _siphon(sim, 0, false)
+	sim.step(CombatInput.new())
+	seen.append_array(sim.events)
 	assert_eq(_count(seen, "brittle"), 1, "Brittle")
 	assert_true(sim.creatures[0].is_staggered(), "the target is staggered")
 
@@ -382,5 +502,7 @@ func test_magic_events_map_to_haptic_effects() -> void:
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"ember"}), &"spell_hit", "bolt hit")
 	assert_eq(Haptics.effect_for_event({"type": "release", "consumed": {S: 3}}), &"release", "small release")
 	assert_eq(Haptics.effect_for_event({"type": "release", "consumed": {S: 5, C: 2}}), &"release_big", "big release")
-	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"release"}), &"", "no double pulse")
+	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"siphon_beam"}), &"", "no double pulse")
+	assert_eq(Haptics.effect_for_event({"type": "siphon", "fighter": p}), &"spell_cast", "the tether forms")
+	assert_eq(Haptics.effect_for_event({"type": "siphon_drain", "taken": {S: 1}}), &"siphon_drain", "a tug per pull")
 	assert_eq(Haptics.effect_for_event({"type": "wardstep"}), &"wardstep", "blink")

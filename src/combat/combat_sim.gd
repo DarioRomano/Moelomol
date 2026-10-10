@@ -454,7 +454,7 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if target.state == Fighter.State.BRACE:
 		events.append({"type": "brace_absorb", "fighter": target, "position": target.position})
 	if not consumed.is_empty():
-		_release_combinations(attacker, target, consumed)
+		release_combinations(attacker, target, consumed)
 	if target.health <= 0.0:
 		_defeat(target)
 		return
@@ -544,7 +544,7 @@ func apply_effect(target: Fighter, kind: StringName, stacks: int) -> void:
 
 
 ## What releasing two or three effects together adds (combat.md, "Release").
-func _release_combinations(attacker: Fighter, target: Fighter, consumed: Dictionary) -> void:
+func release_combinations(attacker: Fighter, target: Fighter, consumed: Dictionary) -> void:
 	var smoulder: bool = consumed.has(StatusEffects.SMOULDER)
 	var chill: bool = consumed.has(StatusEffects.CHILL)
 	var rot: bool = consumed.has(StatusEffects.ROT)
