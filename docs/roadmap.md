@@ -49,11 +49,11 @@ approved the design with Q18 (top-down ¾, ADR-0014) and Q19 (two weapons with
 a swap) on 2026-10-10.
 
 - **Done:** combat test arena with the shared foundation and the greatsword
-  (2026-10-10).
-- **Next:** hammer, bow, magic (with the status-effect system), each its own
-  PR; weapon swap once a second weapon exists.
+  (2026-10-10); hammer, armour and the two-weapon swap (2026-10-10).
+- **Next:** bow, then magic (with the status-effect system), each its own PR.
 - **Waiting on the lead:** arena playtest
-  (`docs/playtests/2026-10-10-combat-arena.md`), Q20.
+  (`docs/playtests/2026-10-10-combat-arena.md`), hammer playtest
+  (`docs/playtests/2026-10-10-hammer.md`).
 
 ## Later (not planned)
 

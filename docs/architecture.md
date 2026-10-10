@@ -59,16 +59,23 @@ Constraints the architecture must honour:
   walkable `Rect2` with rectangular obstacles; fighters are circles with
   hand-written collision (no Godot physics bodies). Emits `events` (hit,
   impact, stagger, dodged, down, ...) for feedback.
-- `Fighter` (state machine data), `CombatMove` (timing in ms, converted to
-  ticks), `Greatsword` (moves and chain rules), `Poise`, `Stamina`,
-  `CombatInput`, `CombatTuning` (all starting values).
+- `Fighter` (state machine data, incl. armour and the two-weapon loadout),
+  `CombatMove` (timing in ms, converted to ticks), `Poise`, `Stamina`,
+  `CombatInput`, `CombatTuning` (shared starting values).
+- `Weapon` is the base of each weapon: it decides what light, heavy and
+  skill do (`try_action`), runs its own charge (`step_charge`, while the
+  player is in `Fighter.State.CHARGE`), and keeps its own state (the
+  hammer's Rhythm). The sim keeps everything shared: dodge, swap (1.5 s
+  cooldown), slow movement while charging, hits, armour, shockwaves.
+  `Greatsword` and `Hammer` hold their moves and starting values.
 - `CombatDrawer` draws a sim on any `CanvasItem` (placeholder shapes), with
   optional render interpolation between ticks (Q20).
 - `scenes/combat/combat_arena.tscn`: reads InputMap actions into a
   `CombatInput` in `_physics_process`, steps the sim, plays haptics, draws.
   `CombatHud` sits in a `UiFrame`.
-- `scenes/showcase/combat_poses.tscn`: scripted sims frozen at telling
-  moments, for the review renders.
+- `scenes/showcase/combat_poses.tscn` (greatsword) and `hammer_poses.tscn`:
+  scripted sims frozen at telling moments, for the review renders. Both
+  extend `PoseSheet` (`pose_sheet.gd`), six panels each.
 - `Haptics` (`src/core/haptics.gd`): named rumble effects (ADR-0013).
 
 Why a custom simulation: every rule is testable headlessly and
@@ -269,3 +276,16 @@ a real controller)
 - `CanvasItem.draw_set_transform(offset)` offsets later draw calls (combat
   poses panels).
 
+### 2026-10-10 (hammer and weapon swap), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `KEY_TAB` is 4194306; `JOY_BUTTON_RIGHT_SHOULDER` is 10 (the swap
+  binding, written into `project.godot` with device -1 like the others; the
+  binding test checks it with controller 1).
+- `match` accepts another class's constants as patterns
+  (`Hammer.STRIKE_PERFECT` in `Haptics.effect_for_event`), and `is Hammer`
+  works on a `Weapon` typed value; both run in the suite.
+- `Array.assign()` replaces a typed array's contents in place, so
+  `CombatDrawer.update_effects` can drop finished effects from the caller's
+  `Array[Dictionary]` (the effect tests run it).
+- `ConfigFile.get_value` returns a `bool` for a saved `true`, so the
+  accessibility setting checks `is bool` and warns otherwise.

@@ -11,8 +11,6 @@ extends Node2D
 ## Developer keys: F5 render interpolation on/off (Q20), F6 creatures
 ## passive/active.
 
-const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6}
-
 var sim: CombatSim = CombatSim.make_arena()
 var haptics: Haptics = Haptics.new()
 var render_interpolation: bool = true
@@ -22,6 +20,9 @@ var _hud: CombatHud
 
 
 func _ready() -> void:
+	for weapon: Weapon in sim.player.weapons:
+		if weapon is Hammer:
+			(weapon as Hammer).wide_sweet_spot = GameSettings.shared().hammer_wide_sweet_spot
 	var camera: Camera2D = Camera2D.new()
 	camera.position = Vector2(320, 180)
 	add_child(camera)
@@ -39,11 +40,7 @@ func _physics_process(_delta: float) -> void:
 		var effect: StringName = Haptics.effect_for_event(event)
 		if effect != &"":
 			haptics.play(effect)
-		if event["type"] in ["impact", "hit"]:
-			effects.append({"kind": event["type"], "position": event["position"], "age": 0})
-	for effect: Dictionary in effects:
-		effect["age"] = int(effect["age"]) + 1
-	effects = effects.filter(func(e: Dictionary) -> bool: return int(e["age"]) < int(EFFECT_TICKS[e["kind"]]))
+	CombatDrawer.update_effects(effects, sim.events)
 
 
 func _process(_delta: float) -> void:
@@ -72,8 +69,10 @@ static func read_input() -> CombatInput:
 	input.move = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
 	input.light_pressed = Input.is_action_just_pressed(&"attack_light")
 	input.heavy_pressed = Input.is_action_just_pressed(&"attack_heavy")
+	input.heavy_held = Input.is_action_pressed(&"attack_heavy")
 	input.skill_pressed = Input.is_action_just_pressed(&"weapon_skill")
 	input.dodge_pressed = Input.is_action_just_pressed(&"dodge")
+	input.swap_pressed = Input.is_action_just_pressed(&"weapon_swap")
 	input.lock_held = Input.is_action_pressed(&"lock_on")
 	input.target_next_pressed = Input.is_action_just_pressed(&"target_next")
 	input.target_prev_pressed = Input.is_action_just_pressed(&"target_prev")

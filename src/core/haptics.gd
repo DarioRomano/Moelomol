@@ -13,7 +13,14 @@ const EFFECTS: Dictionary = {
 	&"impact": [0.4, 1.0, 0.16],
 	&"player_hit": [0.5, 0.5, 0.12],
 	&"stagger": [0.2, 0.7, 0.2],
+	&"hammer_jab": [0.2, 0.4, 0.06],
+	&"hammer_charge": [0.15, 0.0, 0.9],  # weak motor while the charge rises
+	&"hammer_sweet_spot": [0.0, 0.8, 0.03],  # a sharp click
+	&"hammer_hit": [0.3, 0.8, 0.12],
+	&"hammer_perfect": [0.6, 1.0, 0.25],  # the heaviest pulse in the game
 }
+
+const HEAVY_GREATSWORD_MOVES: Array[StringName] = [&"cleave", &"spin", &"rising", &"follow_through", &"brace_counter"]
 
 ## 0 = off, 1 = full. The options menu will set this (ADR-0013: vibration
 ## intensity including off).
@@ -46,10 +53,23 @@ static func effect_for_event(event: Dictionary) -> StringName:
 			var target: Fighter = event["target"]
 			if target.kind == Fighter.Kind.PLAYER:
 				return &"player_hit"
-			var heavy: bool = event["move"] in [&"cleave", &"spin", &"rising", &"follow_through", &"brace_counter"]
-			return &"greatsword_heavy_hit" if heavy else &"greatsword_hit"
+			var move: StringName = event["move"]
+			match move:
+				Hammer.STRIKE_PERFECT:
+					return &""  # the shockwave plays the perfect-strike pulse
+				Hammer.STRIKE_EARLY, Hammer.STRIKE_LATE:
+					return &"hammer_hit"
+				&"hammer_jab", &"ground_stamp":
+					return &"hammer_jab"
+			return &"greatsword_heavy_hit" if move in HEAVY_GREATSWORD_MOVES else &"greatsword_hit"
 		"impact":
 			return &"impact"
+		"charge_start":
+			return &"hammer_charge"
+		"sweet_spot":
+			return &"hammer_sweet_spot"
+		"shockwave":
+			return &"hammer_perfect"
 		"stagger":
 			var fighter: Fighter = event["fighter"]
 			return &"stagger" if fighter.kind == Fighter.Kind.CREATURE else &""

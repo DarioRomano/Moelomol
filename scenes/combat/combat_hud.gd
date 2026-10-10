@@ -18,8 +18,8 @@ func _ready() -> void:
 	_help = _make_label()
 	_help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_help.text = "Move WASD / stick   Light J / X   Heavy K / RT   Skill L / Y   Dodge Space / A   " \
-		+ "Lock Shift / LT   Switch Q E / right stick   F5 interpolation   F6 creatures passive"
+	_help.text = "Move WASD / stick   Light J / X   Heavy (hold) K / RT   Skill L / Y   Dodge Space / A   " \
+		+ "Swap Tab / RB   Lock Shift / LT   Switch Q E / right stick   F5 interpolation   F6 creatures passive"
 
 
 func _make_label() -> Label:
@@ -39,8 +39,10 @@ func show_state(sim: CombatSim, interpolation: bool) -> void:
 	_stamina = p.stamina.current / p.stamina.maximum
 	var doing: String = _describe(p)
 	var passive: bool = not sim.creatures.is_empty() and not sim.creatures[0].ai_enabled
-	_label.text = "%s   chain %d%s%s   interpolation %s%s" % [
-		doing, p.chain, "   BRACE READY" if p.brace_ready else "",
+	var weapon: Weapon = p.weapon()
+	var swap: String = "   swap in %.1f s" % (p.swap_cooldown / float(CombatTuning.TICK_RATE)) if p.swap_cooldown > 0 else ""
+	_label.text = "%s: %s   %s%s%s   interpolation %s%s" % [
+		weapon.display_name, doing, weapon.status_text(p), swap,
 		"   locked" if sim.lock_target != null else "",
 		"on" if interpolation else "off", "   creatures passive" if passive else ""]
 	queue_redraw()
@@ -54,6 +56,8 @@ static func _describe(p: Fighter) -> String:
 			return "Dodge" + (" (invulnerable)" if p.is_invulnerable() else "")
 		Fighter.State.BRACE:
 			return "Brace"
+		Fighter.State.CHARGE:
+			return "Charging"
 		Fighter.State.STAGGERED:
 			return "Staggered"
 		Fighter.State.DOWN:
