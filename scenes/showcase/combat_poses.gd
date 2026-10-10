@@ -76,7 +76,7 @@ func _follow_through(sim: CombatSim, effects: Array[Dictionary]) -> void:
 ## Brace just before a lunge lands: the hit is negated, the creature is
 ## thrown back staggered, and the riposte is mid-swing.
 func _riposte(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	var c: Fighter = sim.add_creature(Vector2(118, 80))
+	var c: Fighter = sim.add_creature(sim.player.position + Vector2(22, 0))
 	c.ai_enabled = false
 	c.facing = Vector2.LEFT
 	sim.start_attack(c, sim._creature_lunge)

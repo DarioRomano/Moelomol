@@ -416,6 +416,18 @@ func test_smoulder_and_rot_bloom_rot_onto_creatures_nearby() -> void:
 	assert_eq(sim.creatures[2].effects.count(R), 0, "not to a distant creature")
 
 
+func test_the_combinations_bloom_even_when_the_burst_kills() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(160, 170)])
+	var c: Fighter = sim.creatures[0]
+	sim.apply_effect(c, S, 3)
+	sim.apply_effect(c, R, 3)
+	c.health = 10.0
+	var seen: Array[Dictionary] = _siphon(sim, 2)
+	assert_false(c.is_alive(), "the burst killed it")
+	assert_eq(_count(seen, "blight_bloom"), 1, "Blight bloom all the same")
+	assert_eq(sim.creatures[1].effects.count(R), Magic.BLIGHT_ROT_STACKS, "Rot spreads to the neighbour")
+
+
 func test_chill_and_rot_make_the_target_brittle() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	sim.apply_effect(sim.creatures[0], C, 1)

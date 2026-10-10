@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: Q28 (where farming magic comes from), Q29 (magic's weapon skill) and Q30 (the greatsword's weapon skill) are open; everything before is resolved.
+Status at 2026-10-10: Q28 (where farming magic comes from) and Q31 (a new mechanic for magic's Rot spell) are open; everything else is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -37,8 +37,9 @@ Status at 2026-10-10: Q28 (where farming magic comes from), Q29 (magic's weapon 
 | Q26 | Controls and targeting at the base | Input model (ADR-0013) | **Resolved**: A |
 | Q27 | Does farming use an energy bar? | Farming slice, upgrades | **Resolved**: farming is magic and costs Mana (sleep, food); enhanced weapon skills cost Mana too |
 | Q28 | Where does farming magic come from, and how does it look? | Farming spell art, story notes | Open (working assumption: C) |
-| Q29 | A more satisfying weapon skill for magic | Magic feel (lead's playtest) | Open |
-| Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | Open |
+| Q29 | A more satisfying weapon skill for magic | Magic feel (lead's playtest) | **Resolved**: B, the Siphon, on heavy hold instead of the skill; the Rot pool it replaces goes to Q31 |
+| Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | **Resolved**: A, guard and riposte |
+| Q31 | A new mechanic for magic's Rot spell | Magic feel; the skill button | Open (interim: the old Rot pool on the skill button) |
 
 ---
 
@@ -1132,6 +1133,12 @@ green and gold as a working assumption; nothing violet yet.
 
 ## Q29. A more satisfying weapon skill for magic
 
+**Resolved 2026-10-10 (the lead):** B, the Siphon, but **on the heavy
+button's hold** instead of the skill. The Rot pool that was there "needs to
+be reworked to a different mechanic. It is rather boring" (Q31). As built:
+`combat.md`, "Siphon: cashing in". Release is gone; the skill button holds
+the old Rot pool until Q31 is answered.
+
 Raised by the lead after playing (2026-10-10): the skill "is not quite
 satisfying… too similar to the ice AoE left by blinking".
 
@@ -1198,6 +1205,9 @@ shortened after the third.
 
 ## Q30. A clearer weapon skill for the greatsword
 
+**Resolved 2026-10-10 (the lead):** A, guard and riposte, as recommended.
+As built: `combat.md`, "Greatsword".
+
 Raised by the lead after playing (2026-10-10): the skill "is hard to
 understand: does it even work?"
 
@@ -1262,3 +1272,69 @@ player bracing at different moments):
 **Recommendation:** A. It answers "does it work?" with a hit that visibly
 does nothing to you and staggers the attacker, and it gives each button one
 job.
+
+## Q31. A new mechanic for magic's Rot spell
+
+Raised by the lead with the Q29 answer (2026-10-10): the Siphon takes the
+heavy hold, and the Rot pool that was there "needs to be reworked to a
+different mechanic. It is rather boring." It lands on the **skill button**,
+which Release used to hold.
+
+**What the Rot spell has to do:**
+- **Rot is the only effect without its own spell.** Ember bolt gives
+  Smoulder, Frost shard gives Chill; without a Rot spell, Rot only comes
+  from Blight bloom, so two of the three combinations become hard to reach.
+- **It should not be a circle on the floor.** Wardstep already leaves one
+  (the Chill pool), and the Q29 feedback was that two circles read alike.
+- **It should feed the Siphon.** Magic's loop is now "stack, then drain and
+  fire"; the best Rot spell gives the player a reason to Siphon at a
+  particular moment.
+
+**What it is now (interim):** the old Rot pool on the skill button: a 22 px
+patch for 4 s, 1 Rot every 0.5 s to whatever stands in it, 20 Focus.
+
+**A. Rot seed: a parasite that grows and jumps** (recommended)
+- **How it works:** a slow seed (about 160 px/s) that latches onto the
+  first creature it hits.
+  - The seed grows on its host: 1 Rot at once, then 1 more every 0.6 s, for
+    4 s. A small violet growth on the creature shows it.
+  - **When the host dies, or the Siphon drains it, the seed jumps** to the
+    nearest creature within 48 px with whatever time it has left.
+  - One seed at a time; casting another moves it. About 15 Focus.
+- Pro: one target, so it is about choosing a host; the jump turns killing
+  or draining into spreading, which ties Rot to the Siphon; nothing on the
+  floor; the "parasite" reading fits the changed land.
+- Con: a new kind of thing to build (an effect attached to a creature that
+  moves between creatures); against a single creature it is just Rot over
+  time.
+
+**B. Withering grasp: a pull**
+- **How it works:** a violet hand reaches 48 px in front, grabs the first
+  creature, gives it 3 Rot and pulls it 24 px towards the player. Heavy
+  creatures (more poise) are not pulled, only slowed for a moment.
+- Pro: physical and immediate; pulling a creature into Siphon reach is a
+  clear setup; the most different from the other spells.
+- Con: pulls danger towards a fragile caster; close to the greatsword's and
+  hammer's push identity, in reverse.
+
+**C. Blight link: tie two creatures together**
+- **How it works:** press once on one creature, again on a second (within
+  a few seconds) to link them with a violet thread for 5 s. Rot on either is
+  copied to the other, and damage dealt to one deals 25% to the other.
+- Pro: rewards fighting groups; every Ember bolt and Frost shard does more
+  on a linked pair; visually distinct (a thread, not a circle).
+- Con: two presses again (the lead just asked for one-press Volley);
+  harder to read in a busy fight; strongest only with exactly two creatures.
+
+**D. Spore cloak: an aura that follows the player**
+- **How it works:** for 4 s, creatures within 24 px of the player gain 1 Rot
+  every 0.5 s; the player's dodge leaves a spore puff (1 Rot) where it
+  started.
+- Pro: simplest to build (the pool, following the player); rewards the
+  Siphon's close range.
+- Con: still a circle; asks a fragile caster to stand close; the least
+  change from what was called boring.
+
+**Recommendation:** A. It is the only option that makes Rot interact with
+the Siphon (drain the host and the seed jumps), it keeps one press, and
+nothing about it is round or on the floor.

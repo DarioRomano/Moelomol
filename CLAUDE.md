@@ -173,5 +173,14 @@ note of the bug it caught.
   control fill its parent.** `set_anchors_preset` keeps the control's current
   size (a new control stays 0×0); only the renders showed it (one corner
   marker instead of four on the UI-width test card).
+- **Fail the test run on objects leaked at exit.** A player and a creature
+  holding each other in their hit lists leaked; the engine's message comes
+  after the runner finishes, so `tools/run-tests.sh` checks for it.
+- **Look at the renders, again.** The magic review render showed a Siphon
+  beam that killed its target and skipped Shatter and Blight bloom; no test
+  covered a kill.
+- **Commit before running anything that restores files.** A `git checkout`
+  to undo a deliberate break also threw away uncommitted work in the same
+  files; break with a copy-and-restore helper, and commit first.
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.

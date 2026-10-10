@@ -256,12 +256,16 @@ func _fire_beam(sim: CombatSim) -> void:
 			0.0, 0.0, 0.0, 0.0)
 		hit.hitstop_ms = CombatTuning.HITSTOP_BIG_MS if first and not spent.is_empty() else 0
 		sim._hit(p, c, hit)
+		if first:
+			# Even when the burst kills (as Release did): found in the review
+			# render, where a full-stack beam killed its target and nothing
+			# bloomed.
+			sim.release_combinations(p, c, spent)
 		if not c.is_alive():
 			continue
 		if spent.has(StatusEffects.SMOULDER):
 			sim.apply_effect(c, StatusEffects.SMOULDER, 1)
 		if first:
-			sim.release_combinations(p, c, spent)
 			if int(spent.get(StatusEffects.CHILL, 0)) >= BEAM_FREEZE_CHILL and c.health > 0.0 and not c.is_staggered():
 				sim.events.append({"type": "frozen", "fighter": c, "position": c.position})
 				sim.stagger(c, StatusEffects.FROZEN_MS)

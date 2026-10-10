@@ -381,3 +381,17 @@ a real controller)
 - Summing 3,000 tick-sized steps of game time gives 59.99999 minutes, not
   60; the clock display adds 0.001 before flooring (the farm pace test
   showed "06:59").
+
+### 2026-10-10 (combat feedback, round two), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `Vector2.orthogonal()` turns a vector a quarter-turn anticlockwise on
+  screen: `RIGHT.orthogonal()` is `(0, -1)`, `(3, 4)` gives `(4, -3)` (the
+  guard's blade is drawn across the facing with it).
+- `Object.get_instance_id()` returns an `int` (type 2) that works with `in`
+  on an `Array[int]`; the hit lists store these instead of `Fighter`
+  references, which formed a cycle.
+- Objects still alive when the engine quits print, after the script has
+  finished: `WARNING: N ObjectDB instances were leaked at exit` and
+  `ERROR: N resources still in use at exit`. The engine's exit code stays 0
+  and the runner's `Logger` hook never sees them, so `tools/run-tests.sh`
+  greps the output for both.
