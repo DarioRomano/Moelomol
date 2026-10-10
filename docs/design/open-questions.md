@@ -809,31 +809,84 @@ fight decides how deep builds go and how much needs balancing.
 
 ## Q20. Smoothing movement at 120 fps with 60 Hz combat logic
 
-Found while building the combat arena (2026-10-10). Combat runs at a fixed
-60 ticks per second (`combat.md`, "Timing"), so its timing windows are the
-same on every machine. The screen is drawn up to 120 times per second
-(ADR-0007). Drawn as-is, a moving character holds still for every second
-frame, which can look like judder on a 120 Hz screen. Godot's built-in physics
-interpolation setting does not apply, because the combat simulation does not
-use Godot physics. The arena lets the lead compare: **F5** toggles render
-interpolation.
+Found while building the combat arena (2026-10-10). The lead asked
+(2026-10-10): *can the logic not be time based instead of frame based?*
 
-**A. Render interpolation** (draw each character between its last two
-positions) (current default)
-- Pro: smooth on 120 Hz and higher screens; logic and timing unchanged; cheap.
-- Con: what is drawn is up to one tick (16.7 ms) behind the simulation, which
-  adds that much visual delay to every input.
+### First, what "time based" means here
 
-**B. Run the simulation at 120 ticks per second**
-- Pro: smooth with no added delay; timing windows twice as fine.
-- Con: about twice the game-logic CPU time, against a 3 ms budget on the
-  minimum spec (ADR-0007); on a 60 Hz screen, half the ticks are never seen.
+The combat logic **is already time based**, not frame based. Every timing is
+defined in milliseconds (a 700 ms telegraph, a 150 ms sweet spot), and the game
+cuts real time into fixed 16.7 ms slices ("ticks", 60 per second), however
+fast or slow the screen draws. At 30, 60, 120 or 240 fps a dodge lasts
+400 ms. This is called a **fixed timestep**.
 
-**C. No smoothing**
+The other kind of time-based logic is a **variable timestep**: every drawn
+frame, advance the logic by exactly the time that passed since the last frame
+(8.3 ms at 120 fps, 16.7 ms at 60, 25 ms at 40). Both are time based; they
+differ in whether the slices are equal.
+
+The question exists because, with fixed 16.7 ms slices, a 120 Hz screen draws
+two frames per slice. Drawn as-is, moving things hold still every second frame
+(judder). Godot's built-in physics interpolation does not apply, because the
+combat simulation does not use Godot physics. In the arena, **F5** toggles
+option A so it can be compared.
+
+### Options
+
+**A. Fixed 60 Hz logic, with render interpolation** (draw each character
+between its last two positions) (current default)
+- Pro: smooth on 120 Hz and faster screens; logic and timing exactly the same
+  on every machine; tests reproduce every situation tick for tick; cheap (a
+  blend per character per frame).
+- Con: what is drawn is up to one tick (16.7 ms, on average about 8 ms)
+  behind the simulation: a small extra delay between pressing a button and
+  seeing the result.
+
+**B. Fixed 120 Hz logic** (slices of 8.3 ms)
+- Pro: smooth at 120 Hz with no added delay; timing windows twice as fine
+  (a 150 ms window becomes 18 slices instead of 9); still exactly
+  reproducible.
+- Con: double the logic CPU time (measured 2026-10-10 on the cloud test
+  machine: 0.02 ms per tick with the arena's 2 creatures, 0.5 ms with 30, so
+  about 1 ms per frame with 30 creatures at 120 Hz, within the 3 ms budget of
+  ADR-0007 but no longer negligible); above 120 Hz (144, 240 Hz screens) it
+  judders again unless combined with A.
+
+**C. Fixed 60 Hz logic, no smoothing**
 - Pro: simplest; no added delay.
-- Con: judder on 120 Hz screens, which is the target (ADR-0007).
+- Con: visible judder on 120 Hz screens, which are the target (ADR-0007).
 
-**Recommendation:** decide after the arena playtest on a 120 Hz screen (your
-5800X): compare F5 on and off. If the delay of A cannot be felt, keep A; if it
-can, choose B and measure its CPU cost with the overlay (F3).
+**D. Variable timestep** (logic advances by each frame's real duration)
+- Pro: smooth at every refresh rate with no interpolation and no added delay;
+  the most common approach in simple Godot projects (`_process(delta)`).
+- Con:
+  - **Timing becomes machine dependent.** Windows are checked only when a
+    frame happens, so a 150 ms hammer sweet spot is judged in 8 ms steps at
+    120 fps but 25 ms steps at 40 fps. Precise timing (the hammer, the bow's
+    clean release, dodge invulnerability) is fairer on fast machines.
+  - **Results are not reproducible.** The same inputs give slightly different
+    distances and outcomes at different frame rates (rounding builds up), so
+    the 54 combat tests could only check "roughly", and the scripted review
+    poses would differ between runs.
+  - **Fast moves can skip through things at low frame rates.** A 24 px shove
+    dash in one 50 ms frame can pass through a creature or a thin wall; every
+    movement would need sweep tests.
+  - **Hitches cause jumps.** A 100 ms stall becomes one 100 ms step; it must be
+    clamped, which then breaks the timing it was meant to keep.
+  - A rewrite of the simulation and its tests.
 
+**E. Mixed:** fixed ticks for combat rules, variable timestep for the player's
+own movement and the camera
+- Pro: the player's own movement feels immediate; combat stays exact.
+- Con: two clocks to keep in step; hits are judged against positions that move
+  between ticks, which causes "I was out of range" disagreements; complex.
+
+### Recommendation
+
+**A now; B if the delay can be felt.** Fixed slices keep combat timing equal
+on every machine and fully testable, which matters most for the
+timing-precise weapons still to come (hammer, bow). D trades that away for
+smoothness that A already provides. In the arena playtest on your 120 Hz
+screen, compare F5 on (A) and off (C): if A feels smooth and you cannot feel
+its delay, keep it; if you can, switch to B (a one-line change to the tick
+rate plus re-checking the tick counts in the tests).
