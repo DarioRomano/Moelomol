@@ -60,6 +60,7 @@ cat <<'EOF'
 - **Windows:** unzip and run `Moelomol.exe`. Windows may warn that the app is unrecognised (it is not signed); choose "More info", then "Run anyway".
 - **macOS:** unzip and open `Moelomol.app`. The app is not notarised: the first time, right-click it and choose Open.
 - **Linux:** unzip and run `./Moelomol.x86_64` (you may need `chmod +x Moelomol.x86_64` first).
+- **Linux ARM64 (test build, not a supported platform):** for ARM devices such as the Steam Frame. Unzip and run `./Moelomol.arm64`.
 
 These are development builds. There is no gameplay yet unless the notes above say otherwise.
 EOF

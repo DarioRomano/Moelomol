@@ -33,7 +33,7 @@ GODOT="$(tools/install-godot.sh --templates | tail -n 1)"     # plus export temp
 tools/run-tests.sh                   # full headless suite (GDScript + CI-script tests), no display
 tools/run-tests.sh --filter palette  # only tests whose "path::name" contains the text
 tools/render-showcase.sh [out_dir]   # renders showcase scenes at 10 screen sizes (needs xvfb-run)
-tools/export.sh windows macos linux web   # runnable zips in dist/
+tools/export.sh windows macos linux linux-arm64 web   # runnable zips in dist/ (linux-arm64: test build)
 tools/smoke-run.sh dist/Moelomol-dev-linux.zip   # start the exported Linux build for 120 frames
 ```
 
@@ -64,7 +64,7 @@ prints failures as `::error` annotations: read them with
 | Path | What |
 |---|---|
 | `project.godot` | Engine settings (ADR-0008 display, Compatibility renderer, typing as errors) |
-| `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`; names are used by CI |
+| `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette |

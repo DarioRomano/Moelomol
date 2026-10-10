@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Exports runnable builds and packages each as a zip in dist/.
 #
-#   tools/export.sh <platform...>     platforms: windows macos linux web
+#   tools/export.sh <platform...>     platforms: windows macos linux linux-arm64 web
+#
+# linux-arm64 is a test build for ARM devices such as the Steam Frame (Q16),
+# not a supported platform (ADR-0004).
 #
 # Environment:
 #   GODOT          Godot 4.7.2 editor binary (default: godot)
@@ -20,7 +23,7 @@ BUILD_LABEL="${BUILD_LABEL:-dev}"
 DIST="$ROOT/dist"
 
 if [ "$#" -eq 0 ]; then
-  echo "usage: tools/export.sh windows|macos|linux|web ..." >&2
+  echo "usage: tools/export.sh windows|macos|linux|linux-arm64|web ..." >&2
   exit 2
 fi
 
@@ -55,6 +58,21 @@ export_one() {
   rm -f "$log"
 }
 
+# Fails unless the binary is an ELF executable for the expected CPU. The ARM64
+# build cannot be run on CI's x86 machines, so this is its main automatic check.
+check_arch() {
+  local binary="$1" expected="$2" info
+  info="$(file -b "$binary")"
+  case "$info" in
+    *"$expected"*) echo "Architecture OK: $(basename "$binary"): $expected" ;;
+    *)
+      echo "Wrong architecture for $binary: $info (expected $expected)" >&2
+      [ "${GITHUB_ACTIONS:-}" = "true" ] && echo "::error title=Wrong architecture::$(basename "$binary"): $info"
+      exit 1
+      ;;
+  esac
+}
+
 for platform in "$@"; do
   name="Moelomol-${BUILD_LABEL}-${platform}"
   stage="$ROOT/build/$platform"
@@ -66,7 +84,14 @@ for platform in "$@"; do
       ;;
     linux)
       export_one "Linux" "$stage/Moelomol.x86_64"
+      check_arch "$stage/Moelomol.x86_64" "x86-64"
       chmod +x "$stage/Moelomol.x86_64"
+      (cd "$stage" && zip -qr "$DIST/$name.zip" .)
+      ;;
+    linux-arm64)
+      export_one "Linux ARM64" "$stage/Moelomol.arm64"
+      check_arch "$stage/Moelomol.arm64" "ARM aarch64"
+      chmod +x "$stage/Moelomol.arm64"
       (cd "$stage" && zip -qr "$DIST/$name.zip" .)
       ;;
     macos)
