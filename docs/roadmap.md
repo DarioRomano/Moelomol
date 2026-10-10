@@ -40,6 +40,15 @@ confirming the tools' licence terms.
 - A playtest checklist for the lead to judge the mood on real screens and
   speakers.
 
+## Combat design (draft, 2026-10-10)
+
+`docs/design/combat.md` and `docs/design/combat-art-prompts.md`: four
+weapons (greatsword, hammer, bow, magic), the shared foundation (dodge,
+stamina, poise and stagger, lock-on), stacking effects and Release. Nothing is
+built. Waiting on the lead: review of the draft, Q18 (perspective), Q19 (weapon
+loadout), and approval of the suggested first build step (a combat test arena
+with the greatsword).
+
 ## Later (not planned)
 
 Decided and ready for the first gameplay system: language (ADR-0003),
