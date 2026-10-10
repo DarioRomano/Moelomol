@@ -87,10 +87,12 @@ prints failures as `::error` annotations: read them with
 
 - Never commit to `main`. Branch per change, open a PR against `main`, one
   coherent change per PR. (The initial commit was the one sanctioned exception.)
-- Merge only when all five CI checks pass: Change notes, Headless tests, Web
-  build, Desktop export, Visual review renders (ADR-0009). Branch protection is
-  not configured; honour the gate by hand. Never skip, disable or quarantine a
-  test to get green.
+- Merge your own PRs at your own judgement (lead, 2026-10-10; ADR-0006
+  amendment), but only when all five CI checks pass: Change notes, Headless
+  tests, Web build, Desktop export, Visual review renders (ADR-0009). Branch
+  protection is not configured; honour the gate by hand. Never skip, disable
+  or quarantine a test to get green. Merging never decides anything under
+  "Ask the project lead before".
 - Every PR description fills in `## Change notes` (it becomes the release
   notes). Every new feature comes with tests in the same PR.
 - Every merge to `main` publishes a release automatically. Do not create

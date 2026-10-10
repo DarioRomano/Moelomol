@@ -1,7 +1,8 @@
 # ADR-0006: Development workflow and merge gate
 
 - **Status:** Accepted. Merge gate extended by ADR-0009 (adds the Change notes
-  check), on the lead's instruction of 2026-10-09.
+  check), on the lead's instruction of 2026-10-09. Amended 2026-10-10: the
+  engineer merges at their own judgement (below).
 - **Date:** 2026-10-09
 - **Decided by:** Project lead (brief of 2026-10-09)
 
@@ -59,3 +60,25 @@ open and unmerged.
   CI status explicitly before every merge.
 - Turning on branch protection would make the gate enforced. That is a
   repository setting for the lead; recommended once Milestone 1's CI exists.
+
+## Amendment (2026-10-10): the engineer merges
+
+- **Decided by:** the project lead, 2026-10-10: "let's drop the review
+  scheme. You create pull requests as before, but merge them at your own
+  judgement."
+- **What changes:** the lead no longer approves merges. The engineer merges
+  their own pull requests when they judge them ready.
+- **What stays:**
+  - every change still goes through a branch and a pull request, with
+    `## Change notes` filled in;
+  - the merge gate stands: all five CI checks (Change notes, Headless tests,
+    Web build, Desktop export, Visual review renders) must pass, and nothing
+    red is merged;
+  - the verification and documentation rules above;
+  - the decisions CLAUDE.md lists under "Ask the project lead before" are
+    still the lead's. Merging does not decide them: a pull request that
+    needs one waits for the answer, or is built on a stated working
+    assumption the lead can reverse.
+- **Consequence:** changes reach `main`, and so a release (ADR-0009), without
+  waiting for the lead. The progress notes, the PR descriptions and the
+  release notes are how the lead keeps track.
