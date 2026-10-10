@@ -131,9 +131,62 @@ func test_combat_events_map_to_haptic_effects() -> void:
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": player, "move": &"creature_lunge"}), &"player_hit", "player hit")
 	assert_eq(Haptics.effect_for_event({"type": "impact", "fighter": creature}), &"impact", "impact")
 	assert_eq(Haptics.effect_for_event({"type": "stagger", "fighter": creature}), &"stagger", "creature stagger")
-	assert_eq(Haptics.effect_for_event({"type": "dodge"}), &"", "no rumble for a dodge")
-	for effect: StringName in [&"greatsword_hit", &"greatsword_heavy_hit", &"player_hit", &"impact", &"stagger"]:
+	# More feedback (lead, 2026-10-10): the dodge, an attack passing through
+	# it, Brace taking a hit, armour breaking, a swap, running out of stamina.
+	assert_eq(Haptics.effect_for_event({"type": "dodge"}), &"dodge", "a light roll pulse")
+	assert_eq(Haptics.effect_for_event({"type": "dodged", "attacker": creature, "target": player}), &"evaded", "evaded")
+	assert_eq(Haptics.effect_for_event({"type": "brace_absorb", "fighter": player}), &"brace_absorb", "Brace")
+	assert_eq(Haptics.effect_for_event({"type": "armour_break", "fighter": creature}), &"armour_break", "shell breaks")
+	assert_eq(Haptics.effect_for_event({"type": "swap", "weapon": &"hammer"}), &"swap", "swap")
+	assert_eq(Haptics.effect_for_event({"type": "no_stamina"}), &"no_stamina", "out of stamina")
+	for effect: StringName in [&"greatsword_hit", &"greatsword_heavy_hit", &"player_hit", &"impact", &"stagger",
+			&"dodge", &"evaded", &"brace_absorb", &"armour_break", &"swap", &"no_stamina"]:
 		assert_true(Haptics.EFFECTS.has(effect), "%s is defined" % effect)
+
+
+func test_sustained_rumble_holds_then_stops() -> void:
+	var calls: Array[Array] = []
+	var stops: Array[int] = []
+	var haptics: Haptics = _haptics(calls)
+	haptics.stop = func(device: int) -> void: stops.append(device)
+	haptics.sustain(Vector2(0.2, 0.1))
+	# Vector2 holds 32-bit floats, so compare with a tolerance.
+	assert_eq(calls.size(), 2, "both controllers")
+	for i: int in range(2):
+		assert_eq(calls[i][0], [0, 2][i], "controller %d" % i)
+		assert_true(absf(float(calls[i][1]) - 0.2) < 0.0001 and absf(float(calls[i][2]) - 0.1) < 0.0001, "the asked level")
+		assert_eq(calls[i][3], Haptics.SUSTAIN_SECONDS, "briefly, refreshed every tick")
+	haptics.sustain(Vector2(0.3, 0.1))
+	assert_eq(calls.size(), 4, "a new level the next tick")
+	haptics.sustain(Vector2.ZERO)
+	assert_eq(stops, [0, 2] as Array[int], "stopped when nothing is held")
+	haptics.sustain(Vector2.ZERO)
+	assert_eq(stops.size(), 2, "and only once")
+
+
+func test_a_one_shot_plays_out_before_the_sustained_rumble_resumes() -> void:
+	var calls: Array[Array] = []
+	var haptics: Haptics = _haptics(calls)
+	haptics.play(&"hammer_sweet_spot")
+	var one_shot_ticks: int = ceili(float(Haptics.EFFECTS[&"hammer_sweet_spot"][2]) * Engine.physics_ticks_per_second)
+	calls.clear()
+	for i: int in range(one_shot_ticks):
+		haptics.sustain(Vector2(0.3, 0.0))
+	assert_eq(calls.size(), 0, "the click is not cut short")
+	haptics.sustain(Vector2(0.3, 0.0))
+	assert_eq(calls.size(), 2, "then the hum resumes")
+
+
+func test_sustained_rumble_respects_intensity() -> void:
+	var calls: Array[Array] = []
+	var haptics: Haptics = _haptics(calls)
+	haptics.intensity = 0.5
+	haptics.sustain(Vector2(0.4, 0.2))
+	assert_true(absf(float(calls[0][1]) - 0.2) < 0.0001 and absf(float(calls[0][2]) - 0.1) < 0.0001, "half")
+	calls.clear()
+	haptics.intensity = 0.0
+	haptics.sustain(Vector2(0.4, 0.2))
+	assert_eq(calls.size(), 0, "off")
 
 
 func test_wide_sweet_spot_setting_survives_save_and_load() -> void:
@@ -171,5 +224,33 @@ func test_f7_changes_the_weapon_not_in_hand() -> void:
 	arena.call("_unhandled_input", _key(KEY_F7))
 	assert_eq(sim.player.weapons[1].id, &"bow", "the hammer slot now holds the bow")
 	assert_eq(sim.player.weapon().id, &"greatsword", "the weapon in hand is unchanged")
+	arena.queue_free()
+	await tree.process_frame
+
+
+func test_arena_holds_the_rumble_while_the_hammer_charges() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var arena: Node2D = ARENA.instantiate()
+	tree.root.add_child(arena)
+	var sim: CombatSim = arena.get("sim")
+	for creature: Fighter in sim.creatures:
+		creature.ai_enabled = false
+	sim.player.weapon_index = 1  # hammer
+	var haptics: Haptics = arena.get("haptics")
+	var calls: Array[Array] = []
+	haptics.devices = func() -> Array[int]: return [0] as Array[int]
+	haptics.rumble = func(device: int, weak: float, strong: float, seconds: float) -> void:
+		calls.append([device, weak, strong, seconds])
+	haptics.stop = func(_device: int) -> void: pass
+	Input.action_press(&"attack_heavy")
+	for i: int in range(20):
+		await tree.physics_frame
+	Input.action_release(&"attack_heavy")
+	assert_eq(sim.player.state, Fighter.State.CHARGE, "charging while the button is held")
+	var held: int = 0
+	for call: Array in calls:
+		if float(call[3]) == Haptics.SUSTAIN_SECONDS:
+			held += 1
+	assert_true(held >= 10, "the charge rumble is held tick by tick (%d refreshes)" % held)
 	arena.queue_free()
 	await tree.process_frame

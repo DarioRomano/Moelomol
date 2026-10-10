@@ -345,28 +345,32 @@ func test_hit_stop_freezes_the_simulation() -> void:
 
 ## Light then heavy: the shove. At x = 150 the creature is beyond the light
 ## swing's reach, so only the shove's dash brings it into range.
-func _shove(sim: CombatSim) -> void:
+## A light then the shove; returns the first creature's health just before
+## the shove (the light can land too, since the reach grew in 2026-10-10).
+func _shove(sim: CombatSim) -> float:
 	_press(sim, &"light")
 	_to_recovery(sim)
+	var before: float = sim.creatures[0].health
 	_press(sim, &"heavy")
 	_until_free(sim)
+	return before
 
 
 func test_shove_pushes_far_without_impact_in_the_open() -> void:
 	var sim: CombatSim = _field([Vector2(150, 150)])
-	_shove(sim)
+	var before: float = _shove(sim)
 	var creature: Fighter = sim.creatures[0]
 	assert_true(creature.position.x > 190.0, "pushed far (x = %s)" % creature.position.x)
-	assert_eq(creature.health, CombatTuning.CREATURE_HEALTH - Greatsword.FINISHERS[1].damage,
+	assert_eq(creature.health, before - Greatsword.FINISHERS[1].damage,
 		"only the shove's damage, no impact")
 
 
 func test_push_into_a_wall_is_an_impact() -> void:
 	var sim: CombatSim = _field([Vector2(150, 150)])
 	sim.obstacles.append(Rect2(175, 100, 20, 100))
-	_shove(sim)
+	var before: float = _shove(sim)
 	var creature: Fighter = sim.creatures[0]
-	var without_impact: float = CombatTuning.CREATURE_HEALTH - Greatsword.FINISHERS[1].damage
+	var without_impact: float = before - Greatsword.FINISHERS[1].damage
 	assert_eq(creature.health, without_impact - CombatTuning.IMPACT_DAMAGE, "impact damage added")
 
 

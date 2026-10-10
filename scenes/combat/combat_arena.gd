@@ -40,6 +40,7 @@ func _physics_process(_delta: float) -> void:
 		var effect: StringName = Haptics.effect_for_event(event)
 		if effect != &"":
 			haptics.play(effect)
+	haptics.sustain(sim.player_rumble())
 	CombatDrawer.update_effects(effects, sim.events)
 
 

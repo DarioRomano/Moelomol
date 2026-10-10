@@ -39,6 +39,9 @@ var state_length: int = 0  # ticks the current state lasts (0 = open-ended)
 
 var move: CombatMove = null
 var hit_this_move: Array[Fighter] = []
+## Where the current attack's hit zone starts: follows the fighter during the
+## windup, then stays put while the attack (and any lunge) plays out.
+var attack_origin: Vector2 = Vector2.ZERO
 var chain: int = 0  # greatsword light swings done in the current chain
 var brace_ready: bool = false  # a hit landed during Brace: next heavy is instant
 
