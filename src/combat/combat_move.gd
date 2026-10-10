@@ -23,6 +23,10 @@ var extend_stagger_ms: int = 0  # added to a staggered target's stagger
 var stagger_ms: int = 0  # > 0: every hit staggers for this long, whatever the poise
 var breaks_armour: bool = false  # shatters armour before the damage lands
 var shockwave_radius: float = 0.0  # > 0: staggers everything this close when it lands
+var melee: bool = true  # false: the move itself hits nothing (shots, gestures)
+var arrow: CombatMove = null  # fired as a projectile when the active part starts
+var pierce: bool = false  # as an arrow: flies on through every creature
+var marker: bool = false  # as an arrow: the Volley marker
 
 
 static func make(p_id: StringName, p_name: String, timing: Vector3i, p_damage: float,

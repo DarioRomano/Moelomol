@@ -21,6 +21,7 @@ SCENES=(
   "res://scenes/showcase/renderer_features.tscn"
   "res://scenes/showcase/combat_poses.tscn"
   "res://scenes/showcase/hammer_poses.tscn"
+  "res://scenes/showcase/bow_poses.tscn"
   "res://scenes/combat/combat_arena.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:

@@ -66,14 +66,19 @@ Constraints the architecture must honour:
   skill do (`try_action`), runs its own charge (`step_charge`, while the
   player is in `Fighter.State.CHARGE`), and keeps its own state (the
   hammer's Rhythm). The sim keeps everything shared: dodge, swap (1.5 s
-  cooldown), slow movement while charging, hits, armour, shockwaves.
-  `Greatsword` and `Hammer` hold their moves and starting values.
+  cooldown), slow movement while charging, hits, armour, shockwaves,
+  arrows and zones. `Greatsword`, `Hammer` and `Bow` hold their moves and
+  starting values.
+- `Projectile` (arrows: straight flight, hit test against the path swept
+  each tick, piercing, the Volley marker) and `Zone` (an area that hits in
+  timed waves: the Volley rain, later magic's pools) are stepped by the sim.
 - `CombatDrawer` draws a sim on any `CanvasItem` (placeholder shapes), with
   optional render interpolation between ticks (Q20).
 - `scenes/combat/combat_arena.tscn`: reads InputMap actions into a
   `CombatInput` in `_physics_process`, steps the sim, plays haptics, draws.
   `CombatHud` sits in a `UiFrame`.
-- `scenes/showcase/combat_poses.tscn` (greatsword) and `hammer_poses.tscn`:
+- `scenes/showcase/combat_poses.tscn` (greatsword), `hammer_poses.tscn` and
+  `bow_poses.tscn`:
   scripted sims frozen at telling moments, for the review renders. Both
   extend `PoseSheet` (`pose_sheet.gd`), six panels each.
 - `Haptics` (`src/core/haptics.gd`): named rumble effects (ADR-0013).
@@ -289,3 +294,13 @@ a real controller)
   `Array[Dictionary]` (the effect tests run it).
 - `ConfigFile.get_value` returns a `bool` for a saved `true`, so the
   accessibility setting checks `is bool` and warns otherwise.
+
+### 2026-10-10 (bow), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `Geometry2D.get_closest_point_to_segment(point, a, b)` exists and returns
+  the closest point on the segment; arrows use it to hit any creature whose
+  circle the tick's flight path crosses (no tunnelling at 6 px per tick).
+- `KEY_F7` is 4194338 (the arena's loadout key; the binding test checks
+  `KEY_F7` against the action).
+- A subclass can override a method with default arguments and call
+  `super(...)` (`bow_poses.gd` wraps `PoseSheet._pose`).

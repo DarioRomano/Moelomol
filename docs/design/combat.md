@@ -463,24 +463,27 @@ title, or `--start-scene combat_arena`). Never at the base.
   stagger, hyper-armour, input buffer, hit-stop, soft aim, lock-on with
   target switching, push and impacts (walls, pillars, other creatures), the
   full greatsword (light chain, four finishers, Follow-through, Brace and its
-  counter), the hammer (below), armour, the two-weapon loadout with swap,
+  counter), the hammer and the bow (below), armour, the two-weapon loadout
+  with swap,
   three training creatures with a telegraphed lunge (one with a stone
   shell), rumble through the haptics service, and a HUD.
 - How: a deterministic simulation (`src/combat/combat_sim.gd`) stepped at
   60 Hz; the scene only reads input and draws. Each weapon is a `Weapon`
-  subclass (`greatsword.gd`, `hammer.gd`). Rule tests drive the simulation
+  subclass (`greatsword.gd`, `hammer.gd`, `bow.gd`). Rule tests drive the simulation
   directly. Placeholder shapes from the palette stand in for art.
 - Developer keys: F5 render interpolation (Q20), F6 creatures passive (for
-  practising combos).
-- Not built yet: bow and magic (next, each its own PR), the status-effect
+  practising combos), F7 changes the weapon not in hand (greatsword, hammer,
+  bow).
+- Not built yet: magic (next), crafted arrowheads (need crafting), the status-effect
   system (comes with magic), a perfect hammer strike counting as a Release
   (needs magic), the hammer's rising tone (no audio system yet), the
   hold/toggle setting for lock-on and an options menu for the wide sweet
   spot (come with the options menu), DualSense triggers (later prototype),
   death and healing.
 - Feel can only be judged by playing:
-  `docs/playtests/2026-10-10-combat-arena.md` and
-  `docs/playtests/2026-10-10-hammer.md`.
+  `docs/playtests/2026-10-10-combat-arena.md`,
+  `docs/playtests/2026-10-10-hammer.md` and
+  `docs/playtests/2026-10-10-bow.md`.
 
 ### Hammer, weapon swap and armour as built
 
@@ -512,3 +515,33 @@ Readings of the design taken while building (say if any is wrong):
 - **The sweet-spot tone** is not built (no audio system); the flash, a
   charge meter above the player with the sweet spot marked, and the rumble
   click are.
+
+### Bow as built
+
+Starting values (in `src/combat/bow.gd`; arrow speed and range in
+`combat_tuning.gd`; tuning needs the lead's approval):
+
+| Value | Start |
+|---|---|
+| Arrows | 360 px/s, up to 260 px; stop at walls, pillars and the first creature (piercing arrows fly on); soft aim for shots reaches the full range in the 30° cone |
+| Quick shot | 80 ms windup, 5 damage, 8 poise, 4 stamina |
+| Draw | 8 stamina when it starts; walk at 48 px/s (60%) |
+| Stages | 300 / 700 / 1200 ms (at Flow 0). Released before stage 1: the quick-shot arrow. Stage 1 strong: 12 damage, 20 poise. Stage 2 piercing: 16 damage, 25 poise, through every creature on its line. Stage 3 heavy: 30 damage, 80 poise (staggers a training creature), 24 px knockback |
+| Clean release | within 80 ms of reaching a stage: +25% damage |
+| Holding stage 3 | 15 stamina/s; the arrow flies by itself when stamina runs out |
+| Dodge shot | heavy during a dodge: a stage-2 piercing arrow as the roll ends; costs a draw (8 stamina) |
+| Flow | +1 per arrow that hits (max 5); each stack makes every stage 8% faster; lost entirely when hit, whichever weapon is in hand |
+| Volley | marker arrow (8 stamina) marks where it stops, for 4 s; skill again calls the rain (10 stamina): radius 20 px + 6 px per Flow spent (all Flow is spent), first wave after 0.4 s, 3 waves 0.3 s apart, each 6 damage and 20 poise per creature inside |
+
+Readings of the design taken while building (say if any is wrong):
+
+- **Only arrows build Flow:** quick shots, drawn arrows, dodge shots. The
+  marker and the rain do not (the rain spends Flow; building it back from
+  the rain would loop).
+- **"Staggers small creatures"** is done with poise: the heavy arrow's 80
+  poise breaks a training creature's 80. Creatures have no size classes yet;
+  bigger ones will simply have more poise.
+- **"Volley pins a group in place"** is done with the rain's poise damage:
+  three waves (60 poise) plus any other hit stagger a training creature.
+- **The mark stays where the marker stopped** (on the creature it hit, or at
+  a wall or the end of its range); it does not follow a creature.

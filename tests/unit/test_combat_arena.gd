@@ -160,3 +160,16 @@ func test_arena_applies_the_wide_sweet_spot_setting() -> void:
 	GameSettings.shared().hammer_wide_sweet_spot = before
 	arena.queue_free()
 	await tree.process_frame
+
+
+func test_f7_changes_the_weapon_not_in_hand() -> void:
+	assert_true(InputMap.event_is_action(_key(KEY_F7), &"dev_cycle_offhand_weapon"), "F7 is bound")
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var arena: Node2D = ARENA.instantiate()
+	tree.root.add_child(arena)
+	var sim: CombatSim = arena.get("sim")
+	arena.call("_unhandled_input", _key(KEY_F7))
+	assert_eq(sim.player.weapons[1].id, &"bow", "the hammer slot now holds the bow")
+	assert_eq(sim.player.weapon().id, &"greatsword", "the weapon in hand is unchanged")
+	arena.queue_free()
+	await tree.process_frame

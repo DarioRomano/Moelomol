@@ -18,8 +18,9 @@ func _ready() -> void:
 	_help = _make_label()
 	_help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_help.text = "Move WASD / stick   Light J / X   Heavy (hold) K / RT   Skill L / Y   Dodge Space / A   " \
-		+ "Swap Tab / RB   Lock Shift / LT   Switch Q E / right stick   F5 interpolation   F6 creatures passive"
+	# Two lines: one did not fit a 4:3 screen (seen in the review render).
+	_help.text = "Move WASD / stick   Light J / X   Heavy (hold) K / RT   Skill L / Y   Dodge Space / A   Swap Tab / RB\n" \
+		+ "Lock Shift / LT   Switch Q E / right stick   F5 interpolation   F6 creatures passive   F7 other weapon"
 
 
 func _make_label() -> Label:

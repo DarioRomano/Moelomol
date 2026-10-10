@@ -21,8 +21,8 @@ amended by ADR-0010.
 
 Combat prototype. Beyond the foundation (test-card title, headless tests,
 review renders, PR builds and releases), there is a **combat test arena**
-with the shared combat foundation, the greatsword, the hammer, armour and the
-two-weapon swap (`docs/design/combat.md`).
+with the shared combat foundation, the greatsword, the hammer, the bow,
+armour and the two-weapon swap (`docs/design/combat.md`).
 There is no other gameplay: no farming, exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.

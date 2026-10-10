@@ -22,8 +22,40 @@ func step_charge(_sim: CombatSim, _input: CombatInput) -> void:
 	pass
 
 
-## The player was hit while holding this weapon.
+## How fast the player walks while charging with this weapon.
+func charge_move_speed() -> float:
+	return CombatTuning.CHARGE_MOVE_SPEED
+
+
+## `action` was pressed during a dodge. Return true to take it (the bow's
+## dodge shot); otherwise it waits in the input buffer as usual.
+func dodge_action(_sim: CombatSim, _action: StringName) -> bool:
+	return false
+
+
+## The player's dodge just ended.
+func on_dodge_end(_sim: CombatSim) -> void:
+	pass
+
+
+## The player was hit. Every weapon in the loadout hears it, not only the
+## one in hand (getting hit costs Rhythm and Flow either way).
 func on_owner_hit(_sim: CombatSim) -> void:
+	pass
+
+
+## A hit by the player (with this weapon in hand) landed.
+func on_hit_landed(_sim: CombatSim, _target: Fighter, _move: CombatMove) -> void:
+	pass
+
+
+## One of the player's projectiles stopped (hit, wall, or out of range).
+func on_projectile_stopped(_sim: CombatSim, _projectile: Projectile) -> void:
+	pass
+
+
+## Every simulation tick, for every weapon in the loadout (timers).
+func tick(_sim: CombatSim) -> void:
 	pass
 
 
