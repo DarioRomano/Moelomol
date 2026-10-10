@@ -27,6 +27,12 @@ var melee: bool = true  # false: the move itself hits nothing (shots, gestures)
 var arrow: CombatMove = null  # fired as a projectile when the active part starts
 var pierce: bool = false  # as an arrow: flies on through every creature
 var marker: bool = false  # as an arrow: the Volley marker
+var projectile_speed: float = 0.0  # as an arrow: px/s; 0 = CombatTuning.ARROW_SPEED
+var effect: StringName = &""  # a status effect each hit applies (StatusEffects)
+var effect_stacks: int = 0
+var releases_effects: bool = false  # consumes every stack on the target into a burst
+var spell: bool = false  # a hit during the windup interrupts it
+var move_speed: float = 0.0  # > 0: the player can walk this fast (px/s) during the move
 
 
 static func make(p_id: StringName, p_name: String, timing: Vector3i, p_damage: float,

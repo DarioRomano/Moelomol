@@ -27,6 +27,16 @@ func charge_move_speed() -> float:
 	return CombatTuning.CHARGE_MOVE_SPEED
 
 
+## True if a hit stops this weapon's charge (magic's casts).
+func charge_interruptible() -> bool:
+	return false
+
+
+## &"roll" (the shared dodge) or &"wardstep" (magic's blink).
+func dodge_kind() -> StringName:
+	return &"roll"
+
+
 ## `action` was pressed during a dodge. Return true to take it (the bow's
 ## dodge shot); otherwise it waits in the input buffer as usual.
 func dodge_action(_sim: CombatSim, _action: StringName) -> bool:

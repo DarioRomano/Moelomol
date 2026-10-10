@@ -11,7 +11,15 @@ extends RefCounted
 const WALL: float = 16.0
 const TILE: float = 16.0
 ## How long each effect plays, in ticks.
-const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6, "shockwave": 18, "armour_break": 16}
+const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6, "shockwave": 18, "armour_break": 16,
+	"release": 14, "shatter": 16, "blight_bloom": 18, "brittle": 14, "frozen": 14, "spread": 12,
+	"wardstep": 12}
+## Effect colours (docs/design/combat.md, "The three effects").
+const EFFECT_COLOURS: Dictionary = {
+	StatusEffects.SMOULDER: Color("#e0a95b"),
+	StatusEffects.CHILL: Color("#4f8296"),
+	StatusEffects.ROT: Color("#6e5b73"),
+}
 
 
 ## The effect a combat event leaves behind, or an empty dictionary.
@@ -20,8 +28,10 @@ static func effect_for_event(event: Dictionary) -> Dictionary:
 	if not EFFECT_TICKS.has(kind):
 		return {}
 	var effect: Dictionary = {"kind": kind, "position": event["position"], "age": 0}
-	if kind == "shockwave":
+	if event.has("radius"):
 		effect["radius"] = event["radius"]
+	if event.has("from"):
+		effect["from"] = event["from"]
 	return effect
 
 
@@ -138,6 +148,9 @@ static func _draw_blade(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	if f.weapon() is Bow:
 		_draw_bow(canvas, f, at, f.weapon() as Bow)
 		return
+	if f.weapon() is Magic:
+		_draw_lantern(canvas, f, at)
+		return
 	var hand: Vector2 = at + Vector2(0, -12)
 	var length: float = 26.0
 	match f.state:
@@ -249,6 +262,48 @@ static func _draw_bow(canvas: CanvasItem, f: Fighter, at: Vector2, bow: Bow) -> 
 	canvas.draw_arc(hand + Vector2(-2, 0), 9, -PI * 0.75, PI * 0.25, 8, Palette.WARMTH[1], 2.0)
 
 
+## The lantern: held at the hip, raised to cast, glowing in the changed
+## land's violet.
+static func _draw_lantern(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
+	var hand: Vector2 = at + Vector2(0, -12)
+	var lantern: Vector2 = hand + Vector2(6 * signf(f.facing.x + 0.01), 4)
+	var glow: float = 4.0
+	match f.state:
+		Fighter.State.CHARGE:
+			lantern = hand + f.facing * 8
+			glow = 5.0 + f.state_tick * 0.4
+			# Where the Rot pool will go if the hold continues.
+			var progress: float = minf(1.0, f.state_tick / float(CombatTuning.ticks(Magic.POOL_HOLD_MS)))
+			canvas.draw_arc(at + f.facing * Magic.POOL_DISTANCE, Magic.POOL_RADIUS * progress, 0, TAU, 24,
+				Color(EFFECT_COLOURS[StatusEffects.ROT], 0.8), 1.0)
+		Fighter.State.ATTACK:
+			lantern = hand + f.facing * 8
+			var phase: StringName = f.attack_phase()
+			glow = 6.0 if phase == &"windup" else 4.0
+			if f.move == Magic.RELEASE and phase != &"windup":
+				var alpha: float = 0.5 if phase == &"active" else 0.15
+				_sector(canvas, at, f.facing, f.radius + f.move.reach, f.move.arc_deg, Color(Palette.CHANGED[1], alpha))
+	canvas.draw_circle(lantern, glow, Color(Palette.CHANGED[1], 0.35))
+	canvas.draw_rect(Rect2(lantern - Vector2(2, 3), Vector2(4, 6)), Palette.CHANGED[0])
+	canvas.draw_rect(Rect2(lantern - Vector2(1, 2), Vector2(2, 3)), Palette.CHANGED[2])
+
+
+## Up to five pips per effect above a creature, one row per effect present.
+static func _draw_effect_pips(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
+	var row: int = 0
+	for kind: StringName in StatusEffects.KINDS:
+		var n: int = f.effects.count(kind)
+		if n == 0:
+			continue
+		# A dark strip behind the pips: violet Rot vanished into the grass in
+		# the first render.
+		var top_left: Vector2 = at + Vector2(-9, -29 - row * 4)
+		canvas.draw_rect(Rect2(top_left, Vector2(18, 4)), Palette.SHADOW[0])
+		for i: int in range(n):
+			canvas.draw_rect(Rect2(top_left + Vector2(1 + i * 3.5, 1), Vector2(2.5, 2)), (EFFECT_COLOURS[kind] as Color).lightened(0.2))
+		row += 1
+
+
 ## Three pips above the player for the draw stages; white in a clean-release
 ## moment.
 static func _draw_stage_pips(canvas: CanvasItem, centre: Vector2, stage: int, clean: bool) -> void:
@@ -262,6 +317,16 @@ static func _draw_stage_pips(canvas: CanvasItem, centre: Vector2, stage: int, cl
 static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> void:
 	var direction: Vector2 = arrow.velocity.normalized()
 	var tip: Vector2 = at + Vector2(0, -8)  # flies at chest height
+	if arrow.move.effect != &"":
+		# A spell: an ember (round) or a frost shard (a diamond), with a trail.
+		var colour: Color = EFFECT_COLOURS[arrow.move.effect]
+		canvas.draw_line(tip - direction * 6, tip, Color(colour, 0.5), 1.0)
+		if arrow.move.effect == StatusEffects.CHILL:
+			var across: Vector2 = direction.orthogonal() * 2
+			canvas.draw_colored_polygon(PackedVector2Array([tip + direction * 3, tip + across, tip - direction * 2, tip - across]), colour)
+		else:
+			canvas.draw_circle(tip, 2.0, colour)
+		return
 	var length: float = 8.0 if arrow.pierce else 6.0
 	var width: float = 2.0 if arrow.move.id == &"arrow_heavy" else 1.0
 	var colour: Color = Palette.WARMTH[3] if arrow.pierce else Palette.PAPER[1]
@@ -282,6 +347,12 @@ static func _draw_mark(canvas: CanvasItem, sim: CombatSim) -> void:
 
 
 static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:
+	if zone.kind in [&"rot_pool", &"chill_pool"]:
+		var colour: Color = EFFECT_COLOURS[StatusEffects.ROT if zone.kind == &"rot_pool" else StatusEffects.CHILL]
+		var left: float = 1.0 - float(zone.age) / (zone.period * zone.waves)
+		canvas.draw_circle(zone.position, zone.radius, Color(colour, 0.15 + 0.15 * left))
+		canvas.draw_arc(zone.position, zone.radius, 0, TAU, 32, Color(colour, 0.8), 1.0)
+		return
 	var waiting: bool = zone.age < zone.delay
 	canvas.draw_circle(zone.position, zone.radius, Color(Palette.WARMTH[3], 0.08 if waiting else 0.16))
 	canvas.draw_arc(zone.position, zone.radius, 0, TAU, 32, Color(Palette.WARMTH[3], 0.7), 1.0)
@@ -333,6 +404,8 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	var phase: StringName = f.attack_phase()
 	if f.is_staggered():
 		body = Palette.STONE[1]
+		if f.effects.count(StatusEffects.CHILL) >= StatusEffects.MAX_STACKS:
+			body = Palette.WATER[1].lightened(0.3)  # Frozen
 	elif phase == &"windup" and (f.state_tick / 4) % 2 == 0:
 		body = Palette.DANGER[1]  # the telegraph flash
 	if phase == &"windup":
@@ -361,6 +434,7 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	canvas.draw_rect(Rect2(at.x - 8, at.y - 18, 16 * f.poise.ratio(), 1), Palette.PAPER[0])
 	if f.armour > 0.0:
 		canvas.draw_rect(Rect2(at.x - 8, at.y - 24, 16 * f.armour / f.armour_max, 2), Palette.STONE[2])
+	_draw_effect_pips(canvas, f, at)
 	if f.is_staggered():
 		_draw_dizzy(canvas, at + Vector2(0, -26), f.state_tick)
 
@@ -398,6 +472,23 @@ static func _draw_effect(canvas: CanvasItem, effect: Dictionary) -> void:
 				var direction: Vector2 = Vector2.from_angle(i * TAU / 6.0 + 0.4)
 				var shard: Vector2 = at + Vector2(0, -12) + direction * (4.0 + t * 14.0) + Vector2(0, t * t * 8.0)
 				canvas.draw_rect(Rect2(shard - Vector2(1.5, 1.5), Vector2(3, 3)), Color(Palette.STONE[2], 1.0 - t))
+		"release", "blight_bloom", "shatter", "spread":
+			var t: float = age / float(EFFECT_TICKS[effect["kind"]])
+			var colours: Dictionary = {"release": Palette.CHANGED[1], "blight_bloom": EFFECT_COLOURS[StatusEffects.ROT],
+				"shatter": Palette.PAPER[1], "spread": EFFECT_COLOURS[StatusEffects.SMOULDER]}
+			var radius: float = effect.get("radius", 16.0)
+			canvas.draw_arc(at + Vector2(0, -6), radius * (0.2 + 0.8 * t), 0, TAU, 32, Color(colours[effect["kind"]], 1.0 - t), 2.0)
+		"brittle", "frozen":
+			var t: float = age / float(EFFECT_TICKS[effect["kind"]])
+			var colour: Color = Palette.PAPER[1] if effect["kind"] == "brittle" else Palette.WATER[1].lightened(0.4)
+			for i: int in range(5):
+				var direction: Vector2 = Vector2.from_angle(i * TAU / 5.0 - PI / 2)
+				canvas.draw_line(at + Vector2(0, -8) + direction * 3, at + Vector2(0, -8) + direction * (6 + t * 6), Color(colour, 1.0 - t), 1.0)
+		"wardstep":
+			var t: float = age / float(EFFECT_TICKS["wardstep"])
+			var from: Vector2 = effect.get("from", at)
+			canvas.draw_rect(Rect2(from + Vector2(-5, -22), Vector2(10, 20)), Color(Palette.CHANGED[2], 0.5 * (1.0 - t)))
+			canvas.draw_line(from + Vector2(0, -12), at + Vector2(0, -12), Color(Palette.CHANGED[1], 0.6 * (1.0 - t)), 1.0)
 		"hit":
 			var size: float = 3.0 + age
 			var c: Color = Color(Palette.PAPER[1], 1.0 - age / 6.0)

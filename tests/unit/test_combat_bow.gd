@@ -387,7 +387,7 @@ func test_loadout_key_cycles_the_weapon_not_in_hand() -> void:
 	for i: int in range(4):
 		seen.append(sim.cycle_offhand_weapon().id)
 		assert_eq(sim.player.weapon().id, &"greatsword", "the weapon in hand stays")
-	assert_eq(seen, [&"bow", &"hammer", &"bow", &"hammer"] as Array[StringName], "never the one in hand")
+	assert_eq(seen, [&"bow", &"magic", &"hammer", &"bow"] as Array[StringName], "every weapon but the one in hand, in turn")
 
 
 func test_bow_events_map_to_haptic_effects() -> void:

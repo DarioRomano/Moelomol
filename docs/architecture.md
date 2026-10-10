@@ -67,18 +67,25 @@ Constraints the architecture must honour:
   player is in `Fighter.State.CHARGE`), and keeps its own state (the
   hammer's Rhythm). The sim keeps everything shared: dodge, swap (1.5 s
   cooldown), slow movement while charging, hits, armour, shockwaves,
-  arrows and zones. `Greatsword`, `Hammer` and `Bow` hold their moves and
-  starting values.
+  arrows and zones, status effects and Release. `Greatsword`, `Hammer`,
+  `Bow` and `Magic` hold their moves and starting values.
+- `StatusEffects` (one per fighter): Smoulder, Chill and Rot stacks, their
+  durations, damage over time, and the Release burst formula. What full
+  stacks do (spread, Frozen, armour weakened) and the Release combinations
+  live in `CombatSim.apply_effect` / `_release_combinations`, because they
+  reach other fighters. Any `CombatMove` can carry an `effect`, so crafted
+  arrowheads and enhancements can apply effects later.
 - `Projectile` (arrows: straight flight, hit test against the path swept
   each tick, piercing, the Volley marker) and `Zone` (an area that hits in
-  timed waves: the Volley rain, later magic's pools) are stepped by the sim.
+  timed waves: the Volley rain, magic's Rot and Chill pools) are stepped by
+  the sim.
 - `CombatDrawer` draws a sim on any `CanvasItem` (placeholder shapes), with
   optional render interpolation between ticks (Q20).
 - `scenes/combat/combat_arena.tscn`: reads InputMap actions into a
   `CombatInput` in `_physics_process`, steps the sim, plays haptics, draws.
   `CombatHud` sits in a `UiFrame`.
-- `scenes/showcase/combat_poses.tscn` (greatsword), `hammer_poses.tscn` and
-  `bow_poses.tscn`:
+- `scenes/showcase/combat_poses.tscn` (greatsword), `hammer_poses.tscn`,
+  `bow_poses.tscn` and `magic_poses.tscn`:
   scripted sims frozen at telling moments, for the review renders. Both
   extend `PoseSheet` (`pose_sheet.gd`), six panels each.
 - `Haptics` (`src/core/haptics.gd`): named rumble effects (ADR-0013).
@@ -304,3 +311,12 @@ a real controller)
   `KEY_F7` against the action).
 - A subclass can override a method with default arguments and call
   `super(...)` (`bow_poses.gd` wraps `PoseSheet._pose`).
+
+### 2026-10-10 (magic), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `StringName.capitalize()` works on a StringName and returns a `String`
+  (spell display names); `Color.lightened(amount)` exists (effect pips,
+  the Frozen tint). Both run in the suite and the renders.
+- A `%` in a string used with the `%` operator must be written `%%`;
+  otherwise the engine logs "unsupported format character" (a test message
+  "60% speed" did this, and the runner's logged-error hook caught it).

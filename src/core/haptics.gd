@@ -22,6 +22,11 @@ const EFFECTS: Dictionary = {
 	&"bow_release": [0.25, 0.15, 0.05],  # the string's snap
 	&"bow_hit": [0.15, 0.3, 0.05],
 	&"bow_heavy_hit": [0.3, 0.7, 0.1],
+	&"spell_cast": [0.1, 0.0, 0.05],  # a faint buzz
+	&"spell_hit": [0.1, 0.2, 0.04],
+	&"release": [0.3, 0.6, 0.1],  # up to 5 stacks consumed
+	&"release_big": [0.5, 0.95, 0.2],  # more than 5
+	&"wardstep": [0.15, 0.1, 0.06],
 }
 
 const HEAVY_GREATSWORD_MOVES: Array[StringName] = [&"cleave", &"spin", &"rising", &"follow_through", &"brace_counter"]
@@ -71,6 +76,10 @@ static func effect_for_event(event: Dictionary) -> StringName:
 					return &"bow_hit"
 				&"volley_rain":
 					return &""  # many small hits at once: rumble would only blur
+				&"ember", &"frost":
+					return &"spell_hit"
+				&"release", &"shatter":
+					return &""  # the release event plays the pulse
 			return &"greatsword_heavy_hit" if move in HEAVY_GREATSWORD_MOVES else &"greatsword_hit"
 		"impact":
 			return &"impact"
@@ -82,6 +91,18 @@ static func effect_for_event(event: Dictionary) -> StringName:
 			return &"hammer_perfect"
 		"draw_stage":
 			return &"bow_stage"
+		"cast":
+			return &"spell_cast"
+		"wardstep":
+			return &"wardstep"
+		"frozen":
+			return &"stagger"
+		"release":
+			var consumed: Dictionary = event["consumed"]
+			var stacks: int = 0
+			for kind: StringName in consumed:
+				stacks += int(consumed[kind])
+			return &"release_big" if stacks > StatusEffects.MAX_STACKS else &"release"
 		"arrow":
 			var shooter: Fighter = event["fighter"]
 			return &"bow_release" if shooter.kind == Fighter.Kind.PLAYER else &""

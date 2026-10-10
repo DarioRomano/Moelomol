@@ -30,11 +30,12 @@ func damage(amount: float, hyper_armour: bool) -> bool:
 	return false
 
 
-func tick() -> void:
+## `scale` slows the refill (Rot).
+func tick(scale: float = 1.0) -> void:
 	if _regen_wait > 0:
 		_regen_wait -= 1
 		return
-	current = minf(maximum, current + CombatTuning.per_tick(CombatTuning.POISE_REGEN_PER_S))
+	current = minf(maximum, current + CombatTuning.per_tick(CombatTuning.POISE_REGEN_PER_S) * scale)
 
 
 func ratio() -> float:

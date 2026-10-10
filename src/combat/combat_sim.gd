@@ -8,7 +8,7 @@ extends RefCounted
 
 const CREATURE_LUNGE_ID: StringName = &"creature_lunge"
 ## Every weapon there is, in the order the arena's loadout key cycles them.
-const WEAPON_IDS: Array[StringName] = [&"greatsword", &"hammer", &"bow"]
+const WEAPON_IDS: Array[StringName] = [&"greatsword", &"hammer", &"bow", &"magic"]
 
 var bounds: Rect2
 var obstacles: Array[Rect2] = []
@@ -59,6 +59,8 @@ static func make_weapon(weapon_id: StringName) -> Weapon:
 			return Hammer.new()
 		&"bow":
 			return Bow.new()
+		&"magic":
+			return Magic.new()
 	push_error("CombatSim.make_weapon: unknown weapon %s" % weapon_id)
 	return null
 
@@ -103,7 +105,9 @@ func step(input: CombatInput) -> void:
 	for f: Fighter in fighters():
 		_apply_push(f)
 		if f.is_alive() and not f.is_staggered():
-			f.poise.tick()
+			f.poise.tick(f.effects.poise_regen_scale())
+	for c: Fighter in creatures:
+		_tick_effects(c)
 	player.stamina.tick()
 	if player.swap_cooldown > 0:
 		player.swap_cooldown -= 1
@@ -181,6 +185,8 @@ func _step_player(input: CombatInput) -> void:
 			if p.attack_phase() == &"recovery" and _buffer_action != &"":
 				if _try_action(_take_buffer(), input):
 					return
+			if p.move.move_speed > 0.0 and p.attack_phase() != &"active":
+				_walk(p, input, p.move.move_speed)  # casting slows but never roots
 			_advance_attack(p)
 			if p.state == Fighter.State.FREE:
 				p.chain = 0  # the chain ends when an attack finishes untouched
@@ -215,6 +221,11 @@ func _try_action(action: StringName, input: CombatInput) -> bool:
 			p.dodge_direction = direction.normalized() if direction.length() > 0.1 else p.facing
 			if lock_target == null:
 				p.facing = p.dodge_direction
+			if p.weapon().dodge_kind() == &"wardstep":
+				_wardstep(p)
+				return true
+			p.iframes = Vector2i(CombatTuning.ticks(CombatTuning.DODGE_IFRAME_START_MS),
+				CombatTuning.ticks(CombatTuning.DODGE_IFRAME_END_MS))
 			p.enter(Fighter.State.DODGE, CombatTuning.ticks(CombatTuning.DODGE_MS))
 			events.append({"type": "dodge"})
 			return true
@@ -236,15 +247,37 @@ func _try_action(action: StringName, input: CombatInput) -> bool:
 	return weapon != null and weapon.try_action(self, action, input)
 
 
+## Magic's dodge: a blink of WARDSTEP_DISTANCE (stopped by walls), leaving
+## a Chill pool where the player stood; invulnerable throughout.
+func _wardstep(p: Fighter) -> void:
+	var from: Vector2 = p.position
+	zones.append(Zone.make(&"chill_pool", p, Magic.CHILL_PAYLOAD, from, Magic.CHILL_POOL_RADIUS, 0,
+		CombatTuning.ticks(Magic.CHILL_POOL_PERIOD_MS), Magic.CHILL_POOL_WAVES))
+	for i: int in range(4):
+		_move_with_collision(p, p.dodge_direction * Magic.WARDSTEP_DISTANCE / 4.0)
+	p.previous_position = p.position  # a blink: no in-between frames
+	var length: int = CombatTuning.ticks(Magic.WARDSTEP_MS)
+	p.iframes = Vector2i(0, length)
+	p.dodge_direction = Vector2.ZERO
+	p.enter(Fighter.State.DODGE, length)
+	events.append({"type": "wardstep", "from": from, "position": p.position})
+
+
 ## Walking slowly while holding a charge, facing the lock target or the way
 ## the player moves.
 func _charge_move(p: Fighter, input: CombatInput) -> void:
+	_walk(p, input, p.weapon().charge_move_speed())
+
+
+## Moves the player at `speed` px/s in the input direction, facing the lock
+## target or the way they move.
+func _walk(p: Fighter, input: CombatInput, speed: float) -> void:
 	var direction: Vector2 = input.move.limit_length(1.0)
 	if lock_target != null:
 		p.facing = (lock_target.position - p.position).normalized()
 	elif direction.length() > 0.1:
 		p.facing = direction.normalized()
-	_move_with_collision(p, direction * CombatTuning.per_tick(p.weapon().charge_move_speed()))
+	_move_with_collision(p, direction * CombatTuning.per_tick(speed))
 
 
 ## Starts `move` for f if it can pay the stamina; returns true if it started.
@@ -338,7 +371,13 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		weapon.on_owner_hit(self)
 	if attacker.kind == Fighter.Kind.PLAYER and attacker.weapon() != null:
 		attacker.weapon().on_hit_landed(self, target, move)
+	_interrupt_cast(target)
 	var damage: float = move.damage
+	var consumed: Dictionary = {}
+	if move.releases_effects and target.effects.total() > 0:
+		consumed = target.effects.consume()
+		damage += StatusEffects.release_damage(consumed)
+		events.append({"type": "release", "fighter": target, "consumed": consumed, "position": target.position})
 	var was_staggered: bool = target.is_staggered()
 	if was_staggered:
 		damage *= move.staggered_damage_multiplier
@@ -353,9 +392,15 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if target.state == Fighter.State.BRACE:
 		target.brace_ready = true
 		events.append({"type": "brace_absorb", "fighter": target})
+	if not consumed.is_empty():
+		_release_combinations(attacker, target, consumed)
 	if target.health <= 0.0:
 		_defeat(target)
 		return
+	if move.effect != &"":
+		apply_effect(target, move.effect, move.effect_stacks)
+		if not target.is_alive() or target.is_staggered():
+			was_staggered = true  # Frozen: no poise check on top
 	if not was_staggered:
 		if move.stagger_ms > 0:
 			stagger(target, move.stagger_ms)
@@ -368,9 +413,10 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		target.push_velocity = direction * (move.push / target.push_ticks)
 
 
-## Takes `amount` off target's health, less while it has armour (which the
-## full amount chips away). Returns the damage actually taken.
+## Takes `amount` off target's health: more with Rot, less while it has
+## armour (which the full amount chips away). Returns the damage taken.
 func _apply_damage(target: Fighter, amount: float) -> float:
+	amount *= target.effects.damage_taken_multiplier()
 	var taken: float = amount
 	if target.armour > 0.0:
 		taken = amount * CombatTuning.ARMOUR_DAMAGE_TAKEN
@@ -379,6 +425,81 @@ func _apply_damage(target: Fighter, amount: float) -> float:
 			events.append({"type": "armour_break", "fighter": target, "position": target.position})
 	target.health -= taken
 	return taken
+
+
+## A hit during a spell's windup (or a magic charge) stops the cast.
+func _interrupt_cast(f: Fighter) -> void:
+	if f.kind != Fighter.Kind.PLAYER:
+		return
+	var casting: bool = f.attack_phase() == &"windup" and f.move.spell
+	var charging: bool = f.state == Fighter.State.CHARGE and f.weapon().charge_interruptible()
+	if casting or charging:
+		f.move = null
+		f.enter(Fighter.State.FREE)
+		events.append({"type": "interrupted", "fighter": f})
+
+
+# --- Status effects ---------------------------------------------------------------
+
+## Adds stacks of an effect to a creature. Reaching full stacks triggers the
+## effect's own result: Smoulder spreads a stack to creatures nearby, Chill
+## freezes (a stagger that ignores poise), Rot weakens armour.
+func apply_effect(target: Fighter, kind: StringName, stacks: int) -> void:
+	if target.kind != Fighter.Kind.CREATURE or not target.is_alive() or kind in target.resists:
+		return
+	var before: int = target.effects.add(kind, stacks)
+	var after: int = target.effects.count(kind)
+	events.append({"type": "effect", "fighter": target, "effect": kind, "stacks": after})
+	if before >= StatusEffects.MAX_STACKS or after < StatusEffects.MAX_STACKS:
+		return
+	match kind:
+		StatusEffects.SMOULDER:
+			events.append({"type": "spread", "fighter": target, "position": target.position})
+			for other: Fighter in creatures:
+				if other != target and other.position.distance_to(target.position) <= StatusEffects.SPREAD_RADIUS:
+					apply_effect(other, StatusEffects.SMOULDER, 1)
+		StatusEffects.CHILL:
+			events.append({"type": "frozen", "fighter": target, "position": target.position})
+			stagger(target, StatusEffects.FROZEN_MS)
+		StatusEffects.ROT:
+			if target.armour > 0.0:
+				target.armour *= StatusEffects.ROT_ARMOUR_KEPT
+				events.append({"type": "armour_weakened", "fighter": target, "position": target.position})
+
+
+## What releasing two or three effects together adds (combat.md, "Release").
+func _release_combinations(attacker: Fighter, target: Fighter, consumed: Dictionary) -> void:
+	var smoulder: bool = consumed.has(StatusEffects.SMOULDER)
+	var chill: bool = consumed.has(StatusEffects.CHILL)
+	var rot: bool = consumed.has(StatusEffects.ROT)
+	if smoulder and chill:
+		events.append({"type": "shatter", "fighter": target, "position": target.position,
+			"radius": Magic.SHATTER_RADIUS})
+		for other: Fighter in _targets_of(attacker):
+			if other != target and other.position.distance_to(target.position) - other.radius <= Magic.SHATTER_RADIUS:
+				_hit(attacker, other, Magic.SHATTER)
+	if smoulder and rot:
+		events.append({"type": "blight_bloom", "fighter": target, "position": target.position,
+			"radius": Magic.BLIGHT_RADIUS})
+		for other: Fighter in creatures:
+			if other != target and other.position.distance_to(target.position) - other.radius <= Magic.BLIGHT_RADIUS:
+				apply_effect(other, StatusEffects.ROT, Magic.BLIGHT_ROT_STACKS)
+	if chill and rot and target.health > 0.0 and not target.is_staggered():
+		events.append({"type": "brittle", "fighter": target, "position": target.position})
+		stagger(target)
+
+
+## Durations, falling stacks and damage over time for one creature.
+func _tick_effects(c: Fighter) -> void:
+	if not c.is_alive():
+		return
+	var burn: float = c.effects.tick()
+	if burn <= 0.0:
+		return
+	var taken: float = _apply_damage(c, burn)
+	events.append({"type": "dot", "fighter": c, "damage": taken, "position": c.position})
+	if c.health <= 0.0:
+		_defeat(c)
 
 
 ## A perfect hammer strike landing: everything within the radius (from the
@@ -398,8 +519,9 @@ func _shockwave(f: Fighter, move: CombatMove) -> void:
 
 ## Looses an arrow carrying `payload` from f, the way f faces.
 func fire(f: Fighter, payload: CombatMove) -> Projectile:
+	var speed: float = payload.projectile_speed if payload.projectile_speed > 0.0 else CombatTuning.ARROW_SPEED
 	var arrow: Projectile = Projectile.make(f, payload, f.position + f.facing * (f.radius + 2.0), f.facing,
-		CombatTuning.per_tick(CombatTuning.ARROW_SPEED), CombatTuning.ARROW_RANGE)
+		CombatTuning.per_tick(speed), CombatTuning.ARROW_RANGE)
 	arrow.pierce = payload.pierce
 	arrow.marker = payload.marker
 	projectiles.append(arrow)
@@ -459,8 +581,12 @@ func _step_zones() -> void:
 		if zone.wave_now():
 			events.append({"type": "wave", "kind": zone.kind, "position": zone.position, "radius": zone.radius})
 			for target: Fighter in _targets_of(zone.owner):
-				if target.position.distance_to(zone.position) - target.radius <= zone.radius:
+				if target.position.distance_to(zone.position) - target.radius > zone.radius:
+					continue
+				if zone.move.damage > 0.0 or zone.move.poise_damage > 0.0:
 					_hit(zone.owner, target, zone.move)
+				elif zone.move.effect != &"":
+					apply_effect(target, zone.move.effect, zone.move.effect_stacks)  # a pool: no hit
 		zone.age += 1
 		if not zone.is_finished():
 			lasting.append(zone)
@@ -492,6 +618,8 @@ func _respawn(f: Fighter) -> void:
 	f.health = f.max_health
 	f.poise.current = f.poise.maximum
 	f.armour = f.armour_max
+	f.effects.clear()
+	f.tempo = 0.0
 	f.position = f.spawn_position
 	f.previous_position = f.spawn_position
 	f.push_ticks = 0
@@ -521,11 +649,13 @@ func _step_creature(c: Fighter) -> void:
 			if c.state_tick >= c.state_length:
 				c.enter(Fighter.State.FREE)
 		Fighter.State.ATTACK:
+			if not _creature_time_passes(c):
+				return  # Chill: the attack plays out slower
 			_advance_attack(c)
 			if c.state == Fighter.State.FREE:
 				c.cooldown = CombatTuning.ticks(CombatTuning.CREATURE_COOLDOWN_MS)
 		Fighter.State.FREE:
-			if c.cooldown > 0:
+			if c.cooldown > 0 and _creature_time_passes(c):
 				c.cooldown -= 1
 			if not c.ai_enabled or not player.is_alive():
 				return
@@ -534,9 +664,20 @@ func _step_creature(c: Fighter) -> void:
 				c.facing = offset.normalized()
 			var gap: float = offset.length() - c.radius - player.radius
 			if gap > CombatTuning.CREATURE_ATTACK_RANGE:
-				_move_with_collision(c, c.facing * CombatTuning.per_tick(CombatTuning.CREATURE_SPEED))
+				var speed: float = CombatTuning.CREATURE_SPEED * c.effects.slow_factor()
+				_move_with_collision(c, c.facing * CombatTuning.per_tick(speed))
 			elif c.cooldown == 0:
 				start_attack(c, _creature_lunge)
+
+
+## Chill slows a creature's attacks: with slow factor s, only a share s of
+## ticks count. Returns true if this tick counts.
+func _creature_time_passes(c: Fighter) -> bool:
+	c.tempo += c.effects.slow_factor()
+	if c.tempo < 1.0:
+		return false
+	c.tempo -= 1.0
+	return true
 
 
 static func _make_creature_lunge() -> CombatMove:

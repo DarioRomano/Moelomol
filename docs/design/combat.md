@@ -463,27 +463,29 @@ title, or `--start-scene combat_arena`). Never at the base.
   stagger, hyper-armour, input buffer, hit-stop, soft aim, lock-on with
   target switching, push and impacts (walls, pillars, other creatures), the
   full greatsword (light chain, four finishers, Follow-through, Brace and its
-  counter), the hammer and the bow (below), armour, the two-weapon loadout
-  with swap,
+  counter), the hammer, the bow and magic with the status-effect system
+  (below), armour, the two-weapon loadout with swap,
   three training creatures with a telegraphed lunge (one with a stone
   shell), rumble through the haptics service, and a HUD.
 - How: a deterministic simulation (`src/combat/combat_sim.gd`) stepped at
   60 Hz; the scene only reads input and draws. Each weapon is a `Weapon`
-  subclass (`greatsword.gd`, `hammer.gd`, `bow.gd`). Rule tests drive the simulation
+  subclass (`greatsword.gd`, `hammer.gd`, `bow.gd`, `magic.gd`). Rule tests drive the simulation
   directly. Placeholder shapes from the palette stand in for art.
 - Developer keys: F5 render interpolation (Q20), F6 creatures passive (for
   practising combos), F7 changes the weapon not in hand (greatsword, hammer,
-  bow).
-- Not built yet: magic (next), crafted arrowheads (need crafting), the status-effect
-  system (comes with magic), a perfect hammer strike counting as a Release
-  (needs magic), the hammer's rising tone (no audio system yet), the
+  bow, magic).
+- Not built yet: crafted arrowheads and effect enhancements (need crafting;
+  any move can already carry an effect), effect-resistant creatures in the
+  arena (the rule exists; the roster comes with the areas), the hammer's
+  rising tone (no audio system yet), the
   hold/toggle setting for lock-on and an options menu for the wide sweet
   spot (come with the options menu), DualSense triggers (later prototype),
   death and healing.
 - Feel can only be judged by playing:
   `docs/playtests/2026-10-10-combat-arena.md`,
-  `docs/playtests/2026-10-10-hammer.md` and
-  `docs/playtests/2026-10-10-bow.md`.
+  `docs/playtests/2026-10-10-hammer.md`,
+  `docs/playtests/2026-10-10-bow.md` and
+  `docs/playtests/2026-10-10-magic.md`.
 
 ### Hammer, weapon swap and armour as built
 
@@ -545,3 +547,40 @@ Readings of the design taken while building (say if any is wrong):
   three waves (60 poise) plus any other hit stagger a training creature.
 - **The mark stays where the marker stopped** (on the creature it hit, or at
   a wall or the end of its range); it does not follow a creature.
+
+### Magic and status effects as built
+
+Starting values (in `src/combat/magic.gd` and `status_effects.gd`; tuning
+needs the lead's approval):
+
+| Value | Start |
+|---|---|
+| Stacks | max 5 per effect; 6 s, refreshed by each application; then one stack lost per second |
+| Smoulder | 2 damage per second per stack; reaching 5 spreads 1 stack to creatures within 32 px |
+| Chill | −10% movement and attack speed per stack (a slowed creature's telegraph lasts longer); reaching 5 freezes: a 1 s stagger that ignores poise |
+| Rot | 1 damage per second per stack; +5% damage taken from everything and −15% poise refill per stack; reaching 5 halves armour |
+| Ember bolt (light) | 150 ms cast, 300 px/s, 3 damage, 1 Smoulder, 5 Focus |
+| Frost shard (heavy, released within 250 ms) | 100 ms cast, 200 px/s, 4 damage, 2 Chill, 12 Focus |
+| Rot pool (heavy, held 250 ms) | 40 px in front, 22 px radius, 4 s; 1 Rot as it lands and every 0.5 s to each creature inside (not a hit); 20 Focus |
+| Release (skill) | 200 ms cast, cone 90° reaching 28 px, 10 Focus; consumes all stacks: each stack is worth 4, 6, 8, 10, 12; ×2 for two effects, ×3 for three (5/5/5 = 360) |
+| Shatter (Smoulder + Chill) | 20 damage, 30 poise to every creature within 36 px of the target |
+| Blight bloom (Smoulder + Rot) | 3 Rot to every creature within 48 px |
+| Brittle (Chill + Rot) | the target is staggered |
+| Perfect hammer strike | counts as a Release on the creatures it hits (the combinations included) |
+| Casting | the player walks at 48 px/s (60%) during a cast; a hit during a cast's windup or the heavy hold interrupts it (Focus is lost) |
+| Focus | 100; refills 6/s, 20/s after 3 s without being hit |
+| Wardstep (magic's dodge) | 40 px blink at once (stopped by walls), invulnerable for its 200 ms, 20 stamina; leaves an 18 px Chill pool for 2 s (1 Chill every 0.5 s) |
+
+Readings of the design taken while building (say if any is wrong):
+
+- **Full stacks act once**, on reaching 5: staying at 5 does not keep
+  spreading or re-freezing. Freezing does not consume the Chill, so Chill +
+  Rot (Brittle) still works on a Frozen creature.
+- **Release's burst ignores Rot's +damage taken**: the Rot is consumed by
+  the same Release.
+- **Brittle is a stagger** (the "massive poise damage" breaks poise at
+  once); it does nothing extra to a creature that is already staggered.
+- **Pools are not hits**: they add stacks without hit-stop, rumble or
+  breaking a Brace.
+- **Effects only land on creatures** for now: no creature applies effects to
+  the player yet.
