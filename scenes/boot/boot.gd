@@ -10,7 +10,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(TEST_CARD.instantiate())
 	var title: Label = Label.new()
-	title.text = "MOELOMOL\nfoundation build - no gameplay yet"
+	title.text = "MOELOMOL\nfoundation build - press F2 for test scenes and the combat arena"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", Palette.WARMTH[3])
 	title.add_theme_font_size_override("font_size", 16)
