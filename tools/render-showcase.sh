@@ -76,23 +76,26 @@ for scene in "${SCENES[@]}"; do
   done
 done
 
-# UI width setting (Q15): HUD frame at each width on 32:9 and 21:9 screens.
-# Format: scene size ui-width
+# Variants: UI width setting (Q15) on 32:9 and 21:9 screens, and the
+# performance overlay (Q16). Format: scene size ui-width [extra flag]
 VARIANTS=(
   "res://scenes/showcase/test_card.tscn 5120x1440 21:9"
   "res://scenes/showcase/test_card.tscn 5120x1440 16:9"
   "res://scenes/showcase/test_card.tscn 3440x1440 21:9"
   "res://scenes/showcase/test_card.tscn 3440x1440 16:9"
+  "res://scenes/showcase/renderer_features.tscn 1920x1080 full --perf-overlay"
+  "res://scenes/showcase/renderer_features.tscn 5120x1440 16:9 --perf-overlay"
 )
 for variant in "${VARIANTS[@]}"; do
-  read -r scene size ui <<<"$variant"
+  read -r scene size ui extra <<<"$variant"
   name="$(basename "$scene" .tscn)"
-  file="$OUT/${name}_${size}_ui-${ui/:/-}.png"
+  suffix="${extra#--}"
+  file="$OUT/${name}_${size}_ui-${ui/:/-}${suffix:+_$suffix}.png"
   log="$(mktemp)"
   if LIBGL_ALWAYS_SOFTWARE="${LIBGL_ALWAYS_SOFTWARE:-1}" render_one "$size" \
       "$GODOT" --path "$ROOT" --display-driver x11 --rendering-driver opengl3 \
       --audio-driver Dummy --resolution "$size" --position 0,0 \
-      -s res://tools/render_showcase.gd -- --scene "$scene" --out "$file" --ui-width "$ui" "${WM_CHECK[@]}" \
+      -s res://tools/render_showcase.gd -- --scene "$scene" --out "$file" --ui-width "$ui" ${extra:+"$extra"} "${WM_CHECK[@]}" \
       >"$log" 2>&1; then
     grep "^render_showcase:" "$log" || true
   else
