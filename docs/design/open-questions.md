@@ -5,7 +5,9 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: every question so far is resolved.
+Status at 2026-10-10: **Q18** (camera perspective) and **Q19** (one or two
+weapons equipped) are new, from the combat design; everything else is
+resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -26,6 +28,8 @@ Status at 2026-10-10: every question so far is resolved.
 | Q15 | How much world should 32:9 screens show? | First level layout | **Resolved**: show it all + UI width setting → ADR-0008 |
 | Q16 | How to check the performance budget without a minimum-spec machine | First gameplay system | **Resolved**: 5800X + Steam Frame (B, C) |
 | Q17 | Whole-number or fractional scaling, now that rendering is full resolution? | Nothing urgent | **Resolved**: keep whole-number |
+| Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Open** (new) |
+| Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Open** (new) |
 
 ---
 
@@ -743,3 +747,57 @@ look even.
 **Recommendation:** A. The bars only appear on unusual sizes and in windowed
 mode, while B's shimmer would affect every player on those sizes all the time.
 Revisit if playtests on real laptops show the bars bother people.
+
+## Q18. Camera perspective: top-down or side view?
+
+Found while designing combat (2026-10-10): the perspective was never decided,
+and it changes how every weapon plays and how every sprite is drawn. The art
+plan's placeholder ("a player character standing in four directions")
+already implies top-down, but no decision records it. `combat.md` and
+`combat-art-prompts.md` assume A.
+
+**A. Top-down ¾ view** (like most farming games: the ground seen from above at
+an angle, characters drawn slightly from the front) (recommended)
+- Pro: farming on a grid of fields, wandering a base and exploring open areas
+  all work naturally; enemies can come from any side, so dodging, pushing into
+  walls, kiting and area effects (shockwaves, pools, Volley) have room; fits
+  the 640×360 view with 40 × 22 tiles and the ultrawide decisions.
+- Con: each character and attack needs several facing directions (more art);
+  aiming without a mouse needs soft aim and lock-on (designed).
+
+**B. Side view** (a 2D action game seen from the side, with jumping)
+- Pro: one facing direction to draw (mirrored); combat readability is
+  excellent; jumping and verticality add options.
+- Con: farming fields from the side is awkward; the base becomes a strip;
+  open exploration becomes platforming; pushing and area effects mostly work
+  along one line; most of the art direction and the "wide empty views" idea
+  would need rethinking.
+
+**Recommendation:** A. Once decided it becomes an ADR: expensive to reverse,
+because every sprite depends on it.
+
+## Q19. One weapon at a time, or two equipped with a swap?
+
+Found while designing combat. The brief wants weapons that fit different
+playstyles and magic built on stacking; whether those can be combined in one
+fight decides how deep builds go and how much needs balancing.
+
+**A. One weapon equipped; change it outside combat**
+- Pro: each weapon is balanced on its own; simplest controls; strongest
+  identity per playstyle.
+- Con: no combinations (magic stacks cashed in by a hammer strike, a bow
+  pinning creatures for a greatsword); a wrong pick for a fight cannot be
+  fixed mid-fight.
+
+**B. Two equipped, swap any time with a short cooldown** (recommended)
+- Pro: hybrid builds (the combinations in `combat.md`); each weapon covers the
+  other's weakness (bow for flyers, hammer for shells); more depth for skills
+  and trinkets.
+- Con: more balancing; every pair must feel good; one more button.
+
+**C. Any weapon, any time (a wheel)**
+- Pro: maximum freedom.
+- Con: playstyles blur into "use the right tool for each enemy"; weapon
+  identity and mastery suffer; menus in the middle of fights.
+
+**Recommendation:** B, with a 1.5 s swap cooldown to keep swaps deliberate.
