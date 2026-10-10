@@ -1,6 +1,7 @@
 extends PoseSheet
-## Hammer review poses (PoseSheet): the jab, the charge and its sweet spot,
-## the perfect strike's shockwave and armour break, Overstrain, Ground stamp.
+## Hammer review poses (PoseSheet): the jab, the charge at level 3 (the
+## sweet spot), the perfect strike's cone shockwave and armour break,
+## overcharge, Ground stamp.
 
 const HAMMER: int = 1
 
@@ -8,10 +9,10 @@ const HAMMER: int = 1
 func _make_panels() -> Array[Dictionary]:
 	return [
 		_pose("Jab", _jab, HAMMER),
-		_pose("Charge in the sweet spot: the head flashes", _sweet_spot, HAMMER),
-		_pose("Perfect strike: the shockwave staggers all", _shockwave, HAMMER),
+		_pose("Charge level 3, the sweet spot: head flashes", _sweet_spot, HAMMER),
+		_pose("Perfect level 3: cone shockwave forward", _shockwave, HAMMER),
 		_pose("Perfect strike shatters a shell", _armour_break, HAMMER),
-		_pose("Held past the sweet spot: Overstrain", _overstrain, HAMMER),
+		_pose("Held past level 3: overcharged", _overstrain, HAMMER),
 		_pose("Ground stamp: get off me", _ground_stamp, HAMMER),
 	]
 
@@ -38,11 +39,14 @@ func _sweet_spot(sim: CombatSim, effects: Array[Dictionary]) -> void:
 
 
 func _shockwave(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	sim.player.position = Vector2(100, 76)
+	# Three in the cone (near, far, off to the side) and one behind, which the
+	# cone leaves standing.
+	sim.player.position = Vector2(56, 76)
 	sim.player.previous_position = sim.player.position
-	_creature(sim, Vector2(126, 76))
-	_creature(sim, Vector2(76, 82))
-	_creature(sim, Vector2(100, 102))
+	_creature(sim, Vector2(84, 76))
+	_creature(sim, Vector2(112, 62))
+	_creature(sim, Vector2(108, 96))
+	_creature(sim, Vector2(30, 80))
 	_charge_to(sim, effects, _hammer(sim).sweet_spot_ticks().x + 2)
 	sim.step(CombatInput.new())
 	_step_until(sim, effects, func() -> bool: return _effect_age(effects, "shockwave") >= 6)

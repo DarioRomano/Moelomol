@@ -86,6 +86,11 @@ func charge_move_speed() -> float:
 	return CAST_MOVE_SPEED
 
 
+## A faint hum while deciding between Frost shard and Rot pool.
+func charge_rumble(_p: Fighter) -> Vector2:
+	return Vector2(0.06, 0.0)
+
+
 func charge_interruptible() -> bool:
 	return true
 
