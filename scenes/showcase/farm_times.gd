@@ -16,7 +16,7 @@ var _sims: Array[FarmSim] = []
 func _ready() -> void:
 	for i: int in range(TIMES.size()):
 		var sim: FarmSim = _small_farm()
-		sim.clock.minute = TIMES[i]
+		sim.clock.total_minutes = TIMES[i]
 		_sims.append(sim)
 		var label: Label = Label.new()
 		label.text = "%d %s" % [i + 1, TITLES[i]]
@@ -35,7 +35,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(640, 360)), Palette.SHADOW[0])
 	for i: int in range(_sims.size()):
 		draw_set_transform(_origin(i))
-		FarmDrawer.draw(self, _sims[i], 1.0, _sims[i].clock.sky_tint())
+		FarmDrawer.draw(self, _sims[i], 1.0, FarmDrawer.world_tint(_sims[i]))
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -75,5 +75,6 @@ static func _small_farm() -> FarmSim:
 	sim.previous_position = sim.player_position
 	sim.facing = Vector2.RIGHT
 	sim.busy = 5
-	sim.last_action = FarmSim.WATERING_CAN
+	sim.last_action = FarmSim.WATER
+	sim.spell_index = sim.spells.find(FarmSim.WATER)
 	return sim

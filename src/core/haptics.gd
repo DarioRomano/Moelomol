@@ -45,7 +45,8 @@ const EFFECTS: Dictionary = {
 	&"farm_water": [0.08, 0.0, 0.1],
 	&"farm_plant": [0.05, 0.1, 0.03],
 	&"farm_harvest": [0.15, 0.35, 0.07],
-	&"farm_nothing": [0.12, 0.0, 0.06],  # a dull buzz: the tool did nothing
+	&"farm_nothing": [0.12, 0.0, 0.06],  # a dull buzz: the spell did nothing
+	&"farm_rain": [0.2, 0.15, 0.4],  # a long soft roll: the weather turns
 }
 
 ## How long each refresh of the sustained rumble lasts; refreshed every tick,
@@ -187,6 +188,8 @@ static func effect_for_farm_event(event: Dictionary) -> StringName:
 			return &"farm_plant"
 		"harvest":
 			return &"farm_harvest"
-		"nothing", "no_seeds":
+		"nothing", "no_seeds", "no_mana":
 			return &"farm_nothing"
+		"rain":
+			return &"farm_rain"
 	return &""

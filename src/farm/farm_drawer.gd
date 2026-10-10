@@ -4,6 +4,9 @@ extends RefCounted
 ## (top-down 3/4 view, ADR-0014). Placeholder art until the provisioned art
 ## arrives; listed in the asset register.
 ##
+## Farming is magic (Q27): the farmer casts with a glow in warm living green
+## and gold (Q28, working assumption C: nothing violet at the base yet).
+##
 ## Every world colour is multiplied by the time of day's tint (the sky);
 ## the base's warm lights and the target highlight are drawn untinted, so at
 ## dusk the windows stay warm while the world goes blue (art direction,
@@ -21,7 +24,16 @@ static func draw(canvas: CanvasItem, sim: FarmSim, alpha: float, tint: Color = C
 	var at: Vector2 = sim.previous_position.lerp(sim.player_position, clampf(alpha, 0.0, 1.0))
 	_draw_player(canvas, sim, at)
 	_draw_lights(canvas, sim)
+	if sim.raining:
+		_draw_rain(canvas, sim)
 	_draw_target(canvas, sim)
+
+
+## The tint to draw the world with: the time of day, dimmed and cooled
+## while it rains.
+static func world_tint(sim: FarmSim) -> Color:
+	var tint: Color = sim.clock.sky_tint()
+	return tint * Color(0.8, 0.85, 0.95) if sim.raining else tint
 
 
 static func _c(colour: Color) -> Color:
@@ -150,32 +162,61 @@ static func _draw_player(canvas: CanvasItem, sim: FarmSim, at: Vector2) -> void:
 	_draw_tool(canvas, sim, at + Vector2(0, -12))
 
 
-## The tool in hand: held out while working, at the side otherwise.
+## The farmer's hands while casting: a glow in front, and the spell's mark
+## on its target (earth for Till, droplets for Water, a seed for Sow); a
+## crop in hand when harvesting. Hands empty otherwise.
 static func _draw_tool(canvas: CanvasItem, sim: FarmSim, hand: Vector2) -> void:
-	var working: bool = sim.busy > 0
-	var direction: Vector2 = sim.facing if working else Vector2(0.4, 1).normalized()
-	var tip: Vector2 = hand + direction * (12.0 if working else 7.0)
-	match sim.last_action if working else sim.tool():
-		FarmSim.HOE:
-			canvas.draw_line(hand, tip, _c(Palette.WARMTH[0]), 2.0)
-			canvas.draw_rect(Rect2(tip - Vector2(2, 1), Vector2(4, 3)), _c(Palette.STONE[2]))
-		FarmSim.WATERING_CAN:
-			canvas.draw_rect(Rect2(tip - Vector2(3, 3), Vector2(6, 5)), _c(Palette.WATER[0]))
-			canvas.draw_line(tip, tip + direction * 4, _c(Palette.WATER[1]), 1.0)
-			if working:
-				for i: int in range(3):
-					canvas.draw_rect(Rect2(tip + direction * (6 + i * 2) + Vector2(0, i), Vector2(1, 1)), _c(Palette.WATER[1]))
-		&"harvest":
-			canvas.draw_rect(Rect2(tip - Vector2(2, 2), Vector2(4, 4)), _c(Palette.CROPS[1]))
-		_:  # a seed pouch
-			canvas.draw_rect(Rect2(tip - Vector2(2, 2), Vector2(5, 5)), _c(Palette.PAPER[0]))
-			canvas.draw_rect(Rect2(tip - Vector2(1, 3), Vector2(3, 1)), _c(Palette.WARMTH[0]))
+	if sim.busy <= 0:
+		return
+	var progress: float = 1.0 - float(sim.busy) / FarmSim.cast_ticks()
+	var tip: Vector2 = hand + sim.facing * 8.0
+	if sim.last_action == &"harvest":
+		canvas.draw_rect(Rect2(tip - Vector2(2, 2), Vector2(4, 4)), _c(Palette.CROPS[1]))
+		return
+	# The glow: untinted, like a light, so casting reads at night.
+	var glow: Color = Palette.WARMTH[3] if sim.last_action != FarmSim.WATER else Palette.CROPS[1]
+	canvas.draw_circle(tip, 2.0 + progress * 2.0, Color(glow, 0.55 * (1.0 - progress * 0.5)))
+	canvas.draw_rect(Rect2(tip - Vector2(1, 1), Vector2(2, 2)), Color(Palette.PAPER[1], 0.9))
+	var target: Vector2 = sim.cell_centre(sim.target_cell())
+	match sim.last_action:
+		FarmSim.TILL:
+			for i: int in range(3):
+				var puff: Vector2 = target + Vector2(-4 + i * 4, 2 - progress * 5.0 - i % 2)
+				canvas.draw_rect(Rect2(puff, Vector2(2, 2)), Color(_c(Palette.WARMTH[1]), 1.0 - progress))
+		FarmSim.WATER:
+			for cell: Vector2i in sim.water_area(sim.target_cell()):
+				var c: Vector2 = sim.cell_centre(cell)
+				for i: int in range(2):
+					var drop: Vector2 = c + Vector2(-3 + i * 5, -10 + progress * 10.0 + i * 2)
+					canvas.draw_rect(Rect2(drop, Vector2(1, 2)), Color(Palette.WATER[1].lightened(0.3), 0.9))
+		_:
+			canvas.draw_rect(Rect2(target + Vector2(-1, -6 + progress * 6.0), Vector2(2, 2)), Color(_c(Palette.WARMTH[0]), 1.0))
+
+
+## Rain (the watering spell's final form): streaks over the whole field.
+static func _draw_rain(canvas: CanvasItem, sim: FarmSim) -> void:
+	var b: Rect2 = sim.bounds()
+	var phase: float = fposmod(sim.clock.total_minutes * 40.0, 24.0)
+	var x: float = b.position.x
+	var row: int = 0
+	while x < b.end.x:
+		var y: float = b.position.y + fposmod(phase + row * 7.0, 24.0) - 12.0
+		while y < b.end.y:
+			canvas.draw_line(Vector2(x, y), Vector2(x - 2, y + 6), Color(Palette.WATER[1].lightened(0.4), 0.5), 1.0)
+			y += 24.0
+		x += 11.0
+		row += 1
 
 
 ## The tile the player acts on, outlined (untinted, so it reads at night).
+## For the watering spell, its whole area is outlined faintly too.
 static func _draw_target(canvas: CanvasItem, sim: FarmSim) -> void:
 	var cell: Vector2i = sim.target_cell()
 	if not sim.plot.contains(cell):
 		return
+	if sim.spell() == FarmSim.WATER:
+		for c: Vector2i in sim.water_area(cell):
+			if c != cell:
+				canvas.draw_rect(sim.cell_rect(Rect2i(c, Vector2i.ONE)).grow(-1.5), Color(Palette.PAPER[1], 0.35), false, 1.0)
 	var r: Rect2 = sim.cell_rect(Rect2i(cell, Vector2i.ONE))
 	canvas.draw_rect(r.grow(-0.5), Color(Palette.PAPER[1], 0.8), false, 1.0)

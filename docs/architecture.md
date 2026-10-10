@@ -99,17 +99,24 @@ Constraints the architecture must honour:
 
 **Farming (`src/farm/`, `scenes/farm/`)**
 - `FarmSim`: the base as a deterministic 60 Hz simulation like `CombatSim`
-  (step(input) per physics tick; events for feedback). Holds `GameClock`
-  (time of day, phases, sky tint, lights), `FarmPlot` (a grid of soil
-  tiles: till, water, plant, harvest, overnight growth), `Inventory` and the
-  player. `CropKind` holds crop data (placeholder content).
+  (step(input) per physics tick; events for feedback). It holds:
+  - `GameClock`: total game minutes; a 24-hour day in 20 real minutes that
+    turns over at 6:00 on its own; phases, sky tint, lights.
+  - `FarmPlot`: a grid of soil tiles: till, water, plant, harvest,
+    overnight growth.
+  - `Inventory`, `Mana` (`src/core/mana.gd`, to be shared with combat) and
+    the player.
+- Farming actions are spells (Till, Water by tier up to rain, Sow) paid in
+  Mana; harvesting is free. `CropKind` holds crop data (placeholder
+  content).
 - `FarmDrawer` draws it with every world colour multiplied by the time of
   day's tint; the base's lights and the target highlight stay untinted. No
   Godot lights or CanvasModulate: the tint is applied per colour, so review
   renders can show several times of day side by side.
 - `scenes/farm/farm_test.tscn` reads the farming InputMap actions; `FarmHud`
-  sits in a `UiFrame`. `scenes/showcase/farm_times.tscn` is the review
-  sheet (dawn, midday, dusk, night).
+  sits in a `UiFrame`. `scenes/showcase/farm_times.tscn` (dawn, midday,
+  dusk, night) and `farm_spells.tscn` (the watering tiers and rain) are the
+  review sheets.
 
 Why a custom simulation: every rule is testable headlessly and
 deterministically (tests call `step()` directly), timing windows are exact
@@ -364,3 +371,13 @@ a real controller)
   excludes the far edge.
 - `Color.get_luminance()` exists (the night-darkness test).
 - `seed` is a built-in GDScript function, so the crop field is `seed_item`.
+
+### 2026-10-10 (farming magic and Mana), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `KEY_F10` is 4194341 (the farm's watering-tier developer key; the binding
+  test checks it).
+- `fposmod(total, 1440.0)` gives the minute of the day for any total,
+  including across midnight.
+- Summing 3,000 tick-sized steps of game time gives 59.99999 minutes, not
+  60; the clock display adds 0.001 before flooring (the farm pace test
+  showed "06:59").

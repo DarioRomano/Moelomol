@@ -1,12 +1,13 @@
 class_name FarmHud
 extends Control
-## The farm's HUD: the day and time, the tool in hand, what the player
-## carries, and the controls. Calm and sparse (art direction); lives in a
+## The farm's HUD: the day and time (and rain), Mana, the selected spell and
+## its cost, what the player carries, and the controls. Calm and sparse (art direction); lives in a
 ## UiFrame, so it follows the UI width setting (ADR-0008). Never tinted by
 ## the time of day.
 
 var _clock: Label
 var _tool: Label
+var _mana: float = 1.0
 var _bag: Label
 var _help: Label
 
@@ -19,14 +20,14 @@ func _ready() -> void:
 	_clock.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_tool = _make_label()
-	_tool.position = Vector2(4, 2)
+	_tool.position = Vector2(4, 8)
 	_bag = _make_label()
-	_bag.position = Vector2(4, 11)
+	_bag.position = Vector2(4, 17)
 	_help = _make_label()
 	_help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_help.text = "Move WASD / stick   Use tool J / X   Interact Space / A (harvest; the door: sleep)   " \
-		+ "Tools Q E / LB RB\nF8 sleep now   F9 time x30"
+	_help.text = "Move WASD / stick   Cast J / X   Interact Space / A (harvest; the door: sleep)   " \
+		+ "Spells Q E / LB RB\nF8 sleep now   F9 time x30   F10 next watering tier"
 
 
 func _make_label() -> Label:
@@ -41,13 +42,24 @@ func _make_label() -> Label:
 
 
 func show_state(sim: FarmSim) -> void:
-	_clock.text = "Day %d   %s   %s%s" % [sim.clock.day, sim.clock.time_text(), sim.clock.phase(),
-		"   (time x%d)" % roundi(sim.time_scale) if sim.time_scale != 1.0 else ""]
-	var tool: StringName = sim.tool()
-	_tool.text = FarmSim.item_name(tool) if sim.inventory.count(tool) == 0 and CropKind.from_seed(tool) == null \
-		else "%s x%d" % [FarmSim.item_name(tool), sim.inventory.count(tool)]
-	var parts: PackedStringArray = PackedStringArray()
+	_clock.text = "Day %d   %s   %s%s%s" % [sim.clock.day(), sim.clock.time_text(), sim.clock.phase(),
+		"   rain" if sim.raining else "", "   (time x%d)" % roundi(sim.time_scale) if sim.time_scale != 1.0 else ""]
+	var spell: StringName = sim.spell()
+	var text: String = "%s   %d mana" % [sim.spell_name(spell), roundi(sim.spell_mana(spell))]
+	if CropKind.from_seed(spell) != null:
+		text += "   (%d seeds)" % sim.inventory.count(spell)
+	_tool.text = text
+	var parts: PackedStringArray = PackedStringArray(["Mana %d" % roundi(sim.mana.current)])
 	for item: StringName in sim.inventory.items():
 		if CropKind.from_seed(item) == null:
 			parts.append("%s %d" % [FarmSim.item_name(item), sim.inventory.count(item)])
 	_bag.text = "   ".join(parts)
+	_mana = sim.mana.ratio()
+	queue_redraw()
+
+
+## The Mana bar (placeholder colour: the crops' green, Q28 working
+## assumption C).
+func _draw() -> void:
+	draw_rect(Rect2(4, 4, 96, 3), Palette.SHADOW[0])
+	draw_rect(Rect2(4, 4, 96 * _mana, 3), Palette.CROPS[1])

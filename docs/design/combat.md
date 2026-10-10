@@ -645,3 +645,21 @@ Readings taken (say if any is wrong):
   stamina cost and drain.
 - **Level 3 has no "imperfect" release.** Releasing anywhere in the level-3
   window is perfect; the window is what narrows with Rhythm.
+
+### Mana (lead, 2026-10-10, Q27)
+
+- **Mana is the player's magic pool, shared by farming and fighting.**
+  Farming spells cost it (`farming.md`). **Enhanced weapon skills consume
+  Mana. Basic attacks, including magic's basic spells (Ember bolt, Frost
+  shard, Rot pool), do not.** This keeps magic a viable fighting style when
+  farming has spent Mana.
+- Mana refills from sleep and food only.
+- **Reading R1** (`farming.md`): "enhanced weapon skills" are the improved
+  skills that the weapon skill trees will give (progression hooks, above).
+  None exist yet, so no combat move costs Mana today. Brace and
+  Follow-through, Ground stamp, Volley and Release stay free. Magic's Focus
+  stays: it is the fight-paced resource of the magic weapon, separate from
+  Mana. If the lead meant the current skill-button moves, each gets a Mana
+  cost instead.
+- The arena does not show Mana yet: combat and farming run in separate test
+  scenes with no shared player state until there is a save or world model.

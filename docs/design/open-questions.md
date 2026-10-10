@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: Q21–Q27 (farming and the day–night cycle) are open; everything before is resolved.
+Status at 2026-10-10: Q28 (where farming magic comes from) is open; everything before is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -29,13 +29,14 @@ Status at 2026-10-10: Q21–Q27 (farming and the day–night cycle) are open; ev
 | Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Resolved**: top-down ¾ → ADR-0014 |
 | Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Resolved**: two with a swap → `combat.md` |
 | Q20 | Smoothing movement at 120 fps with 60 Hz combat logic | Feel of all movement | **Resolved**: A, fixed 60 Hz + render interpolation |
-| Q21 | How the game clock runs (pace, during adventures, seasons) | Farming, adventuring, story pacing | Open (working assumption: A) |
-| Q22 | How a day ends (sleep, staying up, falling asleep) | Farming slice | Open (working assumption: A) |
-| Q23 | How crops grow with the day–night cycle | Farming slice | Open (working assumption: A) |
-| Q24 | What neglect costs (dry soil, unharvested crops) | Farming slice, tone | Open (working assumption: A) |
-| Q25 | Where seeds come from without shops | Farming, exploration rewards | Open (working assumption: A) |
-| Q26 | Controls and targeting at the base | Input model (ADR-0013) | Open (working assumption: A) |
-| Q27 | Does farming use an energy bar? | Farming slice, upgrades | Open (working assumption: A) |
+| Q21 | How the game clock runs (pace, during adventures, seasons) | Farming, adventuring, story pacing | **Resolved**: 20-minute day that fully cycles; night changes sight and monsters → `farming.md` |
+| Q22 | How a day ends (sleep, staying up, falling asleep) | Farming slice | **Resolved** with Q21: sleep is optional, no forced end |
+| Q23 | How crops grow with the day–night cycle | Farming slice | **Resolved**: A, plus watering by spell (4 crops, upgrades up to rain) |
+| Q24 | What neglect costs (dry soil, unharvested crops) | Farming slice, tone | **Resolved**: A |
+| Q25 | Where seeds come from without shops | Farming, exploration rewards | **Resolved**: A |
+| Q26 | Controls and targeting at the base | Input model (ADR-0013) | **Resolved**: A |
+| Q27 | Does farming use an energy bar? | Farming slice, upgrades | **Resolved**: farming is magic and costs Mana (sleep, food); enhanced weapon skills cost Mana too |
+| Q28 | Where does farming magic come from, and how does it look? | Farming spell art, story notes | Open (working assumption: C) |
 
 ---
 
@@ -903,6 +904,13 @@ rate plus re-checking the tick counts in the tests).
 
 ## Q21. How the game clock runs
 
+**Resolved 2026-10-10 (the lead):** a day lasts **20 minutes** and **fully
+cycles**: there is no requirement to go to sleep. There is no hunger. Grown
+crops can be cooked for buffs, but eating is never required. **At night,
+sight is impaired and different monsters spawn**; environmental effects can
+light up spaces at night. This replaces options A–C below. Q22 is answered
+by it.
+
 Found while drafting `farming.md` (2026-10-10). The day–night cycle drives
 crop growth, so its pace sets how often the player farms and how much an
 adventure costs at home.
@@ -938,6 +946,11 @@ playtests.
 
 ## Q22. How a day ends
 
+**Resolved 2026-10-10 (the lead), with Q21:** the day cycles on its own and
+sleep is never required, so nothing forces the day to end. Sleeping skips
+to the next morning (and refills Mana, Q27). The cat-on-the-bed wake-up
+proposed under A is dropped with option A.
+
 **A. Sleep in the bed at any time; at 2:00 the player falls asleep wherever
 they are and wakes at home at 6:00, with no penalty** (recommended)
 - Pro: never punishing (fits the tone); always a clear end to the day; the
@@ -961,6 +974,10 @@ materials, a slow start the next day)
 
 ## Q23. How crops grow with the day–night cycle
 
+**Resolved 2026-10-10 (the lead):** A, overnight growth. **Watering is
+magic:** a watering spell waters up to 4 crops at first; upgrades widen it,
+and its final form turns the weather rainy, which waters the entire farm.
+
 **A. Overnight: each crop watered that day grows one day when the next day
 starts; ripe after a set number of grown days** (recommended)
 - Pro: dawn is when the farm changes, which is the lead's "day / night
@@ -982,6 +999,8 @@ starts; ripe after a set number of grown days** (recommended)
 
 ## Q24. What neglect costs
 
+**Resolved 2026-10-10 (the lead):** A.
+
 **A. Nothing but time: an unwatered crop simply does not grow that day; a
 ripe crop waits** (recommended)
 - Pro: the tone asks for unhurried; a long expedition never wipes out the
@@ -1000,6 +1019,8 @@ ripe crop waits** (recommended)
 **Recommendation:** A.
 
 ## Q25. Where seeds come from without shops
+
+**Resolved 2026-10-10 (the lead):** A.
 
 ADR-0005 rules out merchants and any character to trade with.
 
@@ -1026,6 +1047,8 @@ adventures** (recommended)
 balance).
 
 ## Q26. Controls and targeting at the base
+
+**Resolved 2026-10-10 (the lead):** A.
 
 The base has no combat (ADR-0005), so it can reuse the combat buttons with
 farming meanings. ADR-0013 requires actions, rebindable, and no mouse aiming.
@@ -1055,6 +1078,11 @@ nothing).
 
 ## Q27. Does farming use an energy bar?
 
+**Resolved 2026-10-10 (the lead):** neither option. **All farming is done
+with magic, and therefore costs Mana.** Mana is replenished by sleep and by
+food. So that Mana does not unbalance magic as a fighting style,
+**enhanced weapon skills consume Mana; basic magic attacks do not.**
+
 **A. No: time is the only budget at home** (recommended)
 - Pro: unhurried; one less bar; farming upgrades (bigger cans, multi-tile
   hoe) save time rather than energy, which is easy to understand.
@@ -1067,3 +1095,35 @@ nothing).
 
 **Recommendation:** A. If food later needs a use, healing on adventures is a
 better home for it than farming energy.
+
+## Q28. Where does farming magic come from, and how does it look?
+
+Found while building farming by magic (Q27, 2026-10-10). The combat design
+says magic is the god's own influence: the lantern is drawn in the "changed
+land" violets, the only player-side thing that is (`combat.md`,
+`art-direction.md`). If all farming is magic too, the source of that magic
+is a story question, and the colour is an art question.
+
+**A. The player's own craft:** an old farmer's magic, nothing to do with the
+god; drawn in the warm base and crop colours.
+- Pro: the farm stays purely the player's; warm colours keep "warmth means
+  life"; no new story weight.
+- Con: two kinds of magic in one game need an explanation somewhere; misses
+  a strong hint.
+
+**B. The god's influence, like the lantern:** farming spells in the violets.
+- Pro: one magic, one rule; the most farming-touched part of the game is
+  quietly the god's doing, which fits the reveal (`story.md`).
+- Con: violet at the base breaks the art rule that the base is the one warm
+  place, and gives the secret away early.
+
+**C. The same source, but the player cannot tell yet** (recommended):
+farming spells glow in warm living green and gold; at night, or as the story
+advances, a thread of violet shows in them.
+- Pro: keeps the base warm; the hint grows with the story, which is how
+  `story.md` wants the truth to come out; costs only a colour shift.
+- Con: the writers and artists must keep the progression consistent; one
+  more thing tied to story progress.
+
+**Recommendation:** C. The farm test scene draws farming spells in warm
+green and gold as a working assumption; nothing violet yet.

@@ -8,7 +8,8 @@ extends Node2D
 ## the time of day's tint. The camera is static and centred, like the arena.
 ##
 ## Developer keys: F8 sleeps now (skips to the next morning), F9 runs time
-## 30 times faster.
+## 30 times faster, F10 switches to the next watering tier (the upgrades
+## that unlock them are not built).
 
 const FAST_TIME: float = 30.0
 
@@ -45,8 +46,9 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	# The area outside the field is drawn too, so wide screens see the night.
-	draw_rect(Rect2(-2000, -2000, 4640, 4360), Palette.SHADOW[0] * sim.clock.sky_tint())
-	FarmDrawer.draw(self, sim, Engine.get_physics_interpolation_fraction(), sim.clock.sky_tint())
+	var tint: Color = FarmDrawer.world_tint(sim)
+	draw_rect(Rect2(-2000, -2000, 4640, 4360), Palette.SHADOW[0] * tint)
+	FarmDrawer.draw(self, sim, Engine.get_physics_interpolation_fraction(), tint)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -55,6 +57,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"dev_farm_fast_time", false):
 		sim.time_scale = 1.0 if sim.time_scale != 1.0 else FAST_TIME
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"dev_farm_water_tier", false):
+		sim.water_tier = (sim.water_tier + 1) % FarmSim.WATER_TIERS.size()
 		get_viewport().set_input_as_handled()
 
 
