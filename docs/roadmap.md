@@ -66,17 +66,21 @@ a swap) on 2026-10-10.
 ## Farming and the day–night cycle (started 2026-10-10)
 
 `docs/design/farming.md`: the clock and its phases, overnight crop growth,
-soil and tools, seeds without shops, controls at the base. Q21–Q27 wait for
-the lead; a first slice is built on the recommended options as working
-assumptions.
+farming by magic with Mana, seeds without shops, controls at the base. The
+lead decided Q21–Q27 on 2026-10-10.
 
-- **Done:** farm test scene with the clock, the day–night tint, sleeping,
-  tilling, watering, planting, overnight growth, harvesting and seeds back
-  (2026-10-10).
-- **Waiting on the lead:** Q21–Q27; farming playtest
-  (`docs/playtests/2026-10-10-farming.md`).
-- **Next (once decided):** saving, the pet at the farm, the cat treats
-  recipe (the crafting tutorial), farming upgrades.
+- **Done:**
+  - Farm test scene with the clock, the day–night tint, sleeping, tilling,
+    watering, planting, overnight growth, harvesting and seeds back
+    (2026-10-10).
+  - The lead's decisions built: a 20-minute day that cycles on its own;
+    farming by spells paid in Mana; the watering spell's tiers up to rain
+    (2026-10-10).
+- **Waiting on the lead:** Q28 (where farming magic comes from); farming
+  playtest (`docs/playtests/2026-10-10-farming.md`).
+- **Next:** saving, cooking (food restores Mana and gives buffs; the cat
+  treats are the first recipe), farming upgrades, the pet at the farm, Mana
+  costs for enhanced weapon skills.
 
 ## Later (not planned)
 

@@ -1,6 +1,8 @@
 extends TestCase
-## Farming rules (docs/design/farming.md; Q23-Q25, working assumption A): the
-## plot on its own, then the whole test farm driven tick by tick.
+## Farming rules (docs/design/farming.md; Q21-Q27, decided 2026-10-10): the
+## plot on its own, then the whole test farm driven tick by tick: farming
+## by spells that cost Mana, the watering tiers and rain, a day that cycles
+## on its own.
 
 
 func _plot() -> FarmPlot:
@@ -130,7 +132,7 @@ func _run(sim: FarmSim, ticks: int, input: FarmInput = FarmInput.new()) -> Array
 	return seen
 
 
-## Walks the player to stand on a cell's centre, facing `toward`.
+## Puts the player on a cell's centre, facing `toward`.
 func _stand(sim: FarmSim, cell: Vector2i, toward: Vector2) -> void:
 	sim.player_position = sim.cell_centre(cell)
 	sim.facing = toward
@@ -139,12 +141,13 @@ func _stand(sim: FarmSim, cell: Vector2i, toward: Vector2) -> void:
 func _press(sim: FarmSim, action: StringName) -> Array[Dictionary]:
 	sim.step(FarmInput.press(action))
 	var seen: Array[Dictionary] = sim.events.duplicate()
-	seen.append_array(_run(sim, FarmSim.tool_use_ticks()))
+	seen.append_array(_run(sim, FarmSim.cast_ticks()))
 	return seen
 
 
-func _select(sim: FarmSim, tool: StringName) -> void:
-	sim.tool_index = sim.tools.find(tool)
+func _cast(sim: FarmSim, spell: StringName) -> Array[Dictionary]:
+	sim.spell_index = sim.spells.find(spell)
+	return _press(sim, &"use")
 
 
 func _types(events: Array[Dictionary]) -> Array[String]:
@@ -164,52 +167,53 @@ func test_the_player_acts_on_the_tile_in_front() -> void:
 	assert_eq(sim.target_cell(), Vector2i(11, 11), "diagonal")
 
 
-func test_till_water_plant_with_the_tools() -> void:
+# --- Farming is magic (Q27) -------------------------------------------------------
+
+func test_till_water_sow_are_spells_that_cost_mana() -> void:
 	var sim: FarmSim = _farm()
 	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
 	var target: Vector2i = Vector2i(11, 10)
-	_select(sim, FarmSim.HOE)
-	assert_true("till" in _types(_press(sim, &"use")), "the hoe tills")
-	_select(sim, FarmSim.WATERING_CAN)
-	assert_true("water" in _types(_press(sim, &"use")), "the can waters")
-	_select(sim, &"radish_seeds")
-	var before: int = sim.inventory.count(&"radish_seeds")
-	assert_true("plant" in _types(_press(sim, &"use")), "seeds plant")
+	var mana: float = sim.mana.current
+	assert_true("till" in _types(_cast(sim, FarmSim.TILL)), "Till")
+	assert_eq(sim.mana.current, mana - FarmSim.TILL_MANA, "costs Mana")
+	mana = sim.mana.current
+	assert_true("water" in _types(_cast(sim, FarmSim.WATER)), "Water")
+	assert_eq(sim.mana.current, mana - float(FarmSim.WATER_TIERS[0]["mana"]), "costs its tier's Mana")
+	mana = sim.mana.current
+	var seeds: int = sim.inventory.count(&"radish_seeds")
+	assert_true("plant" in _types(_cast(sim, &"radish_seeds")), "Sow")
+	assert_eq(sim.mana.current, mana - FarmSim.SOW_MANA, "costs Mana")
 	assert_eq(sim.plot.crop_at(target), &"radish", "a radish")
-	assert_eq(sim.inventory.count(&"radish_seeds"), before - 1, "one seed used")
+	assert_eq(sim.inventory.count(&"radish_seeds"), seeds - 1, "and a seed")
 
 
-func test_the_player_stands_still_while_using_a_tool() -> void:
+func test_a_spell_that_would_do_nothing_costs_nothing() -> void:
 	var sim: FarmSim = _farm()
 	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
-	sim.step(FarmInput.press(&"use"))
-	var at: Vector2 = sim.player_position
-	_run(sim, FarmSim.tool_use_ticks() - 1, FarmInput.with_move(Vector2.DOWN))
-	assert_eq(sim.player_position, at, "no walking mid-swing")
-	_run(sim, 5, FarmInput.with_move(Vector2.DOWN))
-	assert_true(sim.player_position.y > at.y, "then free to walk")
+	var mana: float = sim.mana.current
+	assert_true("nothing" in _types(_cast(sim, FarmSim.WATER)), "watering grass does nothing")
+	assert_true("nothing" in _types(_cast(sim, &"radish_seeds")), "sowing on grass does nothing")
+	_stand(sim, Vector2i(4, 6), Vector2.DOWN)
+	assert_true("nothing" in _types(_cast(sim, FarmSim.TILL)), "tilling the path does nothing")
+	assert_eq(sim.mana.current, mana, "no Mana spent")
 
 
-func test_no_seeds_left_plants_nothing() -> void:
+func test_without_mana_no_spell_happens() -> void:
 	var sim: FarmSim = _farm()
 	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
-	sim.plot.till(Vector2i(11, 10))
-	_select(sim, &"radish_seeds")
-	sim.inventory.take(&"radish_seeds", sim.inventory.count(&"radish_seeds"))
-	assert_true("no_seeds" in _types(_press(sim, &"use")), "reported")
-	assert_eq(sim.plot.crop_at(Vector2i(11, 10)), &"", "nothing planted")
+	sim.mana.current = FarmSim.TILL_MANA - 0.5
+	assert_true("no_mana" in _types(_cast(sim, FarmSim.TILL)), "reported")
+	assert_false(sim.plot.is_tilled(Vector2i(11, 10)), "nothing tilled")
 
 
-func test_tool_switching_wraps_both_ways() -> void:
+func test_mana_does_not_refill_by_itself() -> void:
 	var sim: FarmSim = _farm()
-	assert_eq(sim.tool(), FarmSim.HOE, "the hoe first")
-	sim.step(FarmInput.press(&"tool_prev"))
-	assert_eq(sim.tool_index, sim.tools.size() - 1, "back to the last")
-	sim.step(FarmInput.press(&"tool_next"))
-	assert_eq(sim.tool(), FarmSim.HOE, "forward to the first")
+	sim.mana.current = 10.0
+	_run(sim, 60 * 60)  # a real minute
+	assert_eq(sim.mana.current, 10.0, "no passive refill")
 
 
-func test_interacting_with_a_ripe_crop_harvests_it_into_the_inventory() -> void:
+func test_harvesting_is_by_hand_and_free() -> void:
 	var sim: FarmSim = _farm()
 	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
 	var target: Vector2i = Vector2i(11, 10)
@@ -219,40 +223,163 @@ func test_interacting_with_a_ripe_crop_harvests_it_into_the_inventory() -> void:
 		sim.plot.water(target)
 		sim.plot.new_day()
 	var seeds: int = sim.inventory.count(&"radish_seeds")
+	var mana: float = sim.mana.current
 	assert_true("harvest" in _types(_press(sim, &"interact")), "harvested")
 	assert_eq(sim.inventory.count(&"radish"), 1, "a radish in the bag")
 	assert_eq(sim.inventory.count(&"radish_seeds"), seeds + 2, "and two seeds")
+	assert_eq(sim.mana.current, mana, "without Mana")
 
 
-func test_sleeping_at_the_door_starts_the_next_day_and_grows_the_farm() -> void:
+func test_no_seeds_left_sows_nothing() -> void:
+	var sim: FarmSim = _farm()
+	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
+	sim.plot.till(Vector2i(11, 10))
+	sim.inventory.take(&"radish_seeds", sim.inventory.count(&"radish_seeds"))
+	assert_true("no_seeds" in _types(_cast(sim, &"radish_seeds")), "reported")
+	assert_eq(sim.plot.crop_at(Vector2i(11, 10)), &"", "nothing planted")
+
+
+func test_the_player_stands_still_while_casting() -> void:
+	var sim: FarmSim = _farm()
+	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
+	sim.step(FarmInput.press(&"use"))
+	var at: Vector2 = sim.player_position
+	_run(sim, FarmSim.cast_ticks() - 1, FarmInput.with_move(Vector2.DOWN))
+	assert_eq(sim.player_position, at, "no walking mid-cast")
+	_run(sim, 5, FarmInput.with_move(Vector2.DOWN))
+	assert_true(sim.player_position.y > at.y, "then free to walk")
+
+
+func test_spell_switching_wraps_both_ways() -> void:
+	var sim: FarmSim = _farm()
+	assert_eq(sim.spell(), FarmSim.TILL, "Till first")
+	sim.step(FarmInput.press(&"tool_prev"))
+	assert_eq(sim.spell_index, sim.spells.size() - 1, "back to the last")
+	sim.step(FarmInput.press(&"tool_next"))
+	assert_eq(sim.spell(), FarmSim.TILL, "forward to the first")
+
+
+# --- The watering spell (Q23) -----------------------------------------------------
+
+## Tills a block of tiles.
+func _till(sim: FarmSim, rect: Rect2i) -> void:
+	for y: int in range(rect.position.y, rect.end.y):
+		for x: int in range(rect.position.x, rect.end.x):
+			sim.plot.till(Vector2i(x, y))
+
+
+func _watered(sim: FarmSim) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for y: int in range(sim.plot.size.y):
+		for x: int in range(sim.plot.size.x):
+			if sim.plot.is_watered(Vector2i(x, y)):
+				cells.append(Vector2i(x, y))
+	return cells
+
+
+func test_the_first_watering_spell_waters_four_tiles_ahead() -> void:
+	var sim: FarmSim = _farm()
+	_till(sim, Rect2i(8, 6, 10, 10))
+	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
+	_cast(sim, FarmSim.WATER)
+	var expected: Array[Vector2i] = [Vector2i(11, 10), Vector2i(11, 11), Vector2i(12, 10), Vector2i(12, 11)]
+	var got: Array[Vector2i] = _watered(sim)
+	got.sort()
+	assert_eq(got, expected, "2 x 2: the target, forward, and to the player's right")
+
+
+func test_the_watering_area_turns_with_the_player() -> void:
+	var sim: FarmSim = _farm()
+	_stand(sim, Vector2i(10, 10), Vector2.UP)
+	var up: Array[Vector2i] = sim.water_area(Vector2i(10, 9))
+	up.sort()
+	assert_eq(up, [Vector2i(10, 8), Vector2i(10, 9), Vector2i(11, 8), Vector2i(11, 9)] as Array[Vector2i], "facing up")
+	sim.facing = Vector2(0.3, -0.95).normalized()
+	assert_eq(sim.water_area(Vector2i(10, 9)).size(), 4, "a shallow diagonal still covers four tiles")
+	sim.facing = Vector2(1, 1).normalized()
+	var diagonal: Array[Vector2i] = sim.water_area(Vector2i(11, 11))
+	diagonal.sort()
+	assert_eq(diagonal, [Vector2i(10, 11), Vector2i(10, 12), Vector2i(11, 11), Vector2i(11, 12)] as Array[Vector2i],
+		"a true diagonal waters a square on the grid (facing down), never a skewed shape")
+
+
+func test_upgraded_watering_tiers_cover_more() -> void:
+	var sim: FarmSim = _farm()
+	_stand(sim, Vector2i(10, 10), Vector2.RIGHT)
+	var sizes: Array[int] = []
+	for tier: int in range(3):
+		sim.water_tier = tier
+		sizes.append(sim.water_area(Vector2i(11, 10)).size())
+	assert_eq(sizes, [4, 9, 25] as Array[int], "4, then 9, then 25 tiles")
+	sim.water_tier = 1
+	var nine: Array[Vector2i] = sim.water_area(Vector2i(11, 10))
+	assert_true(Vector2i(11, 9) in nine and Vector2i(11, 11) in nine, "3 x 3 is centred across the target")
+
+
+func test_rain_waters_the_whole_farm_until_the_next_morning() -> void:
+	var sim: FarmSim = _farm()
+	_till(sim, Rect2i(8, 6, 3, 3))
+	_till(sim, Rect2i(30, 15, 2, 2))
+	sim.water_tier = FarmSim.WATER_TIERS.size() - 1
+	_stand(sim, Vector2i(20, 10), Vector2.RIGHT)
+	var mana: float = sim.mana.current
+	assert_true("rain" in _types(_cast(sim, FarmSim.WATER)), "it rains")
+	assert_eq(sim.mana.current, mana - float(FarmSim.WATER_TIERS[3]["mana"]), "for the final tier's Mana")
+	assert_eq(_watered(sim).size(), 13, "every tilled tile on the farm, near and far")
+	_stand(sim, Vector2i(14, 14), Vector2.RIGHT)
+	_cast(sim, FarmSim.TILL)
+	assert_true(sim.plot.is_watered(Vector2i(15, 14)), "a tile tilled in the rain is watered too")
+	assert_true("nothing" in _types(_cast(sim, FarmSim.WATER)), "it cannot rain twice")
+	sim.sleep()
+	assert_false(sim.raining, "the rain stops at 6:00")
+	assert_eq(_watered(sim).size(), 0, "and the soil dries as usual")
+
+
+# --- The day (Q21, Q22) -----------------------------------------------------------
+
+func test_the_day_turns_over_at_six_without_sleep() -> void:
 	var sim: FarmSim = _farm()
 	var cell: Vector2i = Vector2i(10, 10)
 	sim.plot.till(cell)
 	sim.plot.plant(cell, &"catmint")
 	sim.plot.water(cell)
+	sim.time_scale = 600.0
+	var seen: Array[Dictionary] = _run(sim, 120)  # 20 real minutes at x600
+	assert_true("new_day" in _types(seen), "a new day")
+	assert_false("slept" in _types(seen), "without sleeping")
+	assert_eq(sim.clock.day(), 2, "day 2")
+	assert_eq(sim.plot.grown_days(cell), 1, "the watered catmint grew")
+
+
+func test_staying_up_all_night_is_fine() -> void:
+	var sim: FarmSim = _farm()
+	_stand(sim, Vector2i(30, 15), Vector2.RIGHT)
+	sim.clock.total_minutes = 26 * 60  # 2:00
+	_run(sim, 60)
+	assert_eq(sim.player_position, sim.cell_centre(Vector2i(30, 15)), "no falling asleep, no moving home")
+	assert_eq(sim.clock.day(), 1, "still the night of day 1")
+
+
+func test_sleeping_skips_to_morning_refills_mana_and_grows_the_farm() -> void:
+	var sim: FarmSim = _farm()
+	var cell: Vector2i = Vector2i(10, 10)
+	sim.plot.till(cell)
+	sim.plot.plant(cell, &"catmint")
+	sim.plot.water(cell)
+	sim.mana.current = 5.0
 	_stand(sim, Vector2i(4, 5), Vector2.UP)
 	assert_eq(sim.target_cell(), sim.door_cell, "facing the door")
 	var seen: Array[Dictionary] = _press(sim, &"interact")
 	assert_true("slept" in _types(seen) and "new_day" in _types(seen), "slept into a new day")
-	assert_eq(sim.clock.day, 2, "day 2")
+	assert_eq(sim.clock.day(), 2, "day 2")
 	assert_eq(sim.clock.time_text(), "06:00", "at 6:00")
+	assert_eq(sim.mana.current, sim.mana.maximum, "Mana full")
 	assert_eq(sim.plot.grown_days(cell), 1, "the watered catmint grew overnight")
-
-
-func test_at_two_the_player_falls_asleep_and_wakes_at_home() -> void:
-	var sim: FarmSim = _farm()
-	_stand(sim, Vector2i(30, 15), Vector2.RIGHT)
-	sim.clock.minute = GameClock.DAY_END_MINUTE - 0.01
-	var seen: Array[Dictionary] = _run(sim, 2)
-	assert_true("passed_out" in _types(seen), "fell asleep")
-	assert_eq(sim.clock.day, 2, "a new day")
-	assert_eq(sim.player_position, sim.wake_position, "at home")
-	assert_eq(sim.inventory.count(&"catmint_seeds"), FarmSim.STARTING_SEEDS[&"catmint_seeds"], "nothing lost")
 
 
 func test_time_passes_at_the_clock_s_pace() -> void:
 	var sim: FarmSim = _farm()
-	_run(sim, 60 * 45)  # 45 real seconds
+	_run(sim, 60 * 50)  # 50 real seconds
 	assert_eq(sim.clock.time_text(), "07:00", "an hour of game time")
 
 

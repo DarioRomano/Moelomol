@@ -29,6 +29,7 @@ func test_bindings_match_the_design() -> void:
 		&"farm_tool_prev": [_key(KEY_Q), _button(JOY_BUTTON_LEFT_SHOULDER)],
 		&"dev_farm_sleep": [_key(KEY_F8)],
 		&"dev_farm_fast_time": [_key(KEY_F9)],
+		&"dev_farm_water_tier": [_key(KEY_F10)],
 	}
 	for action: StringName in bindings:
 		assert_true(InputMap.has_action(action), "%s exists" % action)
@@ -41,10 +42,10 @@ func test_the_scene_steps_the_farm_and_its_clock() -> void:
 	var farm: Node2D = FARM.instantiate()
 	tree.root.add_child(farm)
 	var sim: FarmSim = farm.get("sim")
-	var start: float = sim.clock.minute
+	var start: float = sim.clock.total_minutes
 	for i: int in range(30):
 		await tree.physics_frame
-	assert_true(sim.clock.minute > start, "time passes")
+	assert_true(sim.clock.total_minutes > start, "time passes")
 	farm.queue_free()
 	await tree.process_frame
 
@@ -60,7 +61,21 @@ func test_holding_use_tills_the_tile_in_front() -> void:
 	await tree.physics_frame
 	await tree.physics_frame
 	Input.action_release(&"farm_use_tool")
-	assert_true(sim.plot.is_tilled(Vector2i(13, 10)), "the hoe tilled the tile through the InputMap")
+	assert_true(sim.plot.is_tilled(Vector2i(13, 10)), "Till cast through the InputMap")
+	farm.queue_free()
+	await tree.process_frame
+
+
+func test_f10_steps_through_the_watering_tiers() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var farm: Node2D = FARM.instantiate()
+	tree.root.add_child(farm)
+	var sim: FarmSim = farm.get("sim")
+	var tiers: Array[int] = []
+	for i: int in range(FarmSim.WATER_TIERS.size()):
+		farm.call("_unhandled_input", _key(KEY_F10))
+		tiers.append(sim.water_tier)
+	assert_eq(tiers, [1, 2, 3, 0] as Array[int], "through Rain and back to the first")
 	farm.queue_free()
 	await tree.process_frame
 
@@ -71,7 +86,7 @@ func test_f8_sleeps_and_f9_speeds_up_time() -> void:
 	tree.root.add_child(farm)
 	var sim: FarmSim = farm.get("sim")
 	farm.call("_unhandled_input", _key(KEY_F8))
-	assert_eq(sim.clock.day, 2, "F8: the next morning")
+	assert_eq(sim.clock.day(), 2, "F8: the next morning")
 	farm.call("_unhandled_input", _key(KEY_F9))
 	assert_true(sim.time_scale > 1.0, "F9: fast")
 	farm.call("_unhandled_input", _key(KEY_F9))
@@ -90,13 +105,14 @@ func test_the_farm_is_reachable_with_f2_and_launch_option() -> void:
 
 func test_farm_actions_rumble_softly() -> void:
 	var expected: Dictionary = {"till": &"farm_till", "water": &"farm_water", "plant": &"farm_plant",
-		"harvest": &"farm_harvest", "nothing": &"farm_nothing", "no_seeds": &"farm_nothing", "new_day": &""}
+		"harvest": &"farm_harvest", "nothing": &"farm_nothing", "no_seeds": &"farm_nothing",
+		"no_mana": &"farm_nothing", "rain": &"farm_rain", "new_day": &""}
 	for type: String in expected:
 		assert_eq(Haptics.effect_for_farm_event({"type": type}), expected[type], type)
 		if expected[type] != &"":
 			assert_true(Haptics.EFFECTS.has(expected[type]), "%s is defined" % expected[type])
 	var softest_combat: Array = Haptics.EFFECTS[&"greatsword_hit"]
-	for effect: StringName in [&"farm_till", &"farm_water", &"farm_plant", &"farm_harvest", &"farm_nothing"]:
+	for effect: StringName in [&"farm_till", &"farm_water", &"farm_plant", &"farm_harvest", &"farm_nothing", &"farm_rain"]:
 		var values: Array = Haptics.EFFECTS[effect]
 		assert_true(float(values[1]) < float(softest_combat[1]), "%s is softer than a sword hit" % effect)
 
@@ -122,21 +138,22 @@ func test_the_scene_plays_rumble_for_farm_events() -> void:
 	await tree.process_frame
 
 
-func test_the_hud_shows_day_time_tool_and_bag() -> void:
+func test_the_hud_shows_day_time_spell_mana_and_bag() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
 	var farm: Node2D = FARM.instantiate()
 	tree.root.add_child(farm)
 	await tree.process_frame
 	var sim: FarmSim = farm.get("sim")
 	sim.inventory.add(&"radish", 3)
-	sim.tool_index = sim.tools.find(&"catmint_seeds")
+	sim.spell_index = sim.spells.find(&"catmint_seeds")
 	await tree.process_frame
 	var text: String = ""
 	for label: Node in farm.find_children("*", "Label", true, false):
 		text += (label as Label).text + "\n"
 	assert_true(text.contains("Day 1"), "the day")
 	assert_true(text.contains("06:0"), "the time")
-	assert_true(text.contains("Catmint seeds x6"), "the tool in hand with its count")
+	assert_true(text.contains("Sow catmint   1 mana   (6 seeds)"), "the spell, its cost and the seeds left")
+	assert_true(text.contains("Mana 100"), "Mana")
 	assert_true(text.contains("Radish 3"), "the produce carried")
 	farm.queue_free()
 	await tree.process_frame

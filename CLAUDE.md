@@ -24,9 +24,10 @@ review renders, PR builds and releases), there is a **combat test arena**
 with the shared combat foundation, all four weapons (greatsword, hammer, bow,
 magic), the status-effect system, armour and the two-weapon swap
 (`docs/design/combat.md`).
-There is also a **farm test scene** with the game clock, the day–night tint
-and the farming core (`docs/design/farming.md`; Q21–Q27 open, built on
-working assumption A). There is no other gameplay: no exploration or story. Do not invent
+There is also a **farm test scene** with the game clock (a 20-minute day
+that cycles on its own), the day–night tint, and farming by magic with Mana,
+including the watering spell's tiers up to rain (`docs/design/farming.md`;
+Q21–Q27 decided by the lead, Q28 open). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 

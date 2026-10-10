@@ -25,6 +25,7 @@ SCENES=(
   "res://scenes/showcase/magic_poses.tscn"
   "res://scenes/combat/combat_arena.tscn"
   "res://scenes/showcase/farm_times.tscn"
+  "res://scenes/showcase/farm_spells.tscn"
   "res://scenes/farm/farm_test.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:

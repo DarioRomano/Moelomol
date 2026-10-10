@@ -129,6 +129,16 @@ func clear(cell: Vector2i) -> bool:
 	return true
 
 
+## Waters every tilled tile (rain). Returns how many became watered.
+func water_all() -> int:
+	var n: int = 0
+	for i: int in range(_soil.size()):
+		if _soil[i] == Soil.TILLED and _watered[i] == 0:
+			_watered[i] = 1
+			n += 1
+	return n
+
+
 ## A new day starts: crops on watered soil grow a day (ripe ones stay ripe),
 ## then all soil dries. Returns how many crops grew.
 func new_day() -> int:

@@ -2,7 +2,9 @@ class_name FarmSim
 extends RefCounted
 ## The base as a deterministic simulation, like CombatSim: call step() once
 ## per fixed 60 Hz tick with that tick's input. Holds the clock, the plot,
-## the inventory and the player (docs/design/farming.md). The scene only
+## the inventory, Mana and the player (docs/design/farming.md). All farming
+## is magic (Q27): tilling, watering and sowing are spells that cost Mana;
+## harvesting is by hand. The scene only
 ## reads input and draws; tests drive step() directly.
 ##
 ## The layout is a test farm, not the base's design (level layout is the
@@ -14,27 +16,47 @@ const PLAYER_SPEED: float = 80.0  # layout px per second, as in combat
 const PLAYER_RADIUS: float = 6.0
 ## The tile acted on is the one under this point in front of the feet.
 const TARGET_REACH: float = 12.0
-const TOOL_USE_MS: int = 250  # the player stands still while a tool is used
+const CAST_MS: int = 250  # the player stands still while casting or picking
 
-const HOE: StringName = &"hoe"
-const WATERING_CAN: StringName = &"watering_can"
-const TOOL_NAMES: Dictionary = {HOE: "Hoe", WATERING_CAN: "Watering can"}
+## Farming is magic (Q27, decided 2026-10-10): every farming action is a
+## spell that costs Mana. Sowing has one entry per seed kind, keyed by the
+## seed item. Mana costs are starting values.
+const TILL: StringName = &"till"
+const WATER: StringName = &"water"
+const TILL_MANA: float = 2.0
+const SOW_MANA: float = 1.0
+const SPELL_NAMES: Dictionary = {TILL: "Till", WATER: "Water"}
 
-## What the starting seed tin holds (Q25, working assumption A).
+## The watering spell's tiers (Q23): areas grow with farming upgrades; the
+## final tier makes it rain, which waters the whole farm until the next 6:00.
+## size = tiles across x tiles forward; ZERO for rain.
+const WATER_TIERS: Array[Dictionary] = [
+	{"name": "Water", "size": Vector2i(2, 2), "mana": 4.0},
+	{"name": "Water II", "size": Vector2i(3, 3), "mana": 8.0},
+	{"name": "Water III", "size": Vector2i(5, 5), "mana": 16.0},
+	{"name": "Rain", "size": Vector2i.ZERO, "mana": 30.0},
+]
+
+## What the starting seed tin holds (Q25).
 const STARTING_SEEDS: Dictionary = {&"catmint_seeds": 6, &"radish_seeds": 6}
 
 var origin: Vector2  # layout px of the top-left of tile (0, 0)
 var plot: FarmPlot
 var clock: GameClock = GameClock.new()
 var inventory: Inventory = Inventory.new()
-var tools: Array[StringName] = [HOE, WATERING_CAN]
-var tool_index: int = 0
+var mana: Mana = Mana.new()
+var spells: Array[StringName] = [TILL, WATER]
+var spell_index: int = 0
+## Which watering tier the player has (upgrades unlock the next; until the
+## upgrade system exists, a developer key cycles it).
+var water_tier: int = 0
+var raining: bool = false  # until the next 6:00
 
 var player_position: Vector2
 var previous_position: Vector2
 var facing: Vector2 = Vector2.DOWN
-var busy: int = 0  # ticks left of a tool use
-var last_action: StringName = &""  # for drawing the tool swing
+var busy: int = 0  # ticks left of a cast or a harvest
+var last_action: StringName = &""  # for drawing the cast
 
 ## Solid things the player cannot walk through, in layout px.
 var solids: Array[Rect2] = []
@@ -53,7 +75,7 @@ func _init(p_origin: Vector2, grid: Vector2i) -> void:
 	plot = FarmPlot.new(grid)
 	for seed_id: StringName in STARTING_SEEDS:
 		inventory.add(seed_id, STARTING_SEEDS[seed_id])
-		tools.append(seed_id)
+		spells.append(seed_id)
 
 
 ## The test farm: a 38 x 20 tile field with a farmhouse (its door is the
@@ -92,29 +114,63 @@ func target_cell() -> Vector2i:
 	return cell_at(player_position + facing * TARGET_REACH)
 
 
-func tool() -> StringName:
-	return tools[tool_index]
+func spell() -> StringName:
+	return spells[spell_index]
 
 
-static func tool_use_ticks() -> int:
-	return roundi(TOOL_USE_MS / 1000.0 / TICK_SECONDS)
+static func cast_ticks() -> int:
+	return roundi(CAST_MS / 1000.0 / TICK_SECONDS)
+
+
+## The watering spell at the player's tier.
+func water_spell() -> Dictionary:
+	return WATER_TIERS[water_tier]
+
+
+## Mana the selected spell costs.
+func spell_mana(spell_id: StringName) -> float:
+	match spell_id:
+		TILL:
+			return TILL_MANA
+		WATER:
+			return float(water_spell()["mana"])
+	return SOW_MANA
+
+
+## The tiles the watering spell covers from `target`: `size.x` across and
+## `size.y` forward, extending the way the player faces (the stronger axis
+## of a diagonal), centred across (two wide: the target and the tile to the
+## player's right). Empty for rain, which covers the whole farm.
+func water_area(target: Vector2i) -> Array[Vector2i]:
+	var size: Vector2i = water_spell()["size"]
+	var cells: Array[Vector2i] = []
+	if size == Vector2i.ZERO:
+		return cells
+	var forward: Vector2i = Vector2i(int(signf(facing.x)), 0) if absf(facing.x) > absf(facing.y) \
+		else Vector2i(0, int(signf(facing.y)) if facing.y != 0.0 else 1)
+	var side: Vector2i = Vector2i(-forward.y, forward.x)  # the player's right
+	for depth: int in range(size.y):
+		for across: int in range(size.x):
+			var cell: Vector2i = target + forward * depth + side * (across - (size.x - 1) / 2)
+			if plot.contains(cell):
+				cells.append(cell)
+	return cells
 
 
 func step(input: FarmInput) -> void:
 	events.clear()
 	previous_position = player_position
-	if clock.advance(TICK_SECONDS * time_scale):
-		_fall_asleep()
-		return
+	for i: int in range(clock.advance(TICK_SECONDS * time_scale)):
+		_new_day()  # 6:00, asleep or awake (Q21)
 	if input.tool_next_pressed or input.tool_prev_pressed:
 		var by: int = (1 if input.tool_next_pressed else 0) - (1 if input.tool_prev_pressed else 0)
-		tool_index = posmod(tool_index + by, tools.size())
-		events.append({"type": "tool", "tool": tool()})
+		spell_index = posmod(spell_index + by, spells.size())
+		events.append({"type": "spell", "spell": spell()})
 	if busy > 0:
 		busy -= 1
 		return
 	if input.use_pressed:
-		_use_tool()
+		_cast()
 		return
 	if input.interact_pressed:
 		_interact()
@@ -144,32 +200,55 @@ func _fits(at: Vector2) -> bool:
 	return true
 
 
-func _use_tool() -> void:
+func _cast() -> void:
 	var cell: Vector2i = target_cell()
-	var done: bool = false
-	var kind: String = ""
-	match tool():
-		HOE:
-			done = plot.till(cell)
-			kind = "till"
-		WATERING_CAN:
-			done = plot.water(cell)
-			kind = "water"
+	var cost: float = spell_mana(spell())
+	var crop: CropKind = CropKind.from_seed(spell())
+	if crop != null and inventory.count(spell()) == 0:
+		events.append({"type": "no_seeds", "seed": spell()})
+		return
+	# Would the spell do anything? Mana is only spent when it does.
+	var does_something: bool = false
+	match spell():
+		TILL:
+			does_something = not plot.is_blocked(cell) and not plot.is_tilled(cell)
+		WATER:
+			if water_spell()["size"] == Vector2i.ZERO:
+				does_something = not raining
+			else:
+				for c: Vector2i in water_area(cell):
+					does_something = does_something or (plot.is_tilled(c) and not plot.is_watered(c))
 		_:
-			var crop: CropKind = CropKind.from_seed(tool())
-			if inventory.count(tool()) == 0:
-				events.append({"type": "no_seeds", "seed": tool()})
-				return
-			if crop != null and plot.plant(cell, crop.id):
-				inventory.take(tool())
-				done = true
-			kind = "plant"
-	busy = tool_use_ticks()
-	last_action = tool()
-	if done:
-		events.append({"type": kind, "cell": cell, "position": cell_centre(cell)})
-	else:
+			does_something = plot.is_tilled(cell) and plot.crop_at(cell) == &""
+	busy = cast_ticks()
+	last_action = spell()
+	if not does_something:
 		events.append({"type": "nothing", "cell": cell})
+		return
+	if not mana.try_spend(cost):
+		events.append({"type": "no_mana", "cost": cost})
+		return
+	match spell():
+		TILL:
+			plot.till(cell)
+			if raining:
+				plot.water(cell)
+			events.append({"type": "till", "cell": cell, "position": cell_centre(cell)})
+		WATER:
+			if water_spell()["size"] == Vector2i.ZERO:
+				raining = true
+				var n: int = plot.water_all()
+				events.append({"type": "rain", "watered": n, "position": player_position})
+			else:
+				var watered: Array[Vector2i] = []
+				for c: Vector2i in water_area(cell):
+					if plot.water(c):
+						watered.append(c)
+				events.append({"type": "water", "cells": watered, "position": cell_centre(cell)})
+		_:
+			plot.plant(cell, crop.id)
+			inventory.take(spell())
+			events.append({"type": "plant", "cell": cell, "position": cell_centre(cell)})
 
 
 func _interact() -> void:
@@ -182,32 +261,29 @@ func _interact() -> void:
 		return
 	for item: StringName in items:
 		inventory.add(item, items[item])
-	busy = tool_use_ticks()
+	busy = cast_ticks()
 	last_action = &"harvest"
 	events.append({"type": "harvest", "cell": cell, "items": items, "position": cell_centre(cell)})
 
 
-## Going to bed (any time, Q22): the next day starts at 6:00.
+## Going to bed, any time: skips to the next 6:00 and refills Mana (Q22,
+## Q27). The day also turns over at 6:00 without sleep.
 func sleep() -> void:
-	events.append({"type": "slept", "day": clock.day})
-	_start_next_day()
-
-
-## 2:00: the player falls asleep where they are and wakes at home (Q22,
-## working assumption A: no penalty).
-func _fall_asleep() -> void:
-	events.append({"type": "passed_out", "day": clock.day})
-	_start_next_day()
-
-
-func _start_next_day() -> void:
-	var grew: int = plot.new_day()
-	clock.next_day()
+	events.append({"type": "slept", "day": clock.day()})
+	for i: int in range(clock.sleep_until_morning()):
+		_new_day()
+	mana.refill()
 	player_position = wake_position
 	previous_position = wake_position
 	facing = Vector2.DOWN
 	busy = 0
-	events.append({"type": "new_day", "day": clock.day, "grew": grew})
+
+
+## 6:00: watered crops grow, the soil dries, any rain stops.
+func _new_day() -> void:
+	var grew: int = plot.new_day()
+	raining = false
+	events.append({"type": "new_day", "day": clock.day(), "grew": grew})
 
 
 ## Every crop planted on the plot, as cells.
@@ -220,9 +296,17 @@ func planted_cells() -> Array[Vector2i]:
 	return cells
 
 
+## The HUD's name for a spell.
+func spell_name(spell_id: StringName) -> String:
+	if spell_id == WATER:
+		return water_spell()["name"]
+	if SPELL_NAMES.has(spell_id):
+		return SPELL_NAMES[spell_id]
+	var crop: CropKind = CropKind.from_seed(spell_id)
+	return "Sow %s" % crop.display_name.to_lower() if crop != null else String(spell_id)
+
+
 static func item_name(item: StringName) -> String:
-	if TOOL_NAMES.has(item):
-		return TOOL_NAMES[item]
 	var crop: CropKind = CropKind.from_seed(item)
 	if crop != null:
 		return "%s seeds" % crop.display_name
