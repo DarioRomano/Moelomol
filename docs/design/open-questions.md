@@ -5,8 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: **Q20** (smoothing movement at 120 fps) is new, from the
-combat arena; everything else is resolved.
+Status at 2026-10-10: every question so far is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -29,7 +28,7 @@ combat arena; everything else is resolved.
 | Q17 | Whole-number or fractional scaling, now that rendering is full resolution? | Nothing urgent | **Resolved**: keep whole-number |
 | Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Resolved**: top-down ¾ → ADR-0014 |
 | Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Resolved**: two with a swap → `combat.md` |
-| Q20 | Smoothing movement at 120 fps with 60 Hz combat logic | Feel of all movement | **Open** (new) |
+| Q20 | Smoothing movement at 120 fps with 60 Hz combat logic | Feel of all movement | **Resolved**: A, fixed 60 Hz + render interpolation |
 
 ---
 
@@ -808,6 +807,10 @@ fight decides how deep builds go and how much needs balancing.
 **Recommendation:** B, with a 1.5 s swap cooldown to keep swaps deliberate.
 
 ## Q20. Smoothing movement at 120 fps with 60 Hz combat logic
+
+**Resolved 2026-10-10:** option A (the lead): fixed 60 Hz logic with render
+interpolation, the current default. F5 stays as a developer toggle; if the
+playtest shows the delay can be felt, B is the fallback.
 
 Found while building the combat arena (2026-10-10). The lead asked
 (2026-10-10): *can the logic not be time based instead of frame based?*
