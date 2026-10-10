@@ -21,7 +21,8 @@ amended by ADR-0010.
 
 Combat prototype. Beyond the foundation (test-card title, headless tests,
 review renders, PR builds and releases), there is a **combat test arena**
-with the shared combat foundation and the greatsword (`docs/design/combat.md`).
+with the shared combat foundation, the greatsword, the hammer, armour and the
+two-weapon swap (`docs/design/combat.md`).
 There is no other gameplay: no farming, exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
@@ -69,7 +70,7 @@ prints failures as `::error` annotations: read them with
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
 | `scenes/combat/` | Combat test arena and its HUD |
-| `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), moves, drawing |
+| `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
 | `tests/runner/` | Test runner and `TestCase` base class |

@@ -10,6 +10,32 @@ extends RefCounted
 
 const WALL: float = 16.0
 const TILE: float = 16.0
+## How long each effect plays, in ticks.
+const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6, "shockwave": 18, "armour_break": 16}
+
+
+## The effect a combat event leaves behind, or an empty dictionary.
+static func effect_for_event(event: Dictionary) -> Dictionary:
+	var kind: String = event["type"]
+	if not EFFECT_TICKS.has(kind):
+		return {}
+	var effect: Dictionary = {"kind": kind, "position": event["position"], "age": 0}
+	if kind == "shockwave":
+		effect["radius"] = event["radius"]
+	return effect
+
+
+## Collects the effects of `events` and ages the old ones by a tick.
+static func update_effects(effects: Array[Dictionary], events: Array[Dictionary]) -> void:
+	for event: Dictionary in events:
+		var effect: Dictionary = effect_for_event(event)
+		if not effect.is_empty():
+			effects.append(effect)
+	for effect: Dictionary in effects:
+		effect["age"] = int(effect["age"]) + 1
+	var alive: Array[Dictionary] = effects.filter(func(e: Dictionary) -> bool:
+		return int(e["age"]) < int(EFFECT_TICKS[e["kind"]]))
+	effects.assign(alive)
 
 
 static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Array[Dictionary]) -> void:
@@ -101,6 +127,9 @@ static func _draw_player(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 
 
 static func _draw_blade(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
+	if f.weapon() is Hammer:
+		_draw_hammer(canvas, f, at, f.weapon() as Hammer)
+		return
 	var hand: Vector2 = at + Vector2(0, -12)
 	var length: float = 26.0
 	match f.state:
@@ -128,6 +157,81 @@ static func _draw_blade(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	canvas.draw_line(hand + Vector2(-6, 6), hand + Vector2(6, -14), Palette.STONE[1], 3.0)
 
 
+## The maul: a shaft and an iron-banded head.
+static func _hammer_shape(canvas: CanvasItem, hand: Vector2, direction: Vector2, head_colour: Color) -> void:
+	var tip: Vector2 = hand + direction * 18.0
+	canvas.draw_line(hand, tip, Palette.WARMTH[0], 2.0)
+	var across: Vector2 = direction.orthogonal()
+	var head: PackedVector2Array = PackedVector2Array([
+		tip + across * 5 - direction, tip - across * 5 - direction,
+		tip - across * 5 + direction * 5, tip + across * 5 + direction * 5])
+	canvas.draw_colored_polygon(head, head_colour)
+
+
+static func _draw_hammer(canvas: CanvasItem, f: Fighter, at: Vector2, hammer: Hammer) -> void:
+	var hand: Vector2 = at + Vector2(0, -12)
+	match f.state:
+		Fighter.State.CHARGE:
+			# Raised overhead; the head flashes in the sweet spot.
+			var window: Vector2i = hammer.sweet_spot_ticks()
+			var held: int = f.state_tick
+			var head: Color = Palette.STONE[2]
+			if held >= window.x and held < window.y:
+				head = Palette.PAPER[1]
+			elif held >= window.y:
+				head = Palette.DANGER[1]
+			_hammer_shape(canvas, hand + Vector2(0, -4), Vector2.UP.rotated(-0.25 * signf(f.facing.x)), head)
+			_draw_charge_meter(canvas, at + Vector2(0, -40), held, window)
+			return
+		Fighter.State.ATTACK:
+			var move: CombatMove = f.move
+			var reach: float = f.radius + move.reach
+			var phase: StringName = f.attack_phase()
+			if move.arc_deg >= 360.0:  # Ground stamp: the hammer straight down
+				if phase != &"windup":
+					_sector(canvas, at, f.facing, reach, 360.0, Color(Palette.PAPER[1], 0.45 if phase == &"active" else 0.15))
+				_hammer_shape(canvas, hand + Vector2(4, -6), Vector2.DOWN, Palette.STONE[2])
+				return
+			match phase:
+				&"windup":
+					var swing: Vector2 = Vector2.UP.lerp(f.facing, 0.5).normalized()
+					if move.id == &"hammer_jab":
+						swing = -f.facing
+					_hammer_shape(canvas, hand, swing, Palette.STONE[2])
+				&"active":
+					_sector(canvas, at, f.facing, reach, move.arc_deg, Color(Palette.PAPER[1], 0.55))
+					_hammer_shape(canvas, hand, f.facing, Palette.PAPER[1] if move.breaks_armour else Palette.STONE[2])
+				&"recovery":
+					_sector(canvas, at, f.facing, reach, move.arc_deg, Color(Palette.PAPER[0], 0.15))
+					_hammer_shape(canvas, hand + Vector2(0, 6), f.facing, Palette.STONE[1])
+			return
+	# Carried on the back.
+	_hammer_shape(canvas, hand + Vector2(-6, 6), Vector2(0.5, -1).normalized(), Palette.STONE[1])
+
+
+## The charge meter above the player: fill, the sweet spot marked, and how
+## far past it the charge has gone.
+static func _draw_charge_meter(canvas: CanvasItem, centre: Vector2, held: int, window: Vector2i) -> void:
+	var full: float = window.y + 18.0
+	var width: float = 30.0
+	var left: Vector2 = centre - Vector2(width / 2.0, 0)
+	canvas.draw_rect(Rect2(left - Vector2(1, 1), Vector2(width + 2, 5)), Palette.SHADOW[0])
+	var zone_start: float = width * window.x / full
+	var zone_width: float = width * (window.y - window.x) / full
+	canvas.draw_rect(Rect2(left + Vector2(zone_start, 0), Vector2(zone_width, 3)), Palette.WARMTH[3] * Color(1, 1, 1, 0.6))
+	var fill: Color = Palette.PAPER[0]
+	if held >= window.x and held < window.y:
+		fill = Palette.PAPER[1]
+	elif held >= window.y:
+		fill = Palette.DANGER[1]
+	canvas.draw_rect(Rect2(left, Vector2(width * minf(held / full, 1.0), 3)), fill)
+	# Notches above and below the zone stay visible over the fill (the review
+	# render showed the zone vanishing under it).
+	for x: float in [zone_start, zone_start + zone_width]:
+		canvas.draw_rect(Rect2(left + Vector2(x - 0.5, -3), Vector2(1, 2)), Palette.WARMTH[3])
+		canvas.draw_rect(Rect2(left + Vector2(x - 0.5, 4), Vector2(1, 2)), Palette.WARMTH[3])
+
+
 static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	if f.state == Fighter.State.GONE:
 		return
@@ -149,6 +253,12 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	body.a = fade
 	canvas.draw_rect(Rect2(at.x - 7, at.y - 12, 14, 11), body)
 	canvas.draw_rect(Rect2(at.x - 5, at.y - 15, 10, 4), Color(Palette.CHANGED[0], fade))
+	if f.armour > 0.0:
+		# A stone shell over the back, cracking as it is chipped.
+		canvas.draw_rect(Rect2(at.x - 8, at.y - 14, 16, 6), Color(Palette.STONE[1], fade))
+		canvas.draw_rect(Rect2(at.x - 8, at.y - 14, 16, 2), Color(Palette.STONE[2], fade))
+		if f.armour < f.armour_max * 0.5:
+			canvas.draw_line(Vector2(at.x - 3, at.y - 14), Vector2(at.x, at.y - 9), Palette.SHADOW[0], 1.0)
 	if f.facing.y > -0.5:
 		var shift: float = roundf(f.facing.x * 2.0)
 		canvas.draw_rect(Rect2(at.x - 3 + shift, at.y - 9, 2, 2), Color(Palette.PAPER[1], fade))
@@ -160,6 +270,8 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	canvas.draw_rect(Rect2(at.x - 8, at.y - 21, 16 * f.health / f.max_health, 2), Palette.DANGER[1])
 	canvas.draw_rect(Rect2(at.x - 8, at.y - 18, 16, 1), Palette.SHADOW[0])
 	canvas.draw_rect(Rect2(at.x - 8, at.y - 18, 16 * f.poise.ratio(), 1), Palette.PAPER[0])
+	if f.armour > 0.0:
+		canvas.draw_rect(Rect2(at.x - 8, at.y - 24, 16 * f.armour / f.armour_max, 2), Palette.STONE[2])
 	if f.is_staggered():
 		_draw_dizzy(canvas, at + Vector2(0, -26), f.state_tick)
 
@@ -186,6 +298,17 @@ static func _draw_effect(canvas: CanvasItem, effect: Dictionary) -> void:
 		"impact":
 			var r: float = 4.0 + age * 1.5
 			canvas.draw_arc(at + Vector2(0, -6), r, 0, TAU, 20, Color(Palette.CHANGED[2], 1.0 - age / 12.0), 2.0)
+		"shockwave":
+			var radius: float = effect["radius"]
+			var t: float = age / float(EFFECT_TICKS["shockwave"])
+			canvas.draw_arc(at, radius * minf(1.0, 0.3 + t * 1.4), 0, TAU, 40, Color(Palette.PAPER[1], 1.0 - t), 2.0)
+			canvas.draw_arc(at, radius * minf(1.0, t * 1.2), 0, TAU, 40, Color(Palette.WARMTH[3], 0.8 * (1.0 - t)), 1.0)
+		"armour_break":
+			var t: float = age / float(EFFECT_TICKS["armour_break"])
+			for i: int in range(6):
+				var direction: Vector2 = Vector2.from_angle(i * TAU / 6.0 + 0.4)
+				var shard: Vector2 = at + Vector2(0, -12) + direction * (4.0 + t * 14.0) + Vector2(0, t * t * 8.0)
+				canvas.draw_rect(Rect2(shard - Vector2(1.5, 1.5), Vector2(3, 3)), Color(Palette.STONE[2], 1.0 - t))
 		"hit":
 			var size: float = 3.0 + age
 			var c: Color = Color(Palette.PAPER[1], 1.0 - age / 6.0)

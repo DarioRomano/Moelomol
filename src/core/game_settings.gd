@@ -2,10 +2,12 @@ class_name GameSettings
 extends RefCounted
 ## Player settings, saved to user://settings.cfg.
 ##
-## So far only the UI width (Q15, lead 2026-10-09): on screens wider than the
-## chosen shape, HUD and menus stay inside a centred frame while the world
-## still fills the screen. The options menu that changes it comes with the
-## first menu; until then only the review renders set it.
+## The UI width (Q15, lead 2026-10-09): on screens wider than the chosen
+## shape, HUD and menus stay inside a centred frame while the world still
+## fills the screen. Accessibility: a wider hammer sweet spot
+## (docs/design/combat.md, "Hammer"). The options menu that changes these
+## comes with the first menu; until then only the review renders and the
+## settings file set them.
 ##
 ## Use GameSettings.shared() in the game; tests make their own instances.
 
@@ -16,6 +18,8 @@ enum UiWidth { FULL, WIDE_21_9, WIDE_16_9 }
 const PATH: String = "user://settings.cfg"
 const SECTION: String = "display"
 const KEY_UI_WIDTH: String = "ui_width"
+const ACCESSIBILITY: String = "accessibility"
+const KEY_HAMMER_WIDE_SWEET_SPOT: String = "hammer_wide_sweet_spot"
 ## How each UiWidth is written in the settings file and on the command line.
 const UI_WIDTH_NAMES: Dictionary = {
 	UiWidth.FULL: "full",
@@ -26,6 +30,7 @@ const UI_WIDTH_NAMES: Dictionary = {
 static var _shared: GameSettings = null
 
 var ui_width: UiWidth = UiWidth.FULL
+var hammer_wide_sweet_spot: bool = false
 
 
 ## The game-wide settings, loaded from PATH on first use.
@@ -63,10 +68,16 @@ func load_from(path: String) -> void:
 		push_warning("GameSettings: unknown ui_width '%s' in %s; using full" % [text, path])
 		value = UiWidth.FULL
 	set_ui_width(value as UiWidth)
+	var wide: Variant = config.get_value(ACCESSIBILITY, KEY_HAMMER_WIDE_SWEET_SPOT, false)
+	if wide is bool:
+		hammer_wide_sweet_spot = wide
+	else:
+		push_warning("GameSettings: %s must be true or false in %s" % [KEY_HAMMER_WIDE_SWEET_SPOT, path])
 
 
 func save_to(path: String) -> Error:
 	var config: ConfigFile = ConfigFile.new()
 	config.load(path)  # keep any other sections already there
 	config.set_value(SECTION, KEY_UI_WIDTH, UI_WIDTH_NAMES[ui_width])
+	config.set_value(ACCESSIBILITY, KEY_HAMMER_WIDE_SWEET_SPOT, hammer_wide_sweet_spot)
 	return config.save(path)

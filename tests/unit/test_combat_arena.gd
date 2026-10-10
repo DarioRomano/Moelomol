@@ -41,6 +41,7 @@ func test_default_bindings_match_the_design() -> void:
 		&"lock_on": [_key(KEY_SHIFT), _axis(JOY_AXIS_TRIGGER_LEFT, 1.0)],
 		&"target_next": [_key(KEY_E), _axis(JOY_AXIS_RIGHT_X, 1.0)],
 		&"target_prev": [_key(KEY_Q), _axis(JOY_AXIS_RIGHT_X, -1.0)],
+		&"weapon_swap": [_key(KEY_TAB), _button(JOY_BUTTON_RIGHT_SHOULDER)],
 	}
 	for action: StringName in bindings:
 		assert_true(InputMap.has_action(action), "%s exists" % action)
@@ -133,3 +134,29 @@ func test_combat_events_map_to_haptic_effects() -> void:
 	assert_eq(Haptics.effect_for_event({"type": "dodge"}), &"", "no rumble for a dodge")
 	for effect: StringName in [&"greatsword_hit", &"greatsword_heavy_hit", &"player_hit", &"impact", &"stagger"]:
 		assert_true(Haptics.EFFECTS.has(effect), "%s is defined" % effect)
+
+
+func test_wide_sweet_spot_setting_survives_save_and_load() -> void:
+	var path: String = "user://test_settings_hammer.cfg"
+	var saved: GameSettings = GameSettings.new()
+	saved.hammer_wide_sweet_spot = true
+	assert_eq(saved.save_to(path), OK, "save")
+	var loaded: GameSettings = GameSettings.new()
+	loaded.load_from(path)
+	assert_true(loaded.hammer_wide_sweet_spot, "loaded")
+	assert_true(FileAccess.get_file_as_string(path).contains("hammer_wide_sweet_spot=true"), "readable in the file")
+	DirAccess.remove_absolute(path)
+
+
+func test_arena_applies_the_wide_sweet_spot_setting() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var before: bool = GameSettings.shared().hammer_wide_sweet_spot
+	GameSettings.shared().hammer_wide_sweet_spot = true
+	var arena: Node2D = ARENA.instantiate()
+	tree.root.add_child(arena)
+	var sim: CombatSim = arena.get("sim")
+	var hammer: Hammer = sim.player.weapons[1] as Hammer
+	assert_true(hammer.wide_sweet_spot, "the arena's hammer follows the setting")
+	GameSettings.shared().hammer_wide_sweet_spot = before
+	arena.queue_free()
+	await tree.process_frame

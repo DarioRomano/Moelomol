@@ -20,6 +20,9 @@ var dash: float = 0.0  # layout px the attacker moves forward during active
 var hitstop_ms: int = CombatTuning.HITSTOP_LIGHT_MS
 var staggered_damage_multiplier: float = CombatTuning.STAGGERED_DAMAGE_MULTIPLIER
 var extend_stagger_ms: int = 0  # added to a staggered target's stagger
+var stagger_ms: int = 0  # > 0: every hit staggers for this long, whatever the poise
+var breaks_armour: bool = false  # shatters armour before the damage lands
+var shockwave_radius: float = 0.0  # > 0: staggers everything this close when it lands
 
 
 static func make(p_id: StringName, p_name: String, timing: Vector3i, p_damage: float,

@@ -463,15 +463,52 @@ title, or `--start-scene combat_arena`). Never at the base.
   stagger, hyper-armour, input buffer, hit-stop, soft aim, lock-on with
   target switching, push and impacts (walls, pillars, other creatures), the
   full greatsword (light chain, four finishers, Follow-through, Brace and its
-  counter), two training creatures with a telegraphed lunge, rumble through
-  the haptics service, and a HUD.
+  counter), the hammer (below), armour, the two-weapon loadout with swap,
+  three training creatures with a telegraphed lunge (one with a stone
+  shell), rumble through the haptics service, and a HUD.
 - How: a deterministic simulation (`src/combat/combat_sim.gd`) stepped at
-  60 Hz; the scene only reads input and draws. 46 rule tests drive it
+  60 Hz; the scene only reads input and draws. Each weapon is a `Weapon`
+  subclass (`greatsword.gd`, `hammer.gd`). Rule tests drive the simulation
   directly. Placeholder shapes from the palette stand in for art.
 - Developer keys: F5 render interpolation (Q20), F6 creatures passive (for
   practising combos).
-- Not built yet: hammer, bow and magic (next, in that order, each its own
-  PR), weapon swap (needs a second weapon), the status-effect system (comes
-  with magic), the hold/toggle setting for lock-on (comes with the options
-  menu), DualSense triggers (later prototype), death and healing.
-- Feel can only be judged by playing: `docs/playtests/2026-10-10-combat-arena.md`.
+- Not built yet: bow and magic (next, each its own PR), the status-effect
+  system (comes with magic), a perfect hammer strike counting as a Release
+  (needs magic), the hammer's rising tone (no audio system yet), the
+  hold/toggle setting for lock-on and an options menu for the wide sweet
+  spot (come with the options menu), DualSense triggers (later prototype),
+  death and healing.
+- Feel can only be judged by playing:
+  `docs/playtests/2026-10-10-combat-arena.md` and
+  `docs/playtests/2026-10-10-hammer.md`.
+
+### Hammer, weapon swap and armour as built
+
+Starting values (in `src/combat/hammer.gd` and `combat_tuning.gd`; tuning
+needs the lead's approval):
+
+| Value | Start |
+|---|---|
+| Loadout | greatsword and hammer; swap (Tab / RB) from standing or an attack's recovery; 1.5 s cooldown; a swap ends the greatsword chain |
+| Jab | 150 ms windup, 6 damage, 12 poise, 5 stamina, reach 24 px |
+| Charge | 15 stamina when it starts; walk at 28 px/s (35%); no stamina refill while holding |
+| Sweet spot | starts after 900 ms held, 150 ms wide; each Rhythm stack shortens it by 25 ms from its end (150, 125, 100, 75 ms) |
+| Early release | 20% of full damage at once, rising to 60% just before the sweet spot |
+| Perfect strike | 40 damage, 70 poise, +25% damage per Rhythm stack (Rhythm counts strikes before this one); shatters armour; shockwave 36 px (+8 px per Rhythm) that staggers but does no damage; 120 ms hit-stop |
+| Overstrain | 40% damage, 15 extra stamina; holding past the sweet spot drains 25 stamina/s, and the hammer comes down by itself when stamina runs out |
+| Ground stamp | 100 ms windup, all round within 12 px, 4 damage, a certain 0.4 s stagger, 12 stamina |
+| Armour | the shelled creature's shell absorbs 60 damage; 40% of a hit gets through while it lasts; each hit chips it by its full damage; returns on respawn |
+| Wide sweet spot (accessibility) | 300 ms, no narrowing; `hammer_wide_sweet_spot=true` in `[accessibility]` of `user://settings.cfg` until the options menu exists |
+
+Readings of the design taken while building (say if any is wrong):
+
+- **Jabs neither build nor break Rhythm.** The design says jabs are "for
+  building Rhythm" and also that only perfect strikes add stacks; jabs
+  keeping Rhythm alive lets you jab between perfect strikes.
+- **Dodge or Ground stamp cancel a charge** (its stamina is lost). Light
+  presses during a charge are ignored.
+- **The shockwave staggers but does no damage**, and the armour break only
+  applies to creatures the strike itself hits.
+- **The sweet-spot tone** is not built (no audio system); the flash, a
+  charge meter above the player with the sweet spot marked, and the rumble
+  click are.

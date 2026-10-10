@@ -68,6 +68,17 @@ const CREATURE_RESPAWN_MS: int = 3000
 # Player respawn in the arena (no death design yet)
 const PLAYER_DOWN_MS: int = 2000
 
+# Loadout (Q19: two weapons and a swap)
+const SWAP_COOLDOWN_MS: int = 1500
+
+# Charging (hammer charge, later the bow draw): the player walks slowly
+const CHARGE_MOVE_SPEED: float = 28.0  # layout px per second
+
+# Armour (shells, bark, stone plates): reduces damage until chipped away or
+# shattered by a perfect hammer strike
+const ARMOUR_DAMAGE_TAKEN: float = 0.4  # share of damage that gets through
+const ARMOURED_CREATURE_ARMOUR: float = 60.0  # damage the shell absorbs before it breaks
+
 
 ## Milliseconds to whole simulation ticks (rounded, at least 1 for > 0 ms).
 static func ticks(ms: int) -> int:

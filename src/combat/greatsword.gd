@@ -1,8 +1,9 @@
 class_name Greatsword
-extends RefCounted
-## The greatsword moveset (docs/design/combat.md, "Greatsword"): a light chain
-## of three, and a heavy finisher that depends on how far into the chain the
-## player is. Starting values; tuning needs the lead's approval.
+extends Weapon
+## The greatsword (docs/design/combat.md, "Greatsword"): a light chain of
+## three, a heavy finisher that depends on how far into the chain the player
+## is, and the skill: Follow-through next to a staggered creature, Brace
+## otherwise. Starting values; tuning needs the lead's approval.
 
 ## Light swings, each faster to start than the last. Each steps forward a
 ## little (LIGHT_STEP) so the chain follows the creature its pushes move away;
@@ -27,6 +28,60 @@ const BRACE_MS: int = 500
 const BRACE_STAMINA: float = 10.0
 ## How close a staggered creature must be for Follow-through.
 const FOLLOW_THROUGH_REACH: float = 24.0
+
+
+func _init() -> void:
+	id = &"greatsword"
+	display_name = "Greatsword"
+
+
+func try_action(sim: CombatSim, action: StringName, _input: CombatInput) -> bool:
+	var p: Fighter = sim.player
+	match action:
+		&"light":
+			var light: CombatMove = light_for(p.chain)
+			var chain_before: int = p.chain
+			if sim.start_attack(p, light):
+				p.chain = chain_after(light, chain_before)
+				return true
+			return false
+		&"heavy":
+			var heavy: CombatMove = BRACE_COUNTER if p.brace_ready else heavy_for(p.chain)
+			if sim.start_attack(p, heavy):
+				p.chain = 0
+				return true
+			return false
+		&"skill":
+			var target: Fighter = staggered_creature_in_reach(sim)
+			if target != null:
+				p.facing = (target.position - p.position).normalized()
+				if sim.start_attack(p, FOLLOW_THROUGH, false):
+					p.chain = 0
+					return true
+				return false
+			if not p.stamina.try_spend(BRACE_STAMINA):
+				sim.events.append({"type": "no_stamina"})
+				return false
+			p.move = null
+			p.chain = 0
+			p.brace_ready = false
+			p.enter(Fighter.State.BRACE, CombatTuning.ticks(BRACE_MS))
+			sim.events.append({"type": "brace"})
+			return true
+	return false
+
+
+func status_text(p: Fighter) -> String:
+	return "chain %d%s" % [p.chain, "   BRACE READY" if p.brace_ready else ""]
+
+
+static func staggered_creature_in_reach(sim: CombatSim) -> Fighter:
+	for c: Fighter in sim.creatures:
+		if c.is_staggered():
+			var gap: float = c.position.distance_to(sim.player.position) - c.radius - sim.player.radius
+			if gap <= FOLLOW_THROUGH_REACH:
+				return c
+	return null
 
 
 ## The move for a light press after `chain` light swings. A fourth light starts

@@ -7,8 +7,10 @@ extends RefCounted
 var move: Vector2 = Vector2.ZERO
 var light_pressed: bool = false
 var heavy_pressed: bool = false
+var heavy_held: bool = false  # charging weapons release when this goes false
 var skill_pressed: bool = false
 var dodge_pressed: bool = false
+var swap_pressed: bool = false
 var lock_held: bool = false
 var target_next_pressed: bool = false
 var target_prev_pressed: bool = false
@@ -20,12 +22,22 @@ static func with_move(direction: Vector2) -> CombatInput:
 	return input
 
 
+## Holding heavy (a charge), optionally while moving.
+static func hold_heavy(direction: Vector2 = Vector2.ZERO) -> CombatInput:
+	var input: CombatInput = with_move(direction)
+	input.heavy_held = true
+	return input
+
+
 static func press(action: StringName) -> CombatInput:
 	var input: CombatInput = CombatInput.new()
 	match action:
 		&"light": input.light_pressed = true
-		&"heavy": input.heavy_pressed = true
+		&"heavy":
+			input.heavy_pressed = true
+			input.heavy_held = true
 		&"skill": input.skill_pressed = true
 		&"dodge": input.dodge_pressed = true
+		&"swap": input.swap_pressed = true
 		_: push_error("CombatInput.press: unknown action %s" % action)
 	return input

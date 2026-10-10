@@ -139,7 +139,7 @@ func test_creature_attack_misses_a_dodging_player() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	var creature: Fighter = sim.creatures[0]
 	creature.facing = Vector2.LEFT
-	sim._start_attack(creature, sim._creature_lunge)
+	sim.start_attack(creature, sim._creature_lunge)
 	# Dodge so the lunge's active frames land inside the invulnerable window.
 	var windup: int = sim._creature_lunge.windup_ticks()
 	_run(sim, windup - CombatTuning.ticks(CombatTuning.DODGE_IFRAME_START_MS) - 1)
@@ -152,7 +152,7 @@ func test_creature_attack_hits_a_standing_player_after_its_telegraph() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	var creature: Fighter = sim.creatures[0]
 	creature.facing = Vector2.LEFT
-	sim._start_attack(creature, sim._creature_lunge)
+	sim.start_attack(creature, sim._creature_lunge)
 	_run(sim, sim._creature_lunge.windup_ticks() - 1)
 	assert_eq(sim.player.health, CombatTuning.PLAYER_HEALTH, "no damage during the telegraph")
 	_run(sim, sim._creature_lunge.active_ticks() + 2)
@@ -285,7 +285,7 @@ func test_enough_poise_damage_staggers() -> void:
 func test_staggered_creatures_take_extra_damage() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	var creature: Fighter = sim.creatures[0]
-	sim._stagger(creature)
+	sim.stagger(creature)
 	creature.state_length = 1000
 	_press(sim, &"light")
 	_until_free(sim)
@@ -296,12 +296,12 @@ func test_staggered_creatures_take_extra_damage() -> void:
 func test_stagger_lasts_its_duration_then_ends() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	var creature: Fighter = sim.creatures[0]
-	sim._stagger(creature)
+	sim.stagger(creature)
 	_run(sim, CombatTuning.ticks(CombatTuning.CREATURE_STAGGER_MS) - 1)
 	assert_eq(creature.state, Fighter.State.STAGGERED, "still staggered just before 1.2 s")
 	_run(sim, 2)
 	assert_eq(creature.state, Fighter.State.FREE, "recovered after 1.2 s")
-	sim._stagger(sim.player)
+	sim.stagger(sim.player)
 	_run(sim, CombatTuning.ticks(CombatTuning.PLAYER_STAGGER_MS) + 1)
 	assert_eq(sim.player.state, Fighter.State.FREE, "the player recovers after 0.6 s")
 
@@ -319,8 +319,8 @@ func test_staggered_creature_stops_its_attack() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
 	var creature: Fighter = sim.creatures[0]
 	creature.facing = Vector2.LEFT
-	sim._start_attack(creature, sim._creature_lunge)
-	sim._stagger(creature)
+	sim.start_attack(creature, sim._creature_lunge)
+	sim.stagger(creature)
 	_run(sim, sim._creature_lunge.windup_ticks() + sim._creature_lunge.active_ticks())
 	assert_eq(sim.player.health, CombatTuning.PLAYER_HEALTH, "the interrupted lunge never lands")
 
@@ -382,7 +382,7 @@ func test_push_into_another_creature_hurts_both() -> void:
 
 func test_skill_next_to_a_staggered_creature_is_follow_through() -> void:
 	var sim: CombatSim = _field([Vector2(125, 150)])
-	sim._stagger(sim.creatures[0])
+	sim.stagger(sim.creatures[0])
 	_press(sim, &"skill")
 	assert_eq(_move_id(sim), &"follow_through", "Follow-through")
 
@@ -396,7 +396,7 @@ func test_skill_otherwise_is_brace() -> void:
 
 func test_far_staggered_creature_gives_brace_not_follow_through() -> void:
 	var sim: CombatSim = _field([Vector2(200, 150)])
-	sim._stagger(sim.creatures[0])
+	sim.stagger(sim.creatures[0])
 	_press(sim, &"skill")
 	assert_eq(sim.player.state, Fighter.State.BRACE, "too far for Follow-through")
 
@@ -405,7 +405,7 @@ func test_hit_during_brace_makes_the_next_heavy_instant() -> void:
 	var sim: CombatSim = _field([Vector2(122, 150)])
 	var creature: Fighter = sim.creatures[0]
 	creature.facing = Vector2.LEFT
-	sim._start_attack(creature, sim._creature_lunge)
+	sim.start_attack(creature, sim._creature_lunge)
 	_run(sim, sim._creature_lunge.windup_ticks() - 3)
 	_press(sim, &"skill")
 	_run(sim, sim._creature_lunge.active_ticks() + 2)
@@ -514,6 +514,9 @@ func test_player_recovers_after_being_downed() -> void:
 func test_arena_layout_fits_the_view() -> void:
 	var sim: CombatSim = CombatSim.make_arena()
 	assert_true(Rect2(0, 0, 640, 360).encloses(sim.bounds), "arena inside 640x360")
-	assert_eq(sim.creatures.size(), 2, "two training creatures")
+	assert_eq(sim.creatures.size(), 3, "three training creatures")
+	assert_eq(sim.creatures[2].armour, CombatTuning.ARMOURED_CREATURE_ARMOUR, "the third has a shell")
 	for rect: Rect2 in sim.obstacles:
 		assert_true(sim.bounds.encloses(rect), "obstacle inside the arena")
+	for c: Fighter in sim.creatures:
+		assert_eq(sim.resolve_position(c.position, c.radius), c.position, "creature starts on open ground")

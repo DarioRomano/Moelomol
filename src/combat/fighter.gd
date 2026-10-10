@@ -9,6 +9,7 @@ enum State {
 	ATTACK,      # performing `move`: windup (the telegraph), active, recovery
 	DODGE,       # player roll
 	BRACE,       # player Brace stance
+	CHARGE,      # player holding a charge (hammer); state_tick = ticks held
 	STAGGERED,
 	DOWN,        # defeated: fading (creature) or knocked out (player)
 	GONE,        # creature waiting to respawn
@@ -24,6 +25,13 @@ var max_health: float
 var health: float
 var poise: Poise
 var stamina: Stamina = null  # player only
+var armour: float = 0.0  # damage the shell still absorbs; 0 = none or broken
+var armour_max: float = 0.0
+
+## Player loadout (Q19): two weapons, one in hand.
+var weapons: Array[Weapon] = []
+var weapon_index: int = 0
+var swap_cooldown: int = 0  # ticks until the next swap is allowed
 
 var state: State = State.FREE
 var state_tick: int = 0  # ticks spent in the current state
@@ -52,6 +60,7 @@ static func make_player(at: Vector2) -> Fighter:
 	f.health = f.max_health
 	f.poise = Poise.new(CombatTuning.PLAYER_POISE)
 	f.stamina = Stamina.new()
+	f.weapons = [Greatsword.new(), Hammer.new()]
 	return f
 
 
@@ -66,6 +75,17 @@ static func make_creature(at: Vector2) -> Fighter:
 	f.health = f.max_health
 	f.poise = Poise.new(CombatTuning.CREATURE_POISE)
 	return f
+
+
+## Gives a creature a shell that absorbs `amount` damage.
+func give_armour(amount: float) -> void:
+	armour_max = amount
+	armour = amount
+
+
+## The weapon in hand, or null (creatures).
+func weapon() -> Weapon:
+	return weapons[weapon_index] if weapon_index < weapons.size() else null
 
 
 func enter(new_state: State, length: int = 0) -> void:

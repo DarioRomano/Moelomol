@@ -36,6 +36,8 @@ static func make_arena() -> CombatSim:
 	sim.obstacles.append(Rect2(432, 208, 32, 32))
 	sim.add_creature(Vector2(420, 130))
 	sim.add_creature(Vector2(470, 170))
+	# An armoured creature (a stone shell) for the hammer's armour break.
+	sim.add_creature(Vector2(520, 290)).give_armour(CombatTuning.ARMOURED_CREATURE_ARMOUR)
 	return sim
 
 
@@ -71,6 +73,8 @@ func step(input: CombatInput) -> void:
 		if f.is_alive() and not f.is_staggered():
 			f.poise.tick()
 	player.stamina.tick()
+	if player.swap_cooldown > 0:
+		player.swap_cooldown -= 1
 	_separate_fighters()
 
 
@@ -80,6 +84,8 @@ func _record_buffer(input: CombatInput) -> void:
 	var pressed: StringName = &""
 	if input.dodge_pressed:
 		pressed = &"dodge"
+	elif input.swap_pressed:
+		pressed = &"swap"
 	elif input.skill_pressed:
 		pressed = &"skill"
 	elif input.heavy_pressed:
@@ -124,6 +130,16 @@ func _step_player(input: CombatInput) -> void:
 			p.state_tick += 1
 			if p.state_tick >= p.state_length:
 				p.enter(Fighter.State.FREE)
+		Fighter.State.CHARGE:
+			# A dodge or the weapon skill cancels the charge (its stamina is
+			# spent); other presses wait in the buffer.
+			if _buffer_action in [&"dodge", &"skill"] and _try_action(_take_buffer(), input):
+				return
+			_charge_move(p, input)
+			p.stamina.hold()  # no stamina refill while holding a charge
+			p.weapon().step_charge(self, input)
+			if p.state == Fighter.State.CHARGE:
+				p.state_tick += 1
 		Fighter.State.ATTACK:
 			if p.attack_phase() == &"recovery" and _buffer_action != &"":
 				if _try_action(_take_buffer(), input):
@@ -146,7 +162,8 @@ func _free_move(p: Fighter, input: CombatInput) -> void:
 	_move_with_collision(p, direction * CombatTuning.per_tick(CombatTuning.PLAYER_SPEED))
 
 
-## Starts the action if the player can; returns true if it started.
+## Starts the action if the player can; returns true if it started. Dodge
+## and swap are the same for every weapon; the weapon in hand decides the rest.
 func _try_action(action: StringName, input: CombatInput) -> bool:
 	var p: Fighter = player
 	match action:
@@ -164,40 +181,37 @@ func _try_action(action: StringName, input: CombatInput) -> bool:
 			p.enter(Fighter.State.DODGE, CombatTuning.ticks(CombatTuning.DODGE_MS))
 			events.append({"type": "dodge"})
 			return true
-		&"light":
-			var light: CombatMove = Greatsword.light_for(p.chain)
-			var chain_before: int = p.chain
-			if _start_attack(p, light):
-				p.chain = Greatsword.chain_after(light, chain_before)
-				return true
-			return false
-		&"heavy":
-			var heavy: CombatMove = Greatsword.BRACE_COUNTER if p.brace_ready else Greatsword.heavy_for(p.chain)
-			if _start_attack(p, heavy):
-				p.chain = 0
-				return true
-			return false
-		&"skill":
-			var target: Fighter = _staggered_creature_in_reach()
-			if target != null:
-				p.facing = (target.position - p.position).normalized()
-				if _start_attack(p, Greatsword.FOLLOW_THROUGH, false):
-					p.chain = 0
-					return true
+		&"swap":
+			if p.weapons.size() < 2:
 				return false
-			if not p.stamina.try_spend(Greatsword.BRACE_STAMINA):
-				events.append({"type": "no_stamina"})
+			if p.swap_cooldown > 0:
+				events.append({"type": "swap_blocked"})
 				return false
+			p.weapon_index = (p.weapon_index + 1) % p.weapons.size()
+			p.swap_cooldown = CombatTuning.ticks(CombatTuning.SWAP_COOLDOWN_MS)
 			p.move = null
 			p.chain = 0
 			p.brace_ready = false
-			p.enter(Fighter.State.BRACE, CombatTuning.ticks(Greatsword.BRACE_MS))
-			events.append({"type": "brace"})
+			p.enter(Fighter.State.FREE)
+			events.append({"type": "swap", "weapon": p.weapon().id})
 			return true
-	return false
+	var weapon: Weapon = p.weapon()
+	return weapon != null and weapon.try_action(self, action, input)
 
 
-func _start_attack(f: Fighter, move: CombatMove, aim: bool = true) -> bool:
+## Walking slowly while holding a charge, facing the lock target or the way
+## the player moves.
+func _charge_move(p: Fighter, input: CombatInput) -> void:
+	var direction: Vector2 = input.move.limit_length(1.0)
+	if lock_target != null:
+		p.facing = (lock_target.position - p.position).normalized()
+	elif direction.length() > 0.1:
+		p.facing = direction.normalized()
+	_move_with_collision(p, direction * CombatTuning.per_tick(CombatTuning.CHARGE_MOVE_SPEED))
+
+
+## Starts `move` for f if it can pay the stamina; returns true if it started.
+func start_attack(f: Fighter, move: CombatMove, aim: bool = true) -> bool:
 	if f.stamina != null and not f.stamina.try_spend(move.stamina):
 		events.append({"type": "no_stamina"})
 		return false
@@ -236,15 +250,6 @@ func _aim_player(move: CombatMove) -> void:
 		p.facing = (best.position - p.position).normalized()
 
 
-func _staggered_creature_in_reach() -> Fighter:
-	for c: Fighter in creatures:
-		if c.is_staggered():
-			var gap: float = c.position.distance_to(player.position) - c.radius - player.radius
-			if gap <= Greatsword.FOLLOW_THROUGH_REACH:
-				return c
-	return null
-
-
 # --- Attacks (shared by player and creatures) ------------------------------------
 
 func _advance_attack(f: Fighter) -> void:
@@ -257,6 +262,8 @@ func _advance_attack(f: Fighter) -> void:
 				continue
 			f.hit_this_move.append(target)
 			_hit(f, target, move)
+		if move.shockwave_radius > 0.0 and f.state_tick == move.windup_ticks():
+			_shockwave(f, move)
 	f.state_tick += 1
 	if f.state == Fighter.State.ATTACK and f.state_tick >= f.state_length:
 		f.move = null
@@ -287,12 +294,17 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if target.is_invulnerable():
 		events.append({"type": "dodged", "attacker": attacker, "target": target})
 		return
+	if target.kind == Fighter.Kind.PLAYER and target.weapon() != null:
+		target.weapon().on_owner_hit(self)
 	var damage: float = move.damage
 	var was_staggered: bool = target.is_staggered()
 	if was_staggered:
 		damage *= move.staggered_damage_multiplier
 		target.state_length += CombatTuning.ticks(move.extend_stagger_ms)
-	target.health -= damage
+	if move.breaks_armour and target.armour > 0.0:
+		target.armour = 0.0
+		events.append({"type": "armour_break", "fighter": target, "position": target.position})
+	damage = _apply_damage(target, damage)
 	hitstop = maxi(hitstop, CombatTuning.ticks(move.hitstop_ms))
 	events.append({"type": "hit", "attacker": attacker, "target": target, "move": move.id,
 		"damage": damage, "position": target.position})
@@ -302,8 +314,11 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 	if target.health <= 0.0:
 		_defeat(target)
 		return
-	if not was_staggered and target.poise.damage(move.poise_damage, target.has_hyper_armour()):
-		_stagger(target)
+	if not was_staggered:
+		if move.stagger_ms > 0:
+			stagger(target, move.stagger_ms)
+		elif target.poise.damage(move.poise_damage, target.has_hyper_armour()):
+			stagger(target)
 	if move.push > 0.0:
 		var direction: Vector2 = target.position - attacker.position
 		direction = direction.normalized() if direction.length() > 0.001 else attacker.facing
@@ -311,8 +326,36 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		target.push_velocity = direction * (move.push / target.push_ticks)
 
 
-func _stagger(f: Fighter) -> void:
-	var ms: int = CombatTuning.PLAYER_STAGGER_MS if f.kind == Fighter.Kind.PLAYER else CombatTuning.CREATURE_STAGGER_MS
+## Takes `amount` off target's health, less while it has armour (which the
+## full amount chips away). Returns the damage actually taken.
+func _apply_damage(target: Fighter, amount: float) -> float:
+	var taken: float = amount
+	if target.armour > 0.0:
+		taken = amount * CombatTuning.ARMOUR_DAMAGE_TAKEN
+		target.armour = maxf(0.0, target.armour - amount)
+		if target.armour == 0.0:
+			events.append({"type": "armour_break", "fighter": target, "position": target.position})
+	target.health -= taken
+	return taken
+
+
+## A perfect hammer strike landing: everything within the radius (from the
+## attacker's centre to the target's edge) is staggered.
+func _shockwave(f: Fighter, move: CombatMove) -> void:
+	events.append({"type": "shockwave", "fighter": f, "position": f.position,
+		"radius": move.shockwave_radius})
+	for target: Fighter in _targets_of(f):
+		if target.position.distance_to(f.position) - target.radius > move.shockwave_radius:
+			continue
+		if target.is_invulnerable() or target.is_staggered() or not target.is_alive():
+			continue
+		stagger(target)
+
+
+## Staggers f for `ms`, or its kind's usual stagger when 0.
+func stagger(f: Fighter, ms: int = 0) -> void:
+	if ms <= 0:
+		ms = CombatTuning.PLAYER_STAGGER_MS if f.kind == Fighter.Kind.PLAYER else CombatTuning.CREATURE_STAGGER_MS
 	f.move = null
 	f.chain = 0
 	f.enter(Fighter.State.STAGGERED, CombatTuning.ticks(ms))
@@ -333,6 +376,7 @@ func _defeat(f: Fighter) -> void:
 func _respawn(f: Fighter) -> void:
 	f.health = f.max_health
 	f.poise.current = f.poise.maximum
+	f.armour = f.armour_max
 	f.position = f.spawn_position
 	f.previous_position = f.spawn_position
 	f.push_ticks = 0
@@ -377,7 +421,7 @@ func _step_creature(c: Fighter) -> void:
 			if gap > CombatTuning.CREATURE_ATTACK_RANGE:
 				_move_with_collision(c, c.facing * CombatTuning.per_tick(CombatTuning.CREATURE_SPEED))
 			elif c.cooldown == 0:
-				_start_attack(c, _creature_lunge)
+				start_attack(c, _creature_lunge)
 
 
 static func _make_creature_lunge() -> CombatMove:
@@ -479,13 +523,13 @@ func _apply_push(f: Fighter) -> void:
 ## A creature slammed into a wall, an obstacle or another creature.
 func _impact(f: Fighter) -> void:
 	var was_staggered: bool = f.is_staggered()
-	f.health -= CombatTuning.IMPACT_DAMAGE
+	_apply_damage(f, CombatTuning.IMPACT_DAMAGE)
 	events.append({"type": "impact", "fighter": f, "position": f.position})
 	if f.health <= 0.0:
 		_defeat(f)
 		return
 	if not was_staggered and f.poise.damage(CombatTuning.IMPACT_POISE, f.has_hyper_armour()):
-		_stagger(f)
+		stagger(f)
 
 
 ## Keeps fighters from overlapping. A dodging player passes through creatures.
