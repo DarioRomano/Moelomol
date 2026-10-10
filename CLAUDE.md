@@ -122,8 +122,8 @@ Design doc for the consequences. Update `docs/roadmap.md` when a milestone moves
 
 ## Conventions
 
-- Language: statically typed GDScript (ADR-0003, proposed; applied as the
-  working assumption). The project treats untyped declarations as parse errors. Type every variable,
+- Language: statically typed GDScript (ADR-0003, accepted). The project
+  treats untyped declarations as parse errors. Type every variable,
   parameter and return value. Follow the official GDScript style guide: files
   and folders `snake_case`, `class_name` in `PascalCase`, constants
   `CONSTANT_CASE`.

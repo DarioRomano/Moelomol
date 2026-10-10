@@ -5,10 +5,9 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-09 (third round): everything resolved except **Q8**
-(approve ADR-0003; applied as a working assumption) and **Q16** (new: how to
-check performance without a minimum-spec machine, plus the macOS and Steam
-Deck targets).
+Status at 2026-10-10: **Q18** (camera perspective) and **Q19** (one or two
+weapons equipped) are new, from the combat design; everything else is
+resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -19,7 +18,7 @@ Deck targets).
 | Q5 | Renderer | M1 | **Resolved**: Compatibility everywhere → ADR-0012 |
 | Q6 | Input model | Player movement, first menu | **Resolved**: all recommendations → ADR-0013 |
 | Q7 | Is the web build a shipping platform? | Nothing yet | **Resolved**: validation only, never shipped |
-| Q8 | Approve ADR-0003 (typed GDScript) | M1 | Open (working assumption: approve) |
+| Q8 | Approve ADR-0003 (typed GDScript) | M1 | **Resolved**: approved → ADR-0003 |
 | Q9 | What was the calamity? | M2 art direction detail | **Resolved** → ADR-0010, `story.md` |
 | Q10 | Merging docs-only PRs before CI exists | Docs PRs | **Resolved**: CI PR went first |
 | Q11 | Plain git or Git LFS for binary assets | First large assets | **Resolved** → ADR-0011 |
@@ -27,7 +26,10 @@ Deck targets).
 | Q13 | What the calamity looked like; where monsters come from | Art and audio of adventure areas | **Resolved**: B + C → `story.md` |
 | Q14 | Does feeding the pet do anything in play? | Crafting/recipe design | **Resolved**: tutorial recipe; feeding = story moments → `story.md` |
 | Q15 | How much world should 32:9 screens show? | First level layout | **Resolved**: show it all + UI width setting → ADR-0008 |
-| Q16 | How to check the performance budget without a minimum-spec machine | First gameplay system | **Open** (new) |
+| Q16 | How to check the performance budget without a minimum-spec machine | First gameplay system | **Resolved**: 5800X + Steam Frame (B, C) |
+| Q17 | Whole-number or fractional scaling, now that rendering is full resolution? | Nothing urgent | **Resolved**: keep whole-number |
+| Q18 | Camera perspective: top-down or side view? | All sprites, combat, level layout | **Open** (new) |
+| Q19 | One weapon at a time, or two equipped with a swap? | Combat implementation | **Open** (new) |
 
 ---
 
@@ -164,8 +166,8 @@ can be thinned and thickened at runtime (`AudioStreamSynchronized` and
 
 **Resolved 2026-10-09:** the lead accepted the CPU pairing (i5-7400 /
 Ryzen 5 1600) with the GTX 1050 Ti and the 120 fps target; the table below
-is now ADR-0007's values. The lead has no minimum-spec machine, which raises
-Q16; the macOS and Steam Deck rows stay unconfirmed until answered there.
+is now ADR-0007's values, except the macOS and Steam Deck rows, which the
+lead dropped. How the budget is checked is Q16.
 
 **Lead's direction (2026-10-09):** ideally 120 fps on a GeForce GTX 1050 Ti.
 The lead asked for more guidance before deciding. This section explains what
@@ -428,6 +430,8 @@ validate the export pipeline (option A). ADR-0004 updated.
 
 ## Q8. Approve ADR-0003 (statically typed GDScript)
 
+**Resolved 2026-10-09:** approved. ADR-0003 is Accepted.
+
 **Working assumption since 2026-10-09:** the project is typed GDScript with
 untyped declarations as errors. ADR-0003 stays Proposed until the lead answers.
 
@@ -649,6 +653,14 @@ approve.
 
 ## Q16. How to check the performance budget without a minimum-spec machine
 
+**Resolved 2026-10-09:** the lead measures on the Ryzen 7 5800X (option A's
+scaled budget) and on the Steam Frame both through FEX with the x86 build
+(B) and natively with a Linux ARM64 test build (C). Option D (a real
+minimum-spec PC) was not chosen, so the budget stays unverified on its target
+hardware. The macOS and Steam Deck performance targets were dropped.
+Implemented: the ARM64 test build and the frame-time overlay, with the
+checklist `docs/playtests/2026-10-09-performance-devices.md`.
+
 Found from the lead's Q4 answer (2026-10-09): there is no machine near the
 minimum spec (GTX 1050 Ti, i5-7400). The lead has a Ryzen 7 5800X with an
 RTX 4080 Super, and two lower-powered devices with the same chip (Snapdragon
@@ -700,3 +712,92 @@ Skip C unless you want ARM64 as a shipping platform.
 
 **Also needed (from Q4):** confirm or drop the macOS target (Apple M1: 120 fps
 on 120 Hz displays, 60 otherwise) and the Steam Deck target (60 / 90 fps).
+
+## Q17. Whole-number or fractional scaling, now that rendering is full resolution?
+
+**Resolved 2026-10-10:** option A, keep whole-number scaling (the lead).
+ADR-0008 is unchanged.
+
+Found while implementing the full-resolution change (ADR-0008 Amendment 3).
+`scale_mode = integer` was chosen when the game was drawn at 640×360 and
+scaled up, where fractional scaling would blur or distort everything. Drawing
+at full resolution removes that for text, lights and shapes, but not for
+pixel-art sprites: their art pixels must still map to whole screen pixels to
+look even.
+
+**A. Keep whole-number scaling** (current, recommended)
+- Pro: every art pixel is the same size on screen; no shimmer when sprites
+  or the camera move; every common fullscreen monitor (1080p, 1440p, 4K, the
+  ultrawide sizes) is an exact multiple, and the game starts fullscreen.
+- Con: windows or screens that are not an exact multiple get black borders
+  (1366×768 laptops: thin bars; windowed mode: bars until the window size is a
+  multiple; below 1280×720 the game drops to 1x).
+
+**B. Fractional scaling**
+- Pro: the game fills every window and screen exactly; no bars ever.
+- Con: on non-multiple sizes, art pixels come out uneven (at 2.13x some are
+  2 screen pixels wide, some 3), which shows as wobbling edges and shimmer when
+  anything moves; level art would look slightly different on every screen.
+
+**C. Whole-number scaling for the world, fractional for the UI only**
+- Pro: no bars for menus and text, even art pixels in the world.
+- Con: needs custom code (Godot's setting applies to everything); the world
+  still has bars; UI and world scale would no longer match.
+
+**Recommendation:** A. The bars only appear on unusual sizes and in windowed
+mode, while B's shimmer would affect every player on those sizes all the time.
+Revisit if playtests on real laptops show the bars bother people.
+
+## Q18. Camera perspective: top-down or side view?
+
+Found while designing combat (2026-10-10): the perspective was never decided,
+and it changes how every weapon plays and how every sprite is drawn. The art
+plan's placeholder ("a player character standing in four directions")
+already implies top-down, but no decision records it. `combat.md` and
+`combat-art-prompts.md` assume A.
+
+**A. Top-down ¾ view** (like most farming games: the ground seen from above at
+an angle, characters drawn slightly from the front) (recommended)
+- Pro: farming on a grid of fields, wandering a base and exploring open areas
+  all work naturally; enemies can come from any side, so dodging, pushing into
+  walls, kiting and area effects (shockwaves, pools, Volley) have room; fits
+  the 640×360 view with 40 × 22 tiles and the ultrawide decisions.
+- Con: each character and attack needs several facing directions (more art);
+  aiming without a mouse needs soft aim and lock-on (designed).
+
+**B. Side view** (a 2D action game seen from the side, with jumping)
+- Pro: one facing direction to draw (mirrored); combat readability is
+  excellent; jumping and verticality add options.
+- Con: farming fields from the side is awkward; the base becomes a strip;
+  open exploration becomes platforming; pushing and area effects mostly work
+  along one line; most of the art direction and the "wide empty views" idea
+  would need rethinking.
+
+**Recommendation:** A. Once decided it becomes an ADR: expensive to reverse,
+because every sprite depends on it.
+
+## Q19. One weapon at a time, or two equipped with a swap?
+
+Found while designing combat. The brief wants weapons that fit different
+playstyles and magic built on stacking; whether those can be combined in one
+fight decides how deep builds go and how much needs balancing.
+
+**A. One weapon equipped; change it outside combat**
+- Pro: each weapon is balanced on its own; simplest controls; strongest
+  identity per playstyle.
+- Con: no combinations (magic stacks cashed in by a hammer strike, a bow
+  pinning creatures for a greatsword); a wrong pick for a fight cannot be
+  fixed mid-fight.
+
+**B. Two equipped, swap any time with a short cooldown** (recommended)
+- Pro: hybrid builds (the combinations in `combat.md`); each weapon covers the
+  other's weakness (bow for flyers, hammer for shells); more depth for skills
+  and trinkets.
+- Con: more balancing; every pair must feel good; one more button.
+
+**C. Any weapon, any time (a wheel)**
+- Pro: maximum freedom.
+- Con: playstyles blur into "use the right tool for each enemy"; weapon
+  identity and mastery suffer; menus in the middle of fights.
+
+**Recommendation:** B, with a 1.5 s swap cooldown to keep swaps deliberate.
