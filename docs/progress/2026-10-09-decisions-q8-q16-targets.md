@@ -16,7 +16,7 @@ Recorded the lead's answers:
   5120×1440).
 
 New **Q17**: whole-number or fractional scaling now that rendering is full
-resolution.
+resolution. Answered by the lead on 2026-10-10: keep whole-number scaling.
 
 ## What broke, and how it was found
 

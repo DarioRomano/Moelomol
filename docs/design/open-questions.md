@@ -5,9 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-09 (fourth round): everything resolved except **Q17**
-(new: whole-number or fractional scaling now that rendering is full
-resolution).
+Status at 2026-10-10: every question so far is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -27,7 +25,7 @@ resolution).
 | Q14 | Does feeding the pet do anything in play? | Crafting/recipe design | **Resolved**: tutorial recipe; feeding = story moments → `story.md` |
 | Q15 | How much world should 32:9 screens show? | First level layout | **Resolved**: show it all + UI width setting → ADR-0008 |
 | Q16 | How to check the performance budget without a minimum-spec machine | First gameplay system | **Resolved**: 5800X + Steam Frame (B, C) |
-| Q17 | Whole-number or fractional scaling, now that rendering is full resolution? | Nothing urgent | **Open** (new) |
+| Q17 | Whole-number or fractional scaling, now that rendering is full resolution? | Nothing urgent | **Resolved**: keep whole-number |
 
 ---
 
@@ -712,6 +710,9 @@ Skip C unless you want ARM64 as a shipping platform.
 on 120 Hz displays, 60 otherwise) and the Steam Deck target (60 / 90 fps).
 
 ## Q17. Whole-number or fractional scaling, now that rendering is full resolution?
+
+**Resolved 2026-10-10:** option A, keep whole-number scaling (the lead).
+ADR-0008 is unchanged.
 
 Found while implementing the full-resolution change (ADR-0008 Amendment 3).
 `scale_mode = integer` was chosen when the game was drawn at 640×360 and

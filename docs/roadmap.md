@@ -45,8 +45,7 @@ confirming the tools' licence terms.
 Decided and ready for the first gameplay system: language (ADR-0003),
 performance budget and how it is checked (ADR-0007, Q16), renderer
 (ADR-0012), input model (ADR-0013), display with full-resolution rendering
-and UI width (ADR-0008). Open: Q17 (whole-number or fractional scaling), not
-blocking. Waiting on the lead: the device performance runs
+and UI width (ADR-0008). Q17 decided: keep whole-number scaling. Waiting on the lead: the device performance runs
 (`docs/playtests/2026-10-09-performance-devices.md`).
 
 Farming, exploration and foraging, combat, crafting and enhancement, upgrade
