@@ -27,7 +27,9 @@ magic), the status-effect system, armour and the two-weapon swap
 There is also a **farm test scene** with the game clock (a 20-minute day
 that cycles on its own), the day–night tint, and farming by magic with Mana,
 including the watering spell's tiers up to rain (`docs/design/farming.md`;
-Q21–Q27 decided by the lead, Q28 open). There is no other gameplay: no exploration or story. Do not invent
+Q21–Q28 decided by the lead). The farm, the world's structure and the first
+area, Millbrook, are designed (`docs/design/base.md`, `world.md`,
+`area-millbrook.md`; layouts still proposals) but not built. There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 

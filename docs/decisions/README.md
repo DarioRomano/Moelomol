@@ -28,3 +28,5 @@ Clarifications that do not change the decision (typos, links) are fine.
 | [0012](0012-renderer-compatibility-everywhere.md) | Renderer: Compatibility everywhere | Accepted |
 | [0013](0013-input-model.md) | Input model | Accepted |
 | [0014](0014-top-down-three-quarter-view.md) | Camera perspective: top-down ¾ view | Accepted |
+| [0015](0015-camera-follow-with-dead-zone.md) | Camera: follow with a dead zone, clamped to the area | Accepted |
+| [0016](0016-places-as-separate-scenes.md) | The farm and each area are separate scenes, joined at exits | Accepted |
