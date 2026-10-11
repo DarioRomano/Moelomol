@@ -196,7 +196,10 @@ farming meanings:
 - Saving the game.
 - Where farming magic comes from (Q28).
 - How the farm looks: the base layout is a level-layout decision for the
-  lead; the proposal is `base.md` (2026-10-11).
+  lead; the proposal is `base.md` (2026-10-11). The lead decided (Q33) that
+  the farm is much bigger but overgrown, and that defeating bosses opens
+  more of it; `base.md` proposes a Clear spell for long grass and the
+  parcels.
 
 ## Built so far (2026-10-10)
 

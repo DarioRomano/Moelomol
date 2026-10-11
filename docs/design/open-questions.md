@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-11: Q28 (where farming magic comes from) and Q32–Q37 (the farm and the first area: camera, base size, scenes, starting weapons, falling, objectives) are open; everything else is resolved.
+Status at 2026-10-11: Q28 (where farming magic comes from), Q32 and Q34–Q38 (the farm and the first area: camera, scenes, starting weapons, falling, objectives, how a boss opens farmland) are open; everything else is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -41,11 +41,12 @@ Status at 2026-10-11: Q28 (where farming magic comes from) and Q32–Q37 (the fa
 | Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | **Resolved**: A, guard and riposte |
 | Q31 | A new mechanic for magic's Rot spell | Magic feel; the skill button | **Resolved**: A, the Rot seed |
 | Q32 | The camera in the base and the areas | Building the farm and Millbrook | Open |
-| Q33 | How big the base is | The farm layout | Open |
+| Q33 | How big the base is | The farm layout | **Resolved**: much bigger, overgrown; defeating bosses opens more of it → `base.md` |
 | Q34 | Base and areas: separate scenes or one seamless world | The farm gate, every area | Open |
 | Q35 | What the player has on their first trip out | Millbrook's creatures, crafting order | Open |
 | Q36 | What happens when the player falls in an area | Every area; combat's "death" | Open |
 | Q37 | How the player knows what to do next | Every area's objective | Open |
+| Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | Open |
 
 ---
 
@@ -1403,12 +1404,17 @@ edges** (recommended)
     where nothing threatens.
   - The look-ahead must be tuned per screen shape.
 
-**Recommendation:** A everywhere. The farm on 21:9 and 32:9 shows its whole
-width, so the camera only moves up and down there. Revisit look-ahead (C)
-for the areas after the first playtest, if creatures feel like they come
-from nowhere.
+**Recommendation:** A everywhere, the farm included (it is 160 × 96 tiles
+since Q33, larger than every view). Revisit look-ahead (C) for the areas
+after the first playtest, if creatures feel like they come from nowhere.
 
 ## Q33. How big the base is
+
+**Resolved 2026-10-11 (the lead):** none of the three as written. "Make the
+farm much bigger, but overgrown. Clearing bosses unlocks more areas of the
+farm." As drafted: `base.md`. The farm is 160 × 96 tiles; the homestead
+(the old option B, 48 × 30) is open from the start; six overgrown parcels
+open one per boss. How a boss opens a parcel is Q38.
 
 Raised by the farm design (2026-10-11; `base.md`). The base is the one
 place the player returns to every day, so its size sets the rhythm of
@@ -1608,3 +1614,72 @@ the story is told only through the world and notes (point 5).
   - It breaks the "only notes" rule in spirit.
 
 **Recommendation:** B.
+
+## Q38. How defeating a boss opens part of the farm
+
+Raised by the lead's answer to Q33 (2026-10-11): defeating bosses opens
+more of the overgrown farm. What links a fight far away to land at home
+matters for the story and for how it plays. `base.md` follows the
+recommendation as a working assumption.
+
+**What any option must respect:** the base is untouched by the god
+(`story.md`: "the base, where the god is content, stays untouched and
+peaceful"); farming is magic (Q27); no characters (ADR-0005).
+
+**A. A boss's drop is a tool**
+- **How it works:** each boss drops something the player makes into a
+  plain tool that cuts that parcel's thicket (a tusk-bladed brush hook,
+  say).
+- Pro: plain and physical; no new magic; the story stays as it is.
+- Con:
+  - Six one-use tools, arbitrary in pairing (why does this tusk cut
+    those brambles?).
+  - Clashes with "all farming is done with magic" (Q27).
+
+**B. The thicket is the calamity's growth, and dies with its boss**
+- **How it works:**
+  - The overgrowth is changed bramble, in the changed land's violets,
+    creeping in at the farm's edges.
+  - Each parcel's bramble is tied to one boss. When the boss falls, the
+    bramble withers on its own, and the player comes home to find the
+    parcel open.
+- Pro:
+  - The most immediate link: beat the boss, the land is free.
+  - The farm visibly heals as the world is pushed back.
+- Con:
+  - **Changes a decided story fact:** the farm would be touched by the
+    calamity after all, and violet at the base breaks "the base is the one
+    warm place" (`art-direction.md`).
+  - Explaining why the bramble stops at the homestead points at the cat
+    very early.
+
+**C. Ordinary overgrowth; a boss's heart lets the Clear spell open its
+parcel** (recommended)
+- **How it works:**
+  - **The overgrowth is ordinary:** the farm was once worked by many hands
+    and went wild over the years before the calamity; one person could only
+    keep the homestead. The parcels' traces of the farm's past say so
+    (`base.md`).
+  - **Clear** is a farming spell from the start, for long grass (2 Mana a
+    tile, starting value). Thicket is too much for it.
+  - **Each boss drops its heart**, a piece of changed material. Casting
+    Clear on a parcel's thicket with the heart uses it up, and the whole
+    parcel's thicket withers back in one long moment.
+- Pro:
+  - Keeps the base untouched and warm: the thicket is the farm's own
+    greens, not violet.
+  - Fits "all farming is magic" and the farming upgrades (ADR-0005 point
+    8): bosses become the farming upgrades for land.
+  - The opening is a moment the player makes happen at home, with the cat
+    already sitting in the new parcel.
+  - A quiet hint for Q28: the farming magic grows stronger with what is
+    taken from changed creatures. It is explainable innocently.
+- Con:
+  - **Adds a small piece of backstory:** the farm's earlier generations and
+    why the farm went wild. It is told only through the parcels' traces,
+    but it is new story the lead should approve.
+  - A heart could be carried around unused; the player has to think of
+    casting Clear on the thicket. Proposal: the thicket shimmers faintly
+    while a heart is in the bag.
+
+**Recommendation:** C.

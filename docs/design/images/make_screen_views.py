@@ -36,5 +36,5 @@ for i, (w, h, colour, name) in enumerate(views):
     lx = 6 + i * 205
     d.rectangle([lx, SH * T + 40, lx + 14, SH * T + 52], outline=colour, width=3)
     d.text((lx + 20, SH * T + 38), name, fill=colour, font=f)
-d.text((6, 6), 'The farm on each screen shape, camera on the house (tiles); outside the fence is scenery', fill='#f0ece1', font=f)
+d.text((6, 6), 'The homestead on each screen shape, camera on the house (tiles); beyond its hedges, the overgrown farm', fill='#f0ece1', font=f)
 img.save('base_views.png')
