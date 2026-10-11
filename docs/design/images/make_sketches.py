@@ -1,5 +1,6 @@
-"""Layout sketches for the farm and Millbrook (docs/design/base.md,
-area-millbrook.md): ASCII maps, one character per 2 x 2 tiles, and PNGs.
+"""Layout sketches for the farm estate, its homestead and Millbrook
+(docs/design/base.md, area-millbrook.md): ASCII maps and PNGs. The homestead
+and Millbrook use one character per 2 x 2 tiles; the estate one per 4 x 4.
 
 Run from this folder: python3 make_sketches.py && python3 make_screen_views.py
 It writes base.png, millbrook.png (and base.txt, millbrook.txt, whose text is
@@ -10,19 +11,19 @@ from PIL import Image, ImageDraw, ImageFont
 import random
 
 BASE = """\
-tttttttttttttttttttttttt
-#,,......HHHHH...~~~~.,#
-#.BBB....HHHHHA.~~~~~,,#
-#.BBB....HHDHH..~~~~~,,#
-#.BbB......=L...~~~~.f,#
+#######GG###############
+#,,....=.HHHHH...~~~~.,#
+#.BBB..=.HHHHHA.~~~~~,,#
+#.BBB..=.HHDHH..~~~~~,,#
+#.BbB..=...=L...~~~~.f,#
 #.s============.n.ff.f,#
 #,,,:::TTTT=::::.fffff,#
 #C,,:::TTTT=::::.ffoff,#
 #PPP:::TTTT=::::.fffff,#
 #PPP:::::::=::::..fff,,#
 #PPP:::::::=::::...ff,,#
-#,,,:::::::=,,,,....,,,#
-#,,,,,,....=.....,,,,,,#
+#,,,:::::::============G
+G===========.....,,,,,,#
 #,,,,,,....=m....,,,,,,#
 ###########GG###########"""
 
@@ -145,9 +146,81 @@ COL = {
     '*': '#c9a0dc', 'e': '#e0a95b',
 }
 
+EW, EH = 40, 24
+e = [['x'] * EW for _ in range(EH)]
+
+def erect(x0, y0, x1, y1, c):
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            if 0 <= x < EW and 0 <= y < EH:
+                e[y][x] = c
+
+# The estate's outer hedge and the woods beyond it.
+erect(0, 0, 39, 0, 't'); erect(0, 0, 0, 23, 't'); erect(39, 0, 39, 23, 't')
+# Parcels (all overgrown at the start); the digit is the order they open.
+erect(1, 1, 9, 11, '5')     # north woods and the spring
+erect(10, 1, 29, 4, '6')    # the hill and the old windmill
+erect(10, 5, 29, 12, '1')   # the great fields
+erect(30, 1, 38, 11, '4')   # walled garden and glasshouse
+erect(1, 12, 13, 22, '3')   # the old orchard
+erect(26, 12, 38, 22, '2')  # east pasture and the big barn
+# The homestead (open from the start), bottom centre: 48 x 32 tiles.
+erect(14, 15, 25, 22, 'h')
+erect(14, 13, 25, 14, '1')
+# Old track from the homestead's north gate up through the great fields.
+for y in range(5, 15):
+    e[y][17] = "-"
+erect(0, 23, 39, 23, 't')
+e[23][19] = 'G'; e[23][20] = 'G'
+ESTATE = '\n'.join(''.join(r) for r in e)
+ESTATE_COL = {'t': '#2f3b2e', 'x': '#2f3b2e', 'h': '#8cbf4a', '-': '#4a3f2e', 'G': '#f3d58a',
+              '5': '#34452f', '6': '#5a5a40', '1': '#4c5536', '4': '#4a4f52', '3': '#3d4a30', '2': '#535a38'}
+ESTATE_LABELS = {
+    'Homestead (open)': (19.5, 18.5), '5 North woods\nand the spring': (5, 6), '6 The hill and\nthe windmill': (19.5, 2.4),
+    '1 The great fields': (24, 8.5), '4 Walled garden\nand glasshouse': (34, 6), '3 The old orchard': (7, 17),
+    '2 East pasture\nand the big barn': (32, 17), 'to Millbrook': (19.5, 24.6),
+}
+
+
+def render_estate(path):
+    cell = 24
+    pad = 28
+    img = Image.new('RGB', (EW * cell, EH * cell + pad + 26), '#1b1e2b')
+    d = ImageDraw.Draw(img)
+    f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 15)
+    tf = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 16)
+    rnd = random.Random(3)
+    for y, r in enumerate(e):
+        for x, c in enumerate(r):
+            colour = ESTATE_COL[c]
+            d.rectangle([x * cell, y * cell + pad, (x + 1) * cell - 1, (y + 1) * cell - 1 + pad], fill=colour)
+            if c in '123456':
+                # Thicket texture: darker tufts.
+                for i in range(3):
+                    tx, ty = x * cell + rnd.randrange(cell - 6), y * cell + pad + rnd.randrange(cell - 6)
+                    d.rectangle([tx, ty, tx + 5, ty + 5], fill='#26301f')
+    # Borders wherever two neighbouring squares belong to different parcels.
+    for y in range(EH):
+        for x in range(EW):
+            c = e[y][x]
+            if x + 1 < EW and e[y][x + 1] != c:
+                xx = (x + 1) * cell
+                d.line([xx, y * cell + pad, xx, (y + 1) * cell + pad], fill='#f3d58a' if 'h' in (c, e[y][x + 1]) else '#94a07a', width=2)
+            if y + 1 < EH and e[y + 1][x] != c:
+                yy = (y + 1) * cell + pad
+                d.line([x * cell, yy, (x + 1) * cell, yy], fill='#f3d58a' if 'h' in (c, e[y + 1][x]) else '#94a07a', width=2)
+    for text, (x, y) in ESTATE_LABELS.items():
+        d.multiline_text((x * cell, y * cell + pad), text, fill='#f0ece1' if 'Homestead' not in text else '#1b1e2b',
+                         font=f, anchor='mm', align='center')
+    d.text((6, 5), 'The farm (proposal): 160 x 96 tiles; one square = 4 x 4 tiles; dark = overgrown; numbers = order they open',
+           fill='#f0ece1', font=tf)
+    img.save(path)
+
+
 BASE_MARKERS = {
     '1': (10, 2), '2': (3, 2), '3': (8, 7), '4': (5, 10), '5': (2, 9), '6': (18, 3),
     '7': (14, 1), '8': (19, 9), '9': (13, 13), 'A': (11, 13), 'B': (13, 4), 'C': (1, 5),
+    'N': (7, 1), 'W': (1, 12), 'E': (22, 11),
 }
 
 
@@ -180,9 +253,11 @@ def render(text, cell, path, title, labels, overlay=None):
     img.save(path)
 
 if __name__ == '__main__':
-    render(BASE, 32, 'base.png', 'The farm (proposal): 48 x 30 tiles; one square = 2 x 2 tiles', set(), BASE_MARKERS)
+    render(BASE, 32, 'base.png', 'The homestead (proposal): 48 x 30 tiles; one square = 2 x 2 tiles', set(), BASE_MARKERS)
+    render_estate('estate.png')
     render(MILLBROOK, 20, 'millbrook.png', 'Millbrook (proposal): 112 x 64 tiles; one square = 2 x 2 tiles', set(MARKERS))
     open('base.txt', 'w').write(BASE + '\n')
+    open('estate.txt', 'w').write(ESTATE + '\n')
     open('millbrook.txt', 'w').write(MILLBROOK + '\n')
     for r in BASE.split('\n'): assert len(r) == 24, r
     print(MILLBROOK)

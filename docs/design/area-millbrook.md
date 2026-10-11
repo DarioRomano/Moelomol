@@ -30,9 +30,9 @@ the ford south. That is the area's objective.
   scythe left standing in a half-cut field, a lesson still on the
   schoolroom board. No people, no bodies (`art-direction.md`).
 - **Safe enough to learn in.** The creatures are weak and few, and hold
-  small patches of ground. The first fight is optional and close to home;
-  the hardest fight, the boar, is the last thing on the way to the
-  objective.
+  small patches of ground. The first fight is optional and close to home.
+  The hardest fight, the Old Boar, is the area's boss: the last thing on
+  the way to the objective, and the first boss of the game.
 - **Pretty by day, uneasy at night.** Daylight Millbrook is the gentlest
   place outside the farm. At night the windows stay dark, the night
   creatures come out, and only the fungus in the orchard glows.
@@ -148,8 +148,8 @@ ttttttttttttttttttttttttttt==ttttttttttttttttttttttttttt
      shut.
 10. **A, the footbridge** over the mill race to the miller's yard.
 11. **B, the miller's cottage and yard.**
-    - The yard is a changed boar's ground: the area's hardest fight, and
-      it can be avoided until the player is ready.
+    - The yard is the Old Boar's ground: **Millbrook's boss**. It can be
+      avoided until the player is ready (below).
     - The sluice crank hangs inside the cottage, by the door.
 12. **C, the orchard and the cider press shed.**
     - Apple trees in rows: forage every day.
@@ -184,8 +184,8 @@ The way on is shown by the world, not a quest log (Q37):
    - In the mill (9), past the mice, the sluice wheel has no crank.
    - The miller's note says where it went: draft below.
 3. **Fetch the crank.** It hangs in the miller's cottage (B), across the
-   footbridge, in the boar's yard. The player can sneak past the boar or
-   fight it.
+   footbridge, in the Old Boar's yard. The player can sneak past the boar
+   or fight it; beating it also opens the great fields at the farm.
 4. **Open the sluice.**
    - Back at the mill, the crank fits and the sluice opens.
    - The brook runs back down the race, and the floodwater drains from
@@ -204,14 +204,20 @@ training creature; numbers come with the enemy design.
 |---|---|---|---|
 | **Changed field mice** | Swarmer: many, fast, little poise | Cottage gardens (5), the mill (9), the standing wheat (D); groups of 3–5 | Day |
 | **Changed crows** | Skirmisher: keep away, swoop | The orchard (C) and the wheat field (D); 2–3 | Day |
-| **The boar** | Brute: high poise, a charge with a long telegraph | The miller's yard (B), alone | Day and night |
+| **The Old Boar** (boss) | Brute: high poise, a charge with a long telegraph | The miller's yard (B), alone | Day and night |
 | **Night moths** (Proposal) | Swarmer that flies to light; weak, erratic | Over the green and the meadow | Night |
 
-- **The boar is the area's peak.** It teaches reading a big telegraph,
-  stagger and the dodge. Its yard is fenced, so the fight never spills into
-  the rest of the area. Defeating it is not required: the crank can be
-  taken while it is turned away (the player is never forced into the
-  hardest fight).
+- **The Old Boar is Millbrook's boss** (the lead, 2026-10-11: each boss
+  defeated opens more of the farm; `base.md`).
+  - It teaches reading a big telegraph, stagger and the dodge.
+  - Its yard is fenced, so the fight never spills into the rest of the
+    area.
+  - **Defeating it is not needed for the ford:** the crank can be taken
+    while it is turned away, so the player is never forced into the
+    hardest fight to move on.
+  - **Defeating it gives back the farm's great fields:** it drops its heart,
+    which opens the first overgrown parcel at the farm (`base.md`, Q38).
+  - It is defeated once and does not come back (`world.md`).
 - **Drops** are natural materials, changed (`story.md`, Q13): grey pelts,
   crow feathers, a boar tusk. Their uses come with crafting.
 - **No creature spawns** on the lane, in the cottages, in the chapel or in
@@ -221,7 +227,7 @@ training creature; numbers come with the enemy design.
 
 | | Day (6:00–20:00) | Night (20:00–6:00) |
 |---|---|---|
-| Creatures | Mice, crows, the boar | Night moths, the boar; mice and crows are gone |
+| Creatures | Mice, crows, the Old Boar | Night moths, the Old Boar; mice and crows are gone |
 | Light | Full | Sight about 7 tiles around the player (`world.md`); glowing fungus in the orchard; fireflies over the meadow (and over the floodwater) |
 | Mood | Gentle, overgrown, birdsong thinning towards the south | Dark windows; the only warm things are notes and the player's own lights |
 
@@ -267,6 +273,7 @@ both are ordinary (`story.md` rules 3 and 4).
 | Seeds | New crop kinds from the cottage garden (5); possibly wheat from the field (D) | Found once |
 | Materials | Changed drops (pelts, feathers, the tusk); orchard wood if Q35 C | Drops at 6:00 with the creatures |
 | Animal | The hen (6), if animals exist by then | Found once |
+| Farmland | The Old Boar's heart: opens the great fields at the farm | Once |
 | Notes | About eight | Found once |
 | Trinket | One, on the island (E), reachable later | Found once |
 | Progress | The ford: the way to the second area | Once |
@@ -275,7 +282,7 @@ both are ordinary (`story.md` rules 3 and 4).
 
 - The second area beyond the ford: only its edge is drawn.
 - Crop kinds behind the new seeds; crafting uses of the drops.
-- Creature stats; the boar's moves beyond "a long charge".
+- Creature stats; the Old Boar's moves beyond "a long charge".
 - Interiors of the cottages, beyond one room each.
 - Audio: the area's ambience follows `audio-direction.md` (fewer birds to
   the south); prompts come with the area's art.

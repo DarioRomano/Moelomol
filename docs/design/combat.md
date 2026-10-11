@@ -404,6 +404,10 @@ stronger further from the base. Combat needs a mix that tests each weapon:
 | Skirmisher | A changed crow or fox, keeps away, dodges | Bow, soft aim, lock-on |
 | Effect-resistant | A creature of embers (ignores Smoulder) | Mixing effects, not relying on one |
 
+**Each area has one boss** (the lead, 2026-10-11). Defeating it opens the
+next overgrown parcel of the farm (`base.md`, `world.md`); Millbrook's is
+the Old Boar. Bosses are defeated once and do not come back.
+
 Every creature attack has a telegraph. Creatures do not chase forever;
 fights end when the player leaves their ground (fitting "changed wildlife").
 No combat at the base (ADR-0005): the base has no combat scenes at all.

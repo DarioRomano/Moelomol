@@ -19,9 +19,12 @@
     more changed.
   - `farming.md`: the clock, night.
   - `combat.md`: creatures hold their ground.
-- **Open questions this raises:** Q32 (camera), Q33 (base size), Q34 (base
-  and areas: separate or seamless), Q35 (what the player starts with), Q36
-  (falling in an area), Q37 (how objectives are shown).
+- **Decided:** Q33 (the lead, 2026-10-11): the farm is much bigger but
+  overgrown, and defeating bosses opens more of it (`base.md`).
+- **Open questions this raises:** Q32 (camera), Q34 (base and areas:
+  separate or seamless), Q35 (what the player starts with), Q36 (falling in
+  an area), Q37 (how objectives are shown), Q38 (how a boss opens part of
+  the farm).
 
 ## The shape of the world
 
@@ -36,6 +39,11 @@
   open from the start. Each further area is unlocked by an objective in the
   one before it (ADR-0005 point 3). Millbrook's objective opens the way
   south.
+- **Each area has one boss** (the lead, 2026-10-11). Defeating it opens the
+  next overgrown parcel of the farm (`base.md`). The boss is separate from
+  the area's objective: the objective opens the way on, the boss gives back
+  farmland. A player can press on without beating a boss and come back for
+  it later.
 - **No world map is designed yet.** It comes when there is a second area;
   until then the base and Millbrook are enough to build and play the
   rhythm of a day.
@@ -88,6 +96,7 @@ Recommended (Q34 A):
 | Creatures defeated | At the next 6:00, all of them |
 | Forage (fruit, herbs, honey) | At the next 6:00, where it grew |
 | Notes, seeds found in gardens, trinkets, the area's objective | Never: found once |
+| The area's boss | Never, once defeated. A boss the player loses to is back at full health the next time they enter its ground |
 
 - This ties the areas to the same clock as the farm: one day is one round
   of the world.
@@ -110,11 +119,9 @@ Recommended (Q34 A):
   sees past its edge. Where the playable ground is smaller, the area is
   drawn wider with scenery the player cannot walk into: woods, hedges,
   water, fields beyond a wall.
-- **The base is the exception, and that is deliberate:**
-  - It is 48 × 30 tiles of ground.
-  - Wide screens see its fences and the wild land beyond them (`base.md`,
-    "On every screen").
-  - So the base scene draws scenery out to 84 × 36 tiles.
+- **The farm is 160 × 96 tiles** (`base.md`), larger than every view, so it
+  needs no extra scenery. Its unopened parcels are thicket the player sees
+  beyond the homestead's hedges.
 
 ## Not decided here
 

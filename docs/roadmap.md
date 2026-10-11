@@ -90,11 +90,14 @@ lead decided Q21–Q27 on 2026-10-10.
 `docs/design/world.md` (how the base and the areas fit together),
 `docs/design/base.md` (the farm) and `docs/design/area-millbrook.md`
 (Millbrook, the hamlet below the farm, with its objective: open the ford).
-Proposals with layout sketches; nothing built.
+Proposals with layout sketches; nothing built. The lead decided Q33
+(2026-10-11): the farm is much bigger but overgrown, and each boss defeated
+opens more of it; redrawn as a 160 × 96 farm with the homestead and six
+parcels.
 
-- **Waiting on the lead:** acceptance of the layouts, and Q32–Q37
-  (camera, base size, separate scenes, starting weapons, falling in an
-  area, how objectives are shown).
+- **Waiting on the lead:** acceptance of the layouts, and Q32, Q34–Q38
+  (camera, separate scenes, starting weapons, falling in an area, how
+  objectives are shown, how a boss opens farmland).
 - **Next, once accepted:** the farm layout in place of the test field, then
   the house inside, then Millbrook as the first area, in the order in
   `base.md`.
