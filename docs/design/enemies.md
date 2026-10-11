@@ -323,9 +323,10 @@ out, Grist sleeps).
   - **Mice from burst sacks do not come back** after they are defeated.
   - **Grist goes back to the wallow to sleep at night unless woken;** once
     woken it fights until dawn.
-- **Not built yet:** placing the creatures in Millbrook (the next stage),
-  drops and their uses (crafting), the boss heart's use at the farm, the
-  night roster swapping at 20:00 and 6:00 (the area's clock), creatures
-  coming back at 6:00 (the arena keeps its 3-second respawn).
+- **Built since (2026-10-11):** the creatures placed in Millbrook with the
+  night roster and their return at 6:00, and Grist's heart left where it
+  falls (`area-millbrook.md`).
+- **Not built yet:** drops and their uses (crafting), the heart's use at
+  the farm.
 - How they feel can only be judged by playing:
   `docs/playtests/2026-10-11-creatures-and-grist.md`.

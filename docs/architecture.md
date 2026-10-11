@@ -427,3 +427,15 @@ a real controller)
 - `DisplayServer.window_get_size()` is `(0, 0)` headless;
   `DisplayMath.expected_view_size` then returns the base 640 × 360.
 - `Vector2i.clamp(min, max)` clamps each axis (cell ranges in the drawer).
+
+### 2026-10-11 (Millbrook's objective and notes), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `JOY_BUTTON_B` is 1 and `JOY_BUTTON_BACK` is 4 (View / Back / Share);
+  `KEY_F` is 70, `KEY_I` is 73. The new `interact` and `satchel` actions
+  bind them with device -1 (any controller; tested with device 1).
+- `Label.autowrap_mode` defaults to `TextServer.AUTOWRAP_OFF` (0);
+  `AUTOWRAP_WORD_SMART` (3) on a label of zero width wraps every letter
+  onto its own line (seen in the note's hint in the first render).
+- `ThemeDB.fallback_font` is set headless and under Xvfb;
+  `CanvasItem.draw_string(font, pos, text, alignment, width, size, colour)`
+  draws the interact prompt.
