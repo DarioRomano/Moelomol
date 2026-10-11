@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-10: Q28 (where farming magic comes from) and Q31 (a new mechanic for magic's Rot spell) are open; everything else is resolved.
+Status at 2026-10-11: Q28 (where farming magic comes from) is open; everything else is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -39,7 +39,7 @@ Status at 2026-10-10: Q28 (where farming magic comes from) and Q31 (a new mechan
 | Q28 | Where does farming magic come from, and how does it look? | Farming spell art, story notes | Open (working assumption: C) |
 | Q29 | A more satisfying weapon skill for magic | Magic feel (lead's playtest) | **Resolved**: B, the Siphon, on heavy hold instead of the skill; the Rot pool it replaces goes to Q31 |
 | Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | **Resolved**: A, guard and riposte |
-| Q31 | A new mechanic for magic's Rot spell | Magic feel; the skill button | Open (interim: the old Rot pool on the skill button) |
+| Q31 | A new mechanic for magic's Rot spell | Magic feel; the skill button | **Resolved**: A, the Rot seed |
 
 ---
 
@@ -1274,6 +1274,9 @@ does nothing to you and staggers the attacker, and it gives each button one
 job.
 
 ## Q31. A new mechanic for magic's Rot spell
+
+**Resolved 2026-10-11 (the lead):** A, the Rot seed. As built: `combat.md`,
+"Spells" and "Magic and status effects as built".
 
 Raised by the lead with the Q29 answer (2026-10-10): the Siphon takes the
 heavy hold, and the Rot pool that was there "needs to be reworked to a

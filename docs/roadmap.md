@@ -56,16 +56,15 @@ a swap) on 2026-10-10.
   charge with a cone shockwave, telegraphs that match the hit zone
   (2026-10-10). Second round: quick roll, guard and riposte (Q30), bow
   stages and one-press Volley, Siphon on magic's heavy hold (Q29)
-  (2026-10-10).
-- **Next:** the Rot rework once the lead answers Q31; tuning from the
-  lead's playtests; then the lead decides what
+  (2026-10-10). The Rot seed on magic's skill (Q31 A, 2026-10-11).
+- **Next:** tuning from the lead's playtests; then the lead decides what
   follows (the combat prototype has no further planned step).
 - **Waiting on the lead:** arena playtest
   (`docs/playtests/2026-10-10-combat-arena.md`), hammer, bow and magic
   playtests (`docs/playtests/2026-10-10-hammer.md`,
   `docs/playtests/2026-10-10-bow.md`, `docs/playtests/2026-10-10-magic.md`),
   combat feel changes (`docs/playtests/2026-10-10-combat-feel.md`), round
-  two (`docs/playtests/2026-10-10-combat-feedback-round-two.md`); Q31.
+  two (`docs/playtests/2026-10-10-combat-feedback-round-two.md`).
 
 ## Farming and the day–night cycle (started 2026-10-10)
 

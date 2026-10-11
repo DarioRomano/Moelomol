@@ -3,8 +3,11 @@
 - **Status:** First set, for the lead to run (2026-10-10). Art is provisioned
   by the lead (Q2); these prompts are the brief.
 - **Covers:** everything in `combat.md`: the four weapons, their attack
-  poses and effects, the three status effects and Release, and the combat
-  HUD. Not covered: creatures (designed with each area's roster) and the base.
+  poses and effects, the three status effects, the Siphon and the Rot seed,
+  and the combat HUD. Updated 2026-10-11 for the lead's second round of
+  combat changes (guard and riposte, the quick roll for all weapons, bow
+  stages and one-press Volley, Siphon and Rot seed in place of Release and
+  the Rot pool). Not covered: creatures (designed with each area's roster) and the base.
 - **Follows:** `art-direction.md` (palette, warmth means life, traces not
   bodies, one art-pixel grid), ADR-0008 (640×360 layout, 16 px tiles, the
   player 16 × 24 art pixels).
@@ -140,28 +143,40 @@ Shared **Avoid** list for every prompt:
   frame. + style anchor
 - **Spec:** 48 × 48 per frame; key poses needed: wind-up, impact, follow-through
   for each of 3 swings (9 poses), for south, north and east.
+- **Also:** a quick forward roll with the weapon slung on the back, 4 poses
+  (tuck, roll, roll, rise). Every weapon but the lantern uses this roll; the
+  bow's sheet (F-04) has its own, ending in a shot.
 - **Check for:** the blade looks heavy (body leans into it); character stays
-  the same size and colours in every frame.
+  the same size and colours in every frame; the roll is fast and low (most
+  of it reads in the first two poses).
 
 ### F-02 Greatsword finishers (key poses) — *depends on Q18*
 
 - **Prompt:** Pixel art sprite sheet of the same small farmer character with
   a huge greatsword performing four finishing moves, one per row: an overhead
   cleave straight down into the ground; a forward shoulder shove with the
-  blade held flat; a full spin sweep; a rising upward slash. Top-down
+  blade held flat; a full spin sweep; a rising upward slash. A fifth row:
+  the guard, the blade held flat across the body with both hands and the
+  feet planted wide, then the same guard rocked back by a blow. Top-down
   three-quarter view facing south. + style anchor
 - **Spec:** 48 × 48 per frame; per move: wind-up, impact, recovery (3 poses);
-  south, north, east.
+  the guard: 2 poses; south, north, east. The Riposte after a perfect guard
+  reuses the overhead cleave's impact and recovery.
 - **Check for:** each finisher has a distinct silhouette at impact (so the
-  player can tell them apart mid-fight).
+  player can tell them apart mid-fight); the guard reads as defending, not
+  attacking.
 
 ### A-02 Greatsword effects
 
 - **Prompt:** Pixel art effect sprite sheet, transparent background: (row 1)
   a wide pale crescent slash arc in 4 frames, appearing and fading; (row 2) a
   dust and small debris burst when something is pushed into a wall, 4 frames;
-  (row 3) a short ring of dust for the spin sweep, 4 frames. Colours: pale
-  paper white `#f0ece1`, grey `#a9b0bf`, dust brown `#8f8a6a`. + style anchor
+  (row 3) a short ring of dust for the spin sweep, 4 frames; (row 4) a blow
+  caught on the guard: a few grey sparks off the flat of the blade, 3 frames;
+  (row 5) a perfect guard: a sharp pale flash ring with short sparks thrown
+  outward, the brightest greatsword effect, 4 frames. Colours: pale paper
+  white `#f0ece1`, grey `#a9b0bf`, dust brown `#8f8a6a`, a touch of warm
+  `#e0a95b` in the perfect-guard sparks. + style anchor
 - **Spec:** 64 × 64 per frame.
 - **Check for:** effects are brief and pale, never brighter than the
   character; no sparkles.
@@ -248,7 +263,8 @@ Shared **Avoid** list for every prompt:
   a wooden recurve bow: (row 1) a quick shot: raise, release, lower; (row 2) a
   slow three-stage draw: bow raised, half drawn, fully drawn with the body
   leaning back slightly, then release; (row 3) a dodge roll ending in a
-  crouched shot; (row 4) walking slowly while holding a full draw. Top-down
+  crouched shot; (row 4) walking slowly while holding a full draw; (row 5)
+  the Volley: a quick shot angled high into the air. Top-down
   three-quarter view facing south. + style anchor
 - **Spec:** 48 × 48 per frame; south, north, east.
 - **Check for:** each draw stage is visibly different (the player reads the
@@ -258,10 +274,10 @@ Shared **Avoid** list for every prompt:
 
 - **Prompt:** Pixel art effect sprite sheet, transparent background: (row 1)
   an arrow in flight with a short pale motion trail, 3 frames; (row 2) a
-  longer, brighter trail for a piercing arrow, 3 frames; (row 3) a heavy
-  arrow impact burst, 4 frames; (row 4) a marker arrow stuck in the ground
-  with a faint pulsing ring, 4 frames; (row 5) a rain of falling arrows
-  seen from above at an angle, 6 frames. Colours: pale `#d9d6cc #f0ece1`,
+  longer, brighter trail for a piercing arrow, 3 frames; (row 3) a small
+  push burst where a piercing arrow strikes, 4 frames; (row 4) the Volley
+  arrow, a plain arrow with a red fletching, in flight, 3 frames; (row 5) a
+  rain of falling arrows seen from above at an angle, 6 frames. Colours: pale `#d9d6cc #f0ece1`,
   greys. + style anchor
 - **Spec:** 32 × 32 per frame (rows 4–5: 64 × 64).
 - **Check for:** the three arrow strengths are told apart by trail length;
@@ -294,43 +310,52 @@ Shared **Avoid** list for every prompt:
 - **Check for:** reads as a lantern at 16 px; the violet light is the only
   saturated colour.
 
-### F-05 Casting and Release (key poses) — *depends on Q18*
+### F-05 Casting and Siphon (key poses) — *depends on Q18*
 
 - **Prompt:** Pixel art sprite sheet of the same small farmer character
   holding an iron lantern: (row 1) a quick forward flick of the lantern
   throwing a bolt, 3 poses; (row 2) a heavier underarm throw, 3 poses; (row 3)
-  swinging the lantern down to pour light onto the ground, 4 poses; (row 4)
-  the Release: lantern thrust forward with both hands, light bursting
-  outward, then recoil, 4 poses; (row 5) a short blink: the character
-  dissolving into violet smoke and reappearing, 4 poses. Top-down
-  three-quarter view facing south. + style anchor
+  a gentle underarm lob of a small seed from the lantern's door, 3 poses;
+  (row 4) the Siphon: the lantern held up and out with both hands, the body
+  leaning back as if pulling on a rope, 2 poses, then the release: the
+  lantern thrust forward, a beam bursting out, then recoil, 3 poses; (row 5)
+  a short blink: the character dissolving into violet smoke and reappearing,
+  4 poses. Top-down three-quarter view facing south. + style anchor
 - **Spec:** 48 × 48 per frame; south, north, east.
 - **Check for:** casting poses are light and mobile (never rooted); the
-  Release pose is the most dramatic thing magic does.
+  Siphon's hold reads as pulling something in; its release is the most
+  dramatic thing magic does.
 
 ### A-08 Spell effects
 
 - **Prompt:** Pixel art effect sprite sheet, transparent background: (row 1)
   a small ember bolt, a tumbling amber spark with a short trail, 4 frames;
-  (row 2) a frost shard, a pale blue crystal spinning, 4 frames; (row 3) a rot
-  pool on the ground, a spreading dark violet stain with small moss tufts, 6
-  frames growing then looping; (row 4) a chill patch left behind by the blink,
-  pale frost on the ground, 4 frames. Colours: embers `#e0a95b #b8733a`,
-  frost `#4f8296 #a9b0bf`, rot `#4a3f52 #6e5b73 #47573f`. + style anchor
-- **Spec:** 32 × 32 per frame (rows 3–4: 64 × 64).
+  (row 2) a frost shard, a pale blue crystal spinning, 4 frames; (row 3) the
+  rot seed, a dark husk with a faint violet glow, tumbling slowly, 4 frames;
+  (row 4) the seed's growth on a creature: a dark violet bud with moss and
+  thin tendrils, growing over 6 frames, then withering in 3; (row 5) the
+  seed leaping in an arc to a new host, a violet streak, 4 frames; (row 6) a
+  chill patch left behind by the blink, pale frost on the ground, 4 frames.
+  Colours: embers `#e0a95b #b8733a`, frost `#4f8296 #a9b0bf`, rot `#4a3f52
+  #6e5b73 #47573f`. + style anchor
+- **Spec:** 32 × 32 per frame (rows 5–6: 64 × 64).
 - **Check for:** each effect is identifiable by colour and shape alone (and
   by shape alone, for colour-blind players).
 
-### A-09 Release bursts
+### A-09 Siphon tether, beam and bursts
 
-- **Prompt:** Pixel art effect sprite sheet, transparent background, each row
-  a burst of light and particles, 6 frames: (row 1) a single-effect release,
-  a modest violet burst; (row 2) Shatter: amber and pale blue fragments
-  exploding outward; (row 3) Blight bloom: dark violet spores drifting out in
-  a ring; (row 4) Brittle: a cracking pale shell breaking off a shape; (row 5)
+- **Prompt:** Pixel art effect sprite sheet, transparent background: (row 1)
+  the tether, a thin wavering violet thread with small motes of light
+  travelling along it, 4 frames looping; (row 2) the beam, a straight bright
+  violet-white line that flares and fades, 4 frames; then each row a burst
+  of light and particles where the beam lands, 6 frames: (row 3) a
+  single-effect burst, a modest violet burst; (row 4) Shatter: amber and
+  pale blue fragments exploding outward; (row 5) Blight bloom: dark violet spores drifting out in
+  a ring; (row 6) Brittle: a cracking pale shell breaking off a shape; (row 7)
   all three together: the largest burst, all colours, still restrained.
   + style anchor
-- **Spec:** 64 × 64 per frame.
+- **Spec:** 64 × 64 per frame; the tether and beam as 16 px tall strips
+  that tile along their length.
 - **Check for:** a clear step up in size from one effect to three; even the
   largest stays within the muted palette.
 
