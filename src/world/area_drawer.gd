@@ -15,14 +15,15 @@ const CELL: float = AreaMap.CELL
 
 
 ## Draws the cells of `map` inside `view` (layout px). `tick` animates water.
-static func draw(canvas: CanvasItem, map: AreaMap, view: Rect2, tick: int) -> void:
+## `drain`: 0 = floodwater, 1 = drained mud (Millbrook's sluice).
+static func draw(canvas: CanvasItem, map: AreaMap, view: Rect2, tick: int, drain: float = 0.0) -> void:
 	var low: Vector2i = AreaMap.cell_of(view.position) - Vector2i.ONE
 	var high: Vector2i = AreaMap.cell_of(view.end) + Vector2i.ONE
 	low = low.clamp(Vector2i.ZERO, map.size - Vector2i.ONE)
 	high = high.clamp(Vector2i.ZERO, map.size - Vector2i.ONE)
 	for y: int in range(low.y, high.y + 1):
 		for x: int in range(low.x, high.x + 1):
-			_draw_ground(canvas, map, Vector2i(x, y), tick)
+			_draw_ground(canvas, map, Vector2i(x, y), tick, drain)
 	for y: int in range(low.y, high.y + 1):
 		for x: int in range(low.x, high.x + 1):
 			_draw_cell_top(canvas, map, Vector2i(x, y), tick)
@@ -64,7 +65,7 @@ static func _hash(cell: Vector2i) -> int:
 	return absi((cell.x * 73856093) ^ (cell.y * 19349663)) % 997
 
 
-static func _draw_ground(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tick: int) -> void:
+static func _draw_ground(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tick: int, drain: float = 0.0) -> void:
 	var rect: Rect2 = AreaMap.cell_rect(cell)
 	var c: String = map.char_at(cell)
 	if AreaMap.MARKERS.contains(c):
@@ -81,10 +82,14 @@ static func _draw_ground(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tick:
 			var wave: float = fmod(tick * 0.2 + h, CELL)
 			canvas.draw_line(rect.position + Vector2(4, wave * 0.5 + 6), rect.position + Vector2(12, wave * 0.5 + 6), Palette.WATER[1], 1.0)
 		"w":
+			var mud: Color = Palette.CHANGED[2].darkened(0.45)  # a drained meadow: mud
 			if map.drained:
-				canvas.draw_rect(rect, Palette.CHANGED[2].darkened(0.45))  # a drained meadow: mud
+				canvas.draw_rect(rect, mud)
 			else:
-				canvas.draw_rect(rect, Palette.WATER[1].darkened(0.15))
+				# Draining: the water falls back cell by cell, from the edges
+				# first (each cell's own threshold).
+				var level: float = clampf((drain - (h % 100) / 200.0) * 2.0, 0.0, 1.0)
+				canvas.draw_rect(rect, Palette.WATER[1].darkened(0.15).lerp(mud, level))
 				var shimmer: float = fmod(tick * 0.15 + h * 3, CELL)
 				canvas.draw_line(rect.position + Vector2(shimmer * 0.5 + 4, 10), rect.position + Vector2(shimmer * 0.5 + 12, 10), Palette.PAPER[0] * Color(1, 1, 1, 0.3), 1.0)
 		"=":

@@ -30,8 +30,9 @@ including the watering spell's tiers up to rain (`docs/design/farming.md`;
 Q21–Q28 decided by the lead). The farm, the world's structure and the first
 area, Millbrook, are designed and their layouts accepted
 (`docs/design/base.md`, `world.md`, `area-millbrook.md`, `enemies.md`);
-Millbrook is walkable with its creatures and boss, Grist; its objective and
-notes are next (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+Millbrook is playable: walkable, with its creatures, its boss Grist, its
+notes and satchel, and its objective (the sluice and the ford); the farm is
+next (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 

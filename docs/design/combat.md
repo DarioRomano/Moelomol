@@ -58,6 +58,8 @@ Everything every weapon is built on.
 | Lock on (hold or toggle, setting) | Left Shift | LT / L2 |
 | Switch target while locked | Q / E | Right stick flick |
 | Swap weapon (Q19) | Tab | RB / R1 |
+| Interact: read a note, take, turn (adventures; the lead, 2026-10-11) | F | B / Circle |
+| Satchel: the notes found (adventures; the lead, 2026-10-11) | I | View / Back / Share |
 
 Heavy attacks sit on the trigger because the hammer and bow are "hold and
 release" weapons, and that is what an analog trigger (and, later, the

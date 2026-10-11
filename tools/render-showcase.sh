@@ -28,6 +28,8 @@ SCENES=(
   "res://scenes/world/millbrook.tscn"
   "res://scenes/showcase/millbrook_overview.tscn"
   "res://scenes/showcase/millbrook_night.tscn"
+  "res://scenes/showcase/millbrook_note.tscn"
+  "res://scenes/showcase/millbrook_drained.tscn"
   "res://scenes/combat/combat_arena.tscn"
   "res://scenes/showcase/farm_times.tscn"
   "res://scenes/showcase/farm_spells.tscn"

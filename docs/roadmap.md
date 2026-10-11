@@ -119,7 +119,13 @@ encounters). Built in stages, each its own pull request:
    falling (2026-10-11). Two map corrections (wheat field gap, brook to
    the south edge). Playtest: `docs/playtests/2026-10-11-millbrook-walkable.md`.
 4. **The objective:** notes and the satchel, the crank, the sluice, the
-   flood draining, the ford, Grist's heart, falling.
+   flood draining, the ford, Grist's heart (2026-10-11; falling came with
+   stage 3). Interact F / B and satchel I / View chosen by the lead.
+   Playtest: `docs/playtests/2026-10-11-millbrook-objective.md`.
+
+**Millbrook is complete as far as it can be without the farm:** next is the
+farm (the accepted layout in `base.md`), which the lane's exit, waking in
+bed and Grist's heart all wait for.
 
 ## Later (not planned)
 

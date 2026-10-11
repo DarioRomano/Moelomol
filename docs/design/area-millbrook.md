@@ -358,8 +358,28 @@ player starts at the top of the lane and wakes there after falling.
 - **Review renders:** `millbrook.tscn` (the lane by day), `millbrook_night.tscn`
   (the green at night), `millbrook_overview.tscn` (the whole map with the day
   roster).
-- **Not built yet (stage 4):** notes and the satchel, the crank and the
-  sluice, the flood draining, the ford's exit, Grist's heart, interiors (the
-  mill, the cottages), the exit up the lane to the farm.
+- **The objective, the notes and the satchel (stage 4, 2026-10-11):**
+  - **Interact** (F / B) reads a note, takes the crank or Grist's heart,
+    or turns the sluice; **the satchel** (I / View) lists every note found,
+    newest first. The lead chose both bindings (2026-10-11).
+  - **Nine notes** are placed as in "Places" (`src/world/millbrook_notes.gd`,
+    the drafts above plus the child's drawing, the schoolroom board and the
+    miller's calendar), and a tenth, the miller's note about Grist, appears
+    once Grist is defeated.
+  - **The miller's note carries a loose thread** (a red thread on the paper
+    and in the satchel) until the sluice is open (Q37).
+  - **The crank** hangs by the miller's door in Grist's yard. **The sluice**
+    will not turn without it; with it, the floodwater drains cell by cell
+    over 10 seconds and the meadow and the ford can be walked.
+  - **Grist leaves its heart** where it falls; taking it also takes a tusk.
+  - **Time stands still** while a note or the satchel is open.
+  - **Exits:** the top of the lane and the ford (once drained) report that
+    the farm and the second area are not built yet (a developer line).
+  - The mill and the cottages have no insides yet: what the doc puts inside
+    them (the sluice wheel, the crank on its hook, the kitchen note) is at
+    their doors.
+- **Not built yet:** the farm (the lane's exit, waking in bed, the heart's
+  use), the second area beyond the ford, interiors, saving (what was found
+  and done is forgotten when the scene closes), a satchel review render.
 - How it feels can only be judged by playing:
   `docs/playtests/2026-10-11-millbrook-walkable.md`.
