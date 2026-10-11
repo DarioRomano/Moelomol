@@ -156,3 +156,60 @@ func test_no_interacting_mid_attack() -> void:
 	_go_to(area, &"lost_pet_poster")
 	area.sim.start_attack(area.sim.player, Greatsword.LIGHTS[0])
 	assert_eq(area.interact()["type"], "nothing", "busy swinging")
+
+
+# --- The scene ------------------------------------------------------------------------------
+
+const SCENE: PackedScene = preload("res://scenes/world/millbrook.tscn")
+
+
+func _scene() -> Node2D:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var scene: Node2D = SCENE.instantiate()
+	tree.root.add_child(scene)
+	for c: Fighter in (scene.get("area") as Area).sim.creatures:
+		c.ai_enabled = false
+	return scene
+
+
+func test_reading_a_note_opens_the_paper_and_stops_time() -> void:
+	var scene: Node2D = _scene()
+	var area: Area = scene.get("area")
+	_go_to(area, &"sluice_note")
+	scene.call("press_interact")
+	var note: NoteView = scene.get("_note")
+	assert_true(note.visible, "the paper is open")
+	assert_eq(note.title, "Pinned by the sluice wheel", "the miller's note")
+	assert_true(note.thread, "with its loose thread")
+	var minutes: float = area.clock.total_minutes
+	for i: int in range(10):
+		scene.call("_physics_process", 1.0 / 60.0)
+	assert_eq(area.clock.total_minutes, minutes, "time stands still while reading")
+	scene.call("press_interact")
+	assert_false(note.visible, "put back")
+	scene.call("_physics_process", 1.0 / 60.0)
+	assert_true(area.clock.total_minutes > minutes, "and time runs again")
+	scene.queue_free()
+	await (Engine.get_main_loop() as SceneTree).process_frame
+
+
+func test_the_satchel_lists_newest_first_and_reads_the_chosen_note() -> void:
+	var scene: Node2D = _scene()
+	var area: Area = scene.get("area")
+	for note_id: StringName in [&"lost_pet_poster", &"my_family", &"sluice_note"]:
+		_go_to(area, note_id)
+		scene.call("press_interact")
+		scene.call("press_interact")  # read, put back
+	scene.call("press_satchel")
+	var satchel: SatchelView = scene.get("_satchel")
+	assert_true(satchel.visible, "open")
+	assert_eq(satchel.entries, [&"sluice_note", &"my_family", &"lost_pet_poster"] as Array[StringName], "newest first")
+	assert_true(satchel.threads[&"sluice_note"], "the miller's note has its thread")
+	satchel.move_selection(1)
+	scene.call("press_interact")
+	assert_eq((scene.get("_note") as NoteView).title, "A drawing on the schoolroom wall", "the chosen note")
+	scene.call("press_satchel")
+	assert_false(satchel.visible, "closed")
+	assert_false((scene.get("_note") as NoteView).visible, "and the note with it")
+	scene.queue_free()
+	await (Engine.get_main_loop() as SceneTree).process_frame
