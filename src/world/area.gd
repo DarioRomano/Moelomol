@@ -16,6 +16,10 @@ extends RefCounted
 const OFFSCREEN: float = 680.0
 const SYNC_TICKS: int = 30  # the roster is checked twice a second
 const START_MINUTE: float = 9.0 * 60.0
+## How close the player must be to something to interact with it.
+const INTERACT_RANGE: float = 22.0
+## Millbrook's flood drains over this long once the sluice opens.
+const DRAIN_SECONDS: float = 10.0
 
 var id: StringName
 var map: AreaMap
@@ -29,12 +33,29 @@ var bosses_defeated: Array[StringName] = []
 var lights: Array[Vector2] = []  # always (glowing fungus)
 var night_lights: Array[Vector2] = []  # at night only (fireflies)
 var time_scale: float = 1.0
+## Things the player can interact with (Area.interact): each
+## {"id": StringName, "kind": &"note" | &"crank" | &"sluice" | &"heart",
+##  "position": Vector2, "shown": bool, "taken": bool}.
+var things: Array[Dictionary] = []
+## The notes this area holds: {id: {"title", "text", "objective"}}.
+var notes: Dictionary = {}
+## Notes found, in the order found (the satchel shows them newest first; Q37).
+var satchel: Array[StringName] = []
+## What the player carries out here (the crank, Grist's heart and tusk).
+var bag: Inventory = Inventory.new()
+## The area's objective is done (Millbrook: the sluice is open).
+var objective_done: bool = false
+## 0 = flooded, 1 = drained; rises over DRAIN_SECONDS once the sluice opens.
+var drain_progress: float = 0.0
+## Exits: {"id": StringName, "rect": Rect2, "needs_drained": bool}.
+var exits: Array[Dictionary] = []
 ## What happened at the area level during the last step: "dawn", "dusk",
 ## "woke" (after falling).
 var events: Array[Dictionary] = []
 
 var _ticks: int = 0
 var _was_night: bool = false
+var _in_exit: StringName = &""
 
 
 func _init(p_id: StringName, p_map: AreaMap, p_entrance: Vector2) -> void:
@@ -67,12 +88,13 @@ func step(input: CombatInput) -> void:
 	var new_days: int = clock.advance(time_scale / Engine.physics_ticks_per_second)
 	_apply_light()
 	sim.step(input)
+	_step_drain()
+	_check_exits()
+	for c: Fighter in sim.creatures:
+		if c.creature_kind.boss and not c.is_alive():
+			_boss_defeated(c)
 	for e: Dictionary in sim.events:
 		match e["type"]:
-			"boss_defeated":
-				var boss: Fighter = e["fighter"]
-				if not (boss.creature_kind.id in bosses_defeated):
-					bosses_defeated.append(boss.creature_kind.id)
 			"respawn":
 				if (e["fighter"] as Fighter) == sim.player:
 					_wake_next_morning()
@@ -101,8 +123,8 @@ func skip_to_next_change() -> void:
 func sync(force: bool) -> void:
 	for entry: Dictionary in roster:
 		var f: Fighter = entry["fighter"]
-		if f != null and f.creature_kind.boss and not f.is_alive() and not (f.creature_kind.id in bosses_defeated):
-			bosses_defeated.append(f.creature_kind.id)  # a boss is defeated once (world.md)
+		if f != null and f.creature_kind.boss and not f.is_alive():
+			_boss_defeated(f)
 		if f != null and f.state == Fighter.State.GONE and int(entry["defeated_day"]) < 0:
 			entry["defeated_day"] = clock.day()
 		var kind: StringName = entry["kind"]
@@ -164,3 +186,114 @@ func _wake_next_morning() -> void:
 	sim.zones.clear()
 	sync(true)
 	events.append({"type": "woke"})
+
+
+# --- Things to interact with ------------------------------------------------------------
+
+## Adds something to interact with.
+func add_thing(thing_id: StringName, kind: StringName, at: Vector2, shown: bool = true) -> void:
+	things.append({"id": thing_id, "kind": kind, "position": at, "shown": shown, "taken": false})
+
+
+## The nearest thing within reach of the player, or {}.
+func thing_in_reach() -> Dictionary:
+	var best: Dictionary = {}
+	var best_distance: float = INTERACT_RANGE
+	for thing: Dictionary in things:
+		if not thing["shown"] or thing["taken"]:
+			continue
+		var d: float = (thing["position"] as Vector2).distance_to(sim.player.position)
+		if d <= best_distance:
+			best = thing
+			best_distance = d
+	return best
+
+
+## The player interacts with whatever is in reach. Returns what happened:
+## {"type": "note", "note": id}, {"type": "taken", "item": id},
+## {"type": "sluice_opened"}, {"type": "sluice_stuck"} (no crank), or
+## {"type": "nothing"}.
+func interact() -> Dictionary:
+	if not sim.player.is_alive() or sim.player.state != Fighter.State.FREE:
+		return {"type": "nothing"}
+	var thing: Dictionary = thing_in_reach()
+	if thing.is_empty():
+		return {"type": "nothing"}
+	match thing["kind"]:
+		&"note":
+			var note_id: StringName = thing["id"]
+			if not (note_id in satchel):
+				satchel.append(note_id)
+			return {"type": "note", "note": note_id}
+		&"crank", &"heart":
+			thing["taken"] = true
+			var item: StringName = thing["id"]
+			bag.add(item)
+			if item == &"grist_heart":
+				bag.add(&"tusk")
+			return {"type": "taken", "item": item}
+		&"sluice":
+			if objective_done:
+				return {"type": "nothing"}
+			if not bag.take(&"sluice_crank"):
+				return {"type": "sluice_stuck"}
+			objective_done = true
+			return {"type": "sluice_opened"}
+	return {"type": "nothing"}
+
+
+## True if the note carries the satchel's loose-thread mark: about the
+## objective, which is not done yet (Q37).
+func has_loose_thread(note_id: StringName) -> bool:
+	return bool((notes[note_id] as Dictionary)["objective"]) and not objective_done
+
+
+## The satchel's notes, newest first.
+func satchel_newest_first() -> Array[StringName]:
+	var listed: Array[StringName] = satchel.duplicate()
+	listed.reverse()
+	return listed
+
+
+## The sluice is open: the floodwater drains, played out over DRAIN_SECONDS,
+## then the meadow is walkable.
+func _step_drain() -> void:
+	if not objective_done or map.drained:
+		return
+	drain_progress = minf(1.0, drain_progress + 1.0 / (DRAIN_SECONDS * Engine.physics_ticks_per_second))
+	if drain_progress >= 1.0:
+		map.drained = true
+		events.append({"type": "drained"})
+
+
+## A boss is defeated once (world.md): recorded, and it leaves its heart.
+func _boss_defeated(boss: Fighter) -> void:
+	if boss.creature_kind.id in bosses_defeated:
+		return
+	bosses_defeated.append(boss.creature_kind.id)
+	_leave_heart(boss)
+
+
+## A defeated boss leaves its heart where it fell (enemies.md).
+func _leave_heart(boss: Fighter) -> void:
+	if not (&"grist_heart" in boss.creature_kind.drops):
+		return
+	add_thing(&"grist_heart", &"heart", boss.position)
+	for thing: Dictionary in things:
+		if thing["id"] == &"grist_apples":
+			thing["shown"] = true  # the note for after (enemies.md)
+
+
+func add_exit(exit_id: StringName, rect: Rect2, needs_drained: bool) -> void:
+	exits.append({"id": exit_id, "rect": rect, "needs_drained": needs_drained})
+
+
+## Walking into an exit reports it once, until the player steps out again.
+func _check_exits() -> void:
+	var inside: StringName = &""
+	for exit: Dictionary in exits:
+		if (exit["rect"] as Rect2).has_point(sim.player.position) and (not exit["needs_drained"] or map.drained):
+			inside = exit["id"]
+	if inside != &"" and inside != _in_exit:
+		events.append({"type": "exit", "to": inside})
+	_in_exit = inside

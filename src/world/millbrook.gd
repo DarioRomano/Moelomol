@@ -16,12 +16,49 @@ static func make() -> Area:
 	_roster(area)
 	_yard(area)
 	_field(area)
+	_things(area)
+	_exits(area)
 	for cell: Vector2i in map.cells_of("*"):
 		area.lights.append(AreaMap.centre_of(cell))  # glowing fungus in the orchard
 	for cell: Vector2i in [Vector2i(17, 21), Vector2i(24, 20), Vector2i(31, 21), Vector2i(38, 20)]:
 		area.night_lights.append(AreaMap.centre_of(cell))  # fireflies over the floodwater's edge
 	area.start()
 	return area
+
+
+## The notes, the crank and the sluice (area-millbrook.md, "Places" and
+## "The objective"). The mill and the cottages have no insides yet, so what
+## the doc puts inside them is at their doors.
+static func _things(area: Area) -> void:
+	area.notes = MillbrookNotes.NOTES
+	var places: Dictionary = {
+		&"lost_pet_poster": at(31, 5),  # 2: on a fence post halfway down the lane
+		&"my_family": at(17, 4),  # 4: the schoolhouse
+		&"schoolroom_board": at(15, 6),  # the schoolhouse door
+		&"kitchen_table": at(18, 11),  # the cottage by the green
+		&"chapel_notices": at(39, 3),  # 7: the chapel
+		&"cider_tally": at(7, 12),  # C: the cider shed
+		&"hive_log": at(47, 7),  # G: the beekeeper's hives
+		&"sluice_note": at(37, 18),  # 9: pinned by the sluice wheel, inside the mill door
+		&"miller_calendar": MILLER_DOOR + Vector2(-26, 0),
+	}
+	for note_id: StringName in places:
+		area.add_thing(note_id, &"note", places[note_id])
+	# Shown once Grist is defeated (enemies.md: a note for after).
+	area.add_thing(&"grist_apples", &"note", MILLER_DOOR + Vector2(26, 0), false)
+	area.add_thing(&"sluice_crank", &"crank", MILLER_DOOR)
+	area.add_thing(&"sluice", &"sluice", at(37, 17))
+
+
+## Up the lane to the farm, and the ford south (once the meadow drains).
+static func _exits(area: Area) -> void:
+	area.add_exit(&"farm", Rect2(27 * AreaMap.CELL, 0, AreaMap.CELL * 2, 10), false)
+	area.add_exit(&"south", Rect2(27 * AreaMap.CELL, area.map.rect().end.y - 10, AreaMap.CELL * 2, 10), true)
+
+
+## The miller's door: below the middle of the miller's cottage (cells 48-50,
+## rows 20-21), facing the yard.
+const MILLER_DOOR: Vector2 = Vector2(49.5 * 32.0, 22.0 * 32.0 + 8.0)
 
 
 ## A cell's centre.
