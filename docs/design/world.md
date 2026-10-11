@@ -1,8 +1,8 @@
 # The world: how the base and the areas fit together
 
-- **Status:** Proposal (2026-10-11), for the lead. Level layout, the camera
-  and the open questions listed below are the lead's decisions (CLAUDE.md);
-  nothing here is built.
+- **Status:** The structure is decided (the lead's answers to Q32–Q38,
+  2026-10-11). Items marked **Proposal** are still the engineer's
+  suggestions. Nothing here is built.
 - **Binding constraints:**
   - ADR-0005: one base, the only place farming happens; no combat there;
     the story moves forward by adventuring, fulfilling objectives and
@@ -19,12 +19,15 @@
     more changed.
   - `farming.md`: the clock, night.
   - `combat.md`: creatures hold their ground.
-- **Decided:** Q33 (the lead, 2026-10-11): the farm is much bigger but
-  overgrown, and defeating bosses opens more of it (`base.md`).
-- **Open questions this raises:** Q32 (camera), Q34 (base and areas:
-  separate or seamless), Q35 (what the player starts with), Q36 (falling in
-  an area), Q37 (how objectives are shown), Q38 (how a boss opens part of
-  the farm).
+- **Decided by the lead (2026-10-11):**
+  - Q32: the camera follows with a dead zone, clamped (ADR-0015).
+  - Q33: the farm is much bigger but overgrown, and defeating bosses opens
+    more of it (`base.md`).
+  - Q34: places are separate scenes joined at exits (ADR-0016).
+  - Q35: starting weapons (`combat.md`).
+  - Q36: falling means waking in bed (below).
+  - Q37: objectives show in the world; notes are kept to re-read (below).
+  - Q38: a boss's heart opens its parcel (`base.md`).
 
 ## The shape of the world
 
@@ -48,9 +51,8 @@
   until then the base and Millbrook are enough to build and play the
   rhythm of a day.
 
-## Moving between places (depends on Q34)
+## Moving between places (Q34, ADR-0016)
 
-Recommended (Q34 A):
 - **Each place is its own scene**: the base, each area, the farmhouse
   inside.
 - **The player walks into an exit** (the farm gate, the top of Millbrook's
@@ -70,6 +72,14 @@ Recommended (Q34 A):
   back at its edge. Coming home is never a fight.
 - **Creatures hold their ground** (`combat.md`): each group has a home
   patch and gives up a chase when the player leaves it.
+
+## Falling in an area (Q36)
+
+- The player wakes in the farmhouse bed at the next 6:00, the cat curled on
+  the blanket, keeping everything they carried (`combat.md`).
+- The cost is the rest of the day. The area's creatures and forage are back
+  at 6:00, and a boss is back at full health.
+- How they got home is never explained (`story.md`).
 
 ## Day and night in the areas (Q21)
 
@@ -104,8 +114,13 @@ Recommended (Q34 A):
 
 ## Unlocking, and coming back later
 
-- **Each area has one objective that opens the next area.** The world shows
-  it: a blocked road and something nearby that explains it (Q37).
+- **Each area has one objective that opens the next area** (Q37 B).
+  - The world shows it: a blocked road and something nearby that explains
+    it. There is no quest log and no objective text.
+  - **Every note found is kept in a satchel** the player can open and
+    re-read, newest first.
+  - Notes about an unfinished objective (the miller's note) carry a small
+    loose-thread mark until it is done.
 - **Each area also holds places the player can see but not yet reach**: an
   island, a high loft, a locked cellar. Exploration upgrades (ADR-0005
   point 8) open them later, which gives a reason to come back to old areas
@@ -113,7 +128,10 @@ Recommended (Q34 A):
 - **Upgrades are not designed yet.** The areas only mark where those places
   are.
 
-## Framing areas on every screen (depends on Q32)
+## The camera and framing (Q32, ADR-0015)
+
+- The camera follows the player with a small dead zone, clamped to the
+  place's edges, at the farm and in every area.
 
 - **Every area is at least 80 tiles wide and 30 tall**, so no screen shape
   sees past its edge. Where the playable ground is smaller, the area is

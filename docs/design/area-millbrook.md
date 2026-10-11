@@ -7,9 +7,13 @@
 - **Binding constraints:** ADR-0005, ADR-0010, `story.md` (stage 1,
   "ordinary loss"), `art-direction.md`, `world.md` (shared rules for every
   area).
-- **Open questions that change this area:** Q35 (what the player has when
-  they first come here), Q36 (what happens when they fall), Q37 (how the
-  objective is shown), Q32 (camera).
+- **Decided by the lead (2026-10-11):**
+  - Q35: the player arrives with the greatsword and the hammer; the bow is
+    made from the orchard's wood here.
+  - Q36: falling here means waking in bed at the farm the next morning.
+  - Q37: the objective shows itself; the miller's note is kept in the
+    satchel with a loose-thread mark until the sluice is open.
+  - Q32: the camera follows with a dead zone (ADR-0015).
 
 ## In one paragraph
 
@@ -155,7 +159,8 @@ ttttttttttttttttttttttttttt==ttttttttttttttttttttttttttt
     - Apple trees in rows: forage every day.
     - The cider shed's tally board ("finish the north rows Thursday").
     - Changed crows by day; glowing fungus at night.
-    - If Q35 C is chosen, the **orchard wood** for the bow is found here.
+    - The **orchard wood** for the bow is found here (Q35). Until crafting
+      exists, the bow itself lies in the cider shed.
 13. **D, the half-harvested wheat field.**
     - Half cut, half standing, the scythe left upright where its owner
       stopped.
@@ -271,7 +276,8 @@ both are ordinary (`story.md` rules 3 and 4).
 |---|---|---|
 | Forage | Apples (orchard), honey (hives), wild herbs along the hedgerows | At 6:00 |
 | Seeds | New crop kinds from the cottage garden (5); possibly wheat from the field (D) | Found once |
-| Materials | Changed drops (pelts, feathers, the tusk); orchard wood if Q35 C | Drops at 6:00 with the creatures |
+| Materials | Changed drops (pelts, feathers, the tusk); orchard wood for the bow (Q35) | Drops at 6:00 with the creatures |
+| Weapon | The bow, made from orchard wood (or found in the cider shed until crafting exists) | Once |
 | Animal | The hen (6), if animals exist by then | Found once |
 | Farmland | The Old Boar's heart: opens the great fields at the farm | Once |
 | Notes | About eight | Found once |

@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-11: Q28 (where farming magic comes from), Q32 and Q34–Q38 (the farm and the first area: camera, scenes, starting weapons, falling, objectives, how a boss opens farmland) are open; everything else is resolved.
+Status at 2026-10-11: every question is resolved. The lead accepted all open recommendations on 2026-10-11 (Q28, Q32, Q34–Q38).
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -36,17 +36,17 @@ Status at 2026-10-11: Q28 (where farming magic comes from), Q32 and Q34–Q38 (t
 | Q25 | Where seeds come from without shops | Farming, exploration rewards | **Resolved**: A |
 | Q26 | Controls and targeting at the base | Input model (ADR-0013) | **Resolved**: A |
 | Q27 | Does farming use an energy bar? | Farming slice, upgrades | **Resolved**: farming is magic and costs Mana (sleep, food); enhanced weapon skills cost Mana too |
-| Q28 | Where does farming magic come from, and how does it look? | Farming spell art, story notes | Open (working assumption: C) |
+| Q28 | Where does farming magic come from, and how does it look? | Farming spell art, story notes | **Resolved**: C, warm spells with a thread of violet at night and as the story advances → `farming.md`, `story.md` |
 | Q29 | A more satisfying weapon skill for magic | Magic feel (lead's playtest) | **Resolved**: B, the Siphon, on heavy hold instead of the skill; the Rot pool it replaces goes to Q31 |
 | Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | **Resolved**: A, guard and riposte |
 | Q31 | A new mechanic for magic's Rot spell | Magic feel; the skill button | **Resolved**: A, the Rot seed |
-| Q32 | The camera in the base and the areas | Building the farm and Millbrook | Open |
+| Q32 | The camera in the base and the areas | Building the farm and Millbrook | **Resolved**: A, follow with a dead zone, clamped → ADR-0015 |
 | Q33 | How big the base is | The farm layout | **Resolved**: much bigger, overgrown; defeating bosses opens more of it → `base.md` |
-| Q34 | Base and areas: separate scenes or one seamless world | The farm gate, every area | Open |
-| Q35 | What the player has on their first trip out | Millbrook's creatures, crafting order | Open |
-| Q36 | What happens when the player falls in an area | Every area; combat's "death" | Open |
-| Q37 | How the player knows what to do next | Every area's objective | Open |
-| Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | Open |
+| Q34 | Base and areas: separate scenes or one seamless world | The farm gate, every area | **Resolved**: A, separate scenes joined at exits → ADR-0016 |
+| Q35 | What the player has on their first trip out | Millbrook's creatures, crafting order | **Resolved**: C, greatsword and hammer at the start, the bow from orchard wood, the lantern later → `combat.md` |
+| Q36 | What happens when the player falls in an area | Every area; combat's "death" | **Resolved**: A, wake in bed the next morning → `combat.md`, `world.md` |
+| Q37 | How the player knows what to do next | Every area's objective | **Resolved**: B, the world plus the notes kept to re-read → `world.md` |
+| Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | **Resolved**: C, a boss's heart lets Clear open its parcel → `base.md`, `farming.md` |
 
 ---
 
@@ -1108,6 +1108,10 @@ better home for it than farming energy.
 
 ## Q28. Where does farming magic come from, and how does it look?
 
+**Resolved 2026-10-11 (the lead):** C, as recommended. Farming spells glow
+in warm living green and gold; at night, and more as the story advances, a
+thread of violet shows in them. Recorded in `farming.md` and `story.md`.
+
 Found while building farming by magic (Q27, 2026-10-10). The combat design
 says magic is the god's own influence: the lantern is drawn in the "changed
 land" violets, the only player-side thing that is (`combat.md`,
@@ -1351,6 +1355,8 @@ nothing about it is round or on the floor.
 
 ## Q32. The camera in the base and the areas
 
+**Resolved 2026-10-11 (the lead):** A, as recommended → ADR-0015.
+
 Raised by the farm and Millbrook designs (2026-10-11; `world.md`,
 `base.md`). ADR-0014 left camera behaviour to "the first exploration area",
 and ADR-0008 left camera smoothing and pixel snapping to the first camera
@@ -1460,6 +1466,8 @@ is possible without moving anything.
 
 ## Q34. Base and areas: separate scenes or one seamless world
 
+**Resolved 2026-10-11 (the lead):** A, as recommended → ADR-0016.
+
 Raised by the farm and Millbrook designs (2026-10-11; `world.md`). ADR-0005
 says base and areas "can be built as separate scene families".
 
@@ -1496,6 +1504,12 @@ says base and areas "can be built as separate scene families".
 **Recommendation:** A.
 
 ## Q35. What the player has on their first trip out
+
+**Resolved 2026-10-11 (the lead):** C, as recommended: the greatsword and
+the hammer from the farm's workshop at the start; the bow made from
+Millbrook's orchard wood (lying in the cider shed until crafting exists);
+the lantern later, from the second area's materials. Recorded in
+`combat.md`.
 
 Raised by the Millbrook design (2026-10-11). Millbrook's creatures and the
 order of crafting depend on what the player carries. The combat arena gives
@@ -1536,6 +1550,10 @@ orchard wood; the lantern later, from changed materials** (recommended)
 **Recommendation:** C.
 
 ## Q36. What happens when the player falls in an area
+
+**Resolved 2026-10-11 (the lead):** A, as recommended: wake in the
+farmhouse bed at the next 6:00 with the cat on the blanket, keeping
+everything carried. Recorded in `combat.md`, `world.md` and `story.md`.
 
 Raised by the Millbrook design (2026-10-11). `combat.md` leaves "death and
 its consequences" undecided; the first area needs an answer. The player has
@@ -1578,6 +1596,11 @@ farming without punishing exploration.
 
 ## Q37. How the player knows what to do next
 
+**Resolved 2026-10-11 (the lead):** B, as recommended: objectives show
+themselves in the world; every note found is kept in a satchel to re-read,
+and notes about an unfinished objective carry a loose-thread mark. Recorded
+in `world.md`.
+
 Raised by the Millbrook design (2026-10-11). The story moves forward by
 objectives (ADR-0005 point 3), but nobody can give the player a quest, and
 the story is told only through the world and notes (point 5).
@@ -1616,6 +1639,10 @@ the story is told only through the world and notes (point 5).
 **Recommendation:** B.
 
 ## Q38. How defeating a boss opens part of the farm
+
+**Resolved 2026-10-11 (the lead):** C, as recommended, with the farm's
+backstory (worked by many hands, gone wild before the calamity) and the
+Clear spell. Recorded in `base.md`, `farming.md` and `story.md`.
 
 Raised by the lead's answer to Q33 (2026-10-11): defeating bosses opens
 more of the overgrown farm. What links a fight far away to land at home

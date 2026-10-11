@@ -79,8 +79,8 @@ lead decided Q21–Q27 on 2026-10-10.
   - The lead's decisions built: a 20-minute day that cycles on its own;
     farming by spells paid in Mana; the watering spell's tiers up to rain
     (2026-10-10).
-- **Waiting on the lead:** Q28 (where farming magic comes from); farming
-  playtest (`docs/playtests/2026-10-10-farming.md`).
+- **Waiting on the lead:** farming playtest
+  (`docs/playtests/2026-10-10-farming.md`). Q28 decided 2026-10-11.
 - **Next:** saving, cooking (food restores Mana and gives buffs; the cat
   treats are the first recipe), farming upgrades, the pet at the farm, Mana
   costs for enhanced weapon skills.
@@ -95,9 +95,12 @@ Proposals with layout sketches; nothing built. The lead decided Q33
 opens more of it; redrawn as a 160 × 96 farm with the homestead and six
 parcels.
 
-- **Waiting on the lead:** acceptance of the layouts, and Q32, Q34–Q38
-  (camera, separate scenes, starting weapons, falling in an area, how
-  objectives are shown, how a boss opens farmland).
+- **Decided (2026-10-11):** the lead accepted every recommendation: the
+  camera (ADR-0015), separate scenes (ADR-0016), starting weapons, falling,
+  objectives and the notes satchel, a boss's heart opening its parcel, and
+  how farming magic looks (Q28).
+- **Waiting on the lead:** acceptance of the two layouts themselves (the
+  farm and Millbrook), which are level layout.
 - **Next, once accepted:** the farm layout in place of the test field, then
   the house inside, then Millbrook as the first area, in the order in
   `base.md`.

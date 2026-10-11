@@ -13,11 +13,12 @@
     Mana, the watering tiers up to rain, seeds without shops, the bed.
   - `art-direction.md`: the base is the one warm place; dusk is the
     emotional peak.
-- **Open questions:**
-  - Q38: how defeating a boss clears its part of the farm. This draft
-    follows the recommendation as a working assumption.
-  - Q32: the camera.
-  - Q34: whether the gate is a scene change.
+- **Decided by the lead (2026-10-11):**
+  - Q38: a boss's heart lets Clear open its parcel, and the farm's
+    backstory goes with it.
+  - Q32: the camera follows with a dead zone (ADR-0015).
+  - Q34: the gates are scene changes (ADR-0016).
+  - Q28: farming spells glow warm, with a thread of violet at night.
 
 ## What the farm should feel like
 
@@ -97,7 +98,7 @@ puts what farming needs most first.
 - **Each parcel gives back a building to restore** (the field shelter, the
   barn, the cider shed, the glasshouse, the windmill), so opening a parcel
   is more than more soil. What restoring needs comes with crafting.
-- **Each parcel holds one trace of the farm's past** (Proposal): an old
+- **Each parcel holds one trace of the farm's past** (Q38): an old
   almanac in the field shelter, initials carved in the barn door, a
   child's swing in the orchard. They are written by the farm's earlier
   generations (`story.md` rule 1: people from before, about their own
@@ -116,9 +117,8 @@ puts what farming needs most first.
   there to grow into with Mana upgrades and the rain spell, never to fill
   at once.
 
-### How a parcel opens (Q38; working assumption)
+### How a parcel opens (Q38 C, decided 2026-10-11)
 
-Recommended (Q38 C):
 1. **Each boss drops its heart**, a piece of changed material unlike any
    other drop.
 2. **At the farm, the player casts Clear on that parcel's thicket with the
@@ -134,9 +134,8 @@ overgrowth is neglect, not the calamity (`story.md`: the base is
 untouched). Until its parcel opens, thicket cannot be walked into or
 cleared.
 
-**Clear** (Proposal) is a farming spell from the start (`farming.md`
-lists the others). It turns long grass into grass, 2 Mana per tile
-(starting value). With a boss heart, it opens that boss's parcel.
+**Clear** (Q38) is a farming spell from the start (`farming.md`). It turns
+long grass into grass, 2 Mana per tile (starting value). With a boss heart, it opens that boss's parcel.
 
 ## The homestead
 
@@ -280,7 +279,7 @@ the places.
   inside its boundary only (Proposal: the farm's own weather, a hint that
   the farm is not quite natural).
 
-## On every screen (depends on Q32)
+## On every screen (ADR-0015)
 
 ![The homestead on each screen shape](images/base_views.png)
 
@@ -293,7 +292,8 @@ the places.
 | 4:3 at 1x (1024×768) | 40 × 30 | All its height |
 
 - **The farm is 160 × 96 tiles**, wider and taller than every screen, so
-  the camera follows the player across it and stops at its edges (Q32).
+  the camera follows the player across it and stops at its edges
+  (ADR-0015).
 - Wide screens see thicket and unopened parcels beyond the homestead's
   hedges from the start: the size of what is still to be won back.
 

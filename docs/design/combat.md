@@ -477,12 +477,38 @@ Further starting values chosen while building the arena (all in
 | Training creature | speed 40 px/s, health 150, poise 80, stagger 1.2 s; lunge 0.7 s telegraph, 15 damage, 30 poise; 0.8 s recovery (the punish window) |
 | Defeated creature | fades over 1 s, returns after 3 s (arena only) |
 
+## Starting weapons and falling (decided 2026-10-11)
+
+**What the player has, and when** (Q35 C):
+- **At the start:** the plough-share greatsword and the fence-post maul
+  (the hammer), hanging in the farm's workshop. The two-weapon swap works
+  from the first fight.
+- **From Millbrook:** the orchard-wood bow, the first weapon the player
+  makes (orchard wood, crow feathers for arrows). It is the crafting
+  tutorial for weapons. Until crafting exists, the bow lies in Millbrook's
+  cider shed.
+- **From the second area:** the lantern (magic), made from that area's
+  changed materials.
+- The combat arena keeps all four weapons: it is a test scene.
+
+**Falling in an area** (Q36 A):
+- The screen fades, and the player wakes in the farmhouse bed at the next
+  6:00, the cat curled on the blanket.
+- **They keep everything they carried.** The cost is the rest of the day.
+- Creatures and forage in the area are back at 6:00, and a boss is back at
+  full health (`world.md`). How they got home is never explained
+  (`story.md`).
+- If fights feel toothless in playtests, the fallback is a small Mana cost
+  on waking (a balance change for the lead).
+- The combat arena keeps its practice rules: the player gets up at their
+  starting spot after a moment.
+
 ## What this draft does not decide
 
-Death and its consequences, healing, enemy roster and AI, numbers beyond
-the starting values, each weapon's skill tree, enhancement recipes, which
-weapons are available when (a story and progression question), and the
-combat camera (follows Q18).
+Healing, enemy roster and AI, numbers beyond
+the starting values, each weapon's skill tree, enhancement recipes. (Which
+weapons are available when, falling, and the camera were decided on
+2026-10-11: above, and ADR-0015.)
 
 ## Built so far (2026-10-10)
 

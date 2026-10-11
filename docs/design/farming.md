@@ -2,7 +2,8 @@
 
 - **Status:** Decided by the lead on 2026-10-10 (Q21–Q27 in
   `open-questions.md`). Values marked **starting value** are the engineer's
-  placeholders for tuning; Q28 (where farming magic comes from) is open.
+  placeholders for tuning. Q28 (how farming magic looks) and Q38 (the
+  Clear spell) were decided on 2026-10-11.
 - **Binding constraints:**
   - ADR-0005: one base, the only place farming happens; peaceful, no combat
     there; no characters, so **no shops or merchants**.
@@ -98,6 +99,7 @@
 | **Water** | by tier (below) | Tilled soil in its area, planted or not | Watered, darker soil until the next 6:00 |
 | **Sow** (one per seed kind) | 1 | Tilled soil with nothing on it | Plants one seed from the bag |
 | Harvest | free (by hand) | A ripe crop | Produce and seeds into the bag |
+| **Clear** (Q38) | 2 (starting value) | Long grass | Grass, ready to till. With a boss's heart in the bag, cast on a parcel's thicket: the whole parcel opens (`base.md`) |
 | Sleep | free | The bed (the farmhouse door in the test scene) | The next 6:00; Mana full |
 
 - The player casts on **the tile in front of them**, highlighted (Q26:
@@ -106,6 +108,17 @@
 - **Harvest is by hand** (reading R2): picking a ripe crop is not a spell.
 - Not enough Mana: the spell does not happen, with a dull rumble and the Mana
   bar flashing. Planting also needs a seed of the kind.
+
+### How farming magic looks (Q28, decided 2026-10-11)
+
+- **Farming spells glow in warm living green and gold**, so the farm stays
+  the one warm place (`art-direction.md`).
+- **A thread of violet shows in them at night**, and more as the story
+  advances. Violet is the changed land's colour, the lantern's colour
+  (`combat.md`). It hints that farming magic and the god share a source;
+  the player is never told (`story.md`).
+- The farm test scene draws the warm glows; the violet thread is not built
+  yet (it needs story progress to exist).
 
 ### The watering spell (Q23)
 
@@ -194,12 +207,10 @@ farming meanings:
 - Cooking and the treats recipe.
 - The farming skill tree and the upgrades that unlock the watering tiers.
 - Saving the game.
-- Where farming magic comes from (Q28).
-- How the farm looks: the base layout is a level-layout decision for the
-  lead; the proposal is `base.md` (2026-10-11). The lead decided (Q33) that
-  the farm is much bigger but overgrown, and that defeating bosses opens
-  more of it; `base.md` proposes a Clear spell for long grass and the
-  parcels.
+- How the farm looks: the layout is a level-layout decision for the lead;
+  the proposal is `base.md` (2026-10-11). Decided: the farm is much bigger
+  but overgrown, and defeating bosses opens more of it (Q33); a boss's heart
+  lets Clear open its parcel (Q38).
 
 ## Built so far (2026-10-10)
 

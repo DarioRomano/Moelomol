@@ -96,3 +96,25 @@ not matching it for a moment; the ambience going briefly silent around it).
   small, uncanny events at the base that carry the reveal. No stat bonuses or
   buffs from the pet.
 - The pet lives at the base and does not join adventures (ADR-0010).
+
+## Decided 2026-10-11 (Q28, Q36, Q37, Q38)
+
+- **Farming magic shares the god's source, and the player cannot tell
+  yet** (Q28 C). Farming spells glow warm green and gold. A thread of
+  violet shows in them at night and more as the story advances.
+- **Falling in a fight, the player wakes in their own bed** the next
+  morning, the cat curled on the blanket (Q36 A). How they got home is never
+  explained; it reads as staggering home until the player knows better.
+- **Found notes are kept in a satchel to re-read** (Q37 B). No objective
+  text is ever written for the player; no voice speaks but the notes'
+  writers.
+- **The farm was once worked by many hands** (Q38 C). It went wild over the
+  years before the calamity; the player alone could only keep the
+  homestead. This is told only through one trace of the farm's past in each
+  overgrown parcel (`base.md`), written by its earlier generations (rule 1).
+  - The overgrowth is neglect, not the calamity: the base stays untouched.
+  - Each parcel opens with a boss's heart, a changed material, through the
+    farming magic. That is one more quiet hint at the shared source.
+- **Proposal (part of the farm layout, `base.md`):** the cat is always
+  first into a newly opened parcel, one of the small impossible things at
+  the base.
