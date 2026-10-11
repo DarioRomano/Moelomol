@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-11: Q28 (where farming magic comes from) is open; everything else is resolved.
+Status at 2026-10-11: Q28 (where farming magic comes from) and Q32–Q37 (the farm and the first area: camera, base size, scenes, starting weapons, falling, objectives) are open; everything else is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -40,6 +40,12 @@ Status at 2026-10-11: Q28 (where farming magic comes from) is open; everything e
 | Q29 | A more satisfying weapon skill for magic | Magic feel (lead's playtest) | **Resolved**: B, the Siphon, on heavy hold instead of the skill; the Rot pool it replaces goes to Q31 |
 | Q30 | A clearer weapon skill for the greatsword | Greatsword feel (lead's playtest) | **Resolved**: A, guard and riposte |
 | Q31 | A new mechanic for magic's Rot spell | Magic feel; the skill button | **Resolved**: A, the Rot seed |
+| Q32 | The camera in the base and the areas | Building the farm and Millbrook | Open |
+| Q33 | How big the base is | The farm layout | Open |
+| Q34 | Base and areas: separate scenes or one seamless world | The farm gate, every area | Open |
+| Q35 | What the player has on their first trip out | Millbrook's creatures, crafting order | Open |
+| Q36 | What happens when the player falls in an area | Every area; combat's "death" | Open |
+| Q37 | How the player knows what to do next | Every area's objective | Open |
 
 ---
 
@@ -1341,3 +1347,264 @@ patch for 4 s, 1 Rot every 0.5 s to whatever stands in it, 20 Focus.
 **Recommendation:** A. It is the only option that makes Rot interact with
 the Siphon (drain the host and the seed jumps), it keeps one press, and
 nothing about it is round or on the floor.
+
+## Q32. The camera in the base and the areas
+
+Raised by the farm and Millbrook designs (2026-10-11; `world.md`,
+`base.md`). ADR-0014 left camera behaviour to "the first exploration area",
+and ADR-0008 left camera smoothing and pixel snapping to the first camera
+work. Both need the lead (CLAUDE.md).
+
+**What any option must handle:** views from 40 × 22.5 tiles (16:9) to
+80 × 22.5 (32:9) and 40 × 30 (4:3 at 1x), so levels never depend on one
+view size (ADR-0008).
+
+**A. Follow the player, with a small dead zone, clamped to the area's
+edges** (recommended)
+- **How it works:**
+  - The camera stays still while the player moves inside a small box
+    around the screen's centre (about 2 × 1.5 tiles), then follows
+    smoothly (catching up in about 0.15 s).
+  - It stops at the area's edges, so the screen never shows past them.
+  - Areas are drawn at least 80 × 30 tiles with scenery so that no screen
+    reaches an edge (`world.md`).
+  - The camera's position is rounded to whole screen pixels (not art
+    pixels), so the full-resolution rendering stays smooth (ADR-0008,
+    amendment 3) and tiles never shimmer.
+- Pro:
+  - The standard for top-down farming and adventure games; nothing to
+    learn.
+  - Works on every screen shape.
+  - The dead zone stops small movements (casting, aiming, a dodge)
+    shaking the view.
+- Con:
+  - Needs scenery around every area for wide screens: more art at the
+    edges.
+  - Fights near an area's edge sit off-centre.
+
+**B. Fixed screens: the camera jumps a screen at a time** (classic Zelda)
+- **How it works:** each area is cut into screen-sized rooms; walking off
+  one edge slides to the next room.
+- Pro:
+  - Each screen can be composed like a picture.
+  - Fights happen in a known frame.
+- Con:
+  - A "screen" is a different size on every monitor: 32:9 would see two
+    and a half rooms at once, or show bars. This clashes with ADR-0008's
+    "never capped".
+  - It cuts up the open, lonely views.
+
+**C. Follow with look-ahead**
+- **How it works:** as A, but the camera leads in the direction the player
+  moves or faces, showing more of what is ahead.
+- Pro: more warning of creatures ahead; good for the bow.
+- Con:
+  - The view swings when the player turns, which is busy at the base,
+    where nothing threatens.
+  - The look-ahead must be tuned per screen shape.
+
+**Recommendation:** A everywhere. The farm on 21:9 and 32:9 shows its whole
+width, so the camera only moves up and down there. Revisit look-ahead (C)
+for the areas after the first playtest, if creatures feel like they come
+from nowhere.
+
+## Q33. How big the base is
+
+Raised by the farm design (2026-10-11; `base.md`). The base is the one
+place the player returns to every day, so its size sets the rhythm of
+every day.
+
+**A. One screen: 40 × 22 tiles, with a fixed camera**
+- Pro:
+  - The whole farm is always in view: the coziest option.
+  - The camera never moves.
+  - The cheapest to draw.
+- Con:
+  - Room for only about 100 tilled tiles: little space for farming to grow
+    into.
+  - On 16:10 and 4:3 the extra height shows scenery; on 32:9 the farm is
+    half the screen.
+
+**B. Compact: 48 × 30 tiles, about one and a half screens** (recommended;
+the draft in `base.md`)
+- Pro:
+  - Almost all of it is visible at once on 16:9, and all its width on
+    21:9 and 32:9.
+  - Everything is a few seconds' walk away.
+  - Room for about 230 tilled tiles once the old fields are cleared, plus
+    the pen, the pond and an empty meadow for later.
+- Con:
+  - The camera moves a little.
+  - It may feel small late in the game if farming grows a lot (more crops,
+    more animals).
+
+**C. Large: about 80 × 60 tiles, several screens**
+- Pro:
+  - Room for big fields, orchards and pastures.
+  - Farming can grow for a long time.
+- Con:
+  - Walking takes time each day.
+  - Most of it is empty for most of the game, which reads as unfinished
+    rather than lonely.
+  - The farm's warm, single-glance feeling is lost.
+
+**Recommendation:** B. If farming outgrows it, the old fields and the
+meadow are the place to grow into; a later expansion past the east hedge
+is possible without moving anything.
+
+## Q34. Base and areas: separate scenes or one seamless world
+
+Raised by the farm and Millbrook designs (2026-10-11; `world.md`). ADR-0005
+says base and areas "can be built as separate scene families".
+
+**A. Separate scenes, joined at exits** (recommended)
+- **How it works:** walking into the farm gate fades out for about 0.3 s
+  and in again at the top of Millbrook's lane. The farm and each area load
+  on their own.
+- Pro:
+  - Peace and danger are cleanly apart: the base loads no combat at all
+    (ADR-0005 point 2).
+  - The fade marks coming home, which is the relief `art-direction.md`
+    wants.
+  - Each area is small to load and to test.
+  - Simplest for saving and for the performance budget.
+- Con:
+  - A short break in the walk.
+  - The farm and the lane must be drawn so they visibly continue each other
+    (the lane seen from the gate; the farm's hedge seen at the top of the
+    lane).
+
+**B. One seamless world**
+- **How it works:** the farm and Millbrook are one continuous map; the gate
+  is just a gate.
+- Pro:
+  - The most immersive: the player watches the farm shrink behind them on
+    the lane.
+- Con:
+  - "No combat at the base" becomes a border rule inside one scene, which
+    is easier to get wrong.
+  - The scene loads more at once and grows with every area.
+  - Saving and streaming are harder.
+  - Wide screens would see creatures' ground from the farm.
+
+**Recommendation:** A.
+
+## Q35. What the player has on their first trip out
+
+Raised by the Millbrook design (2026-10-11). Millbrook's creatures and the
+order of crafting depend on what the player carries. The combat arena gives
+all four weapons; the game does not have to.
+
+**A. The greatsword only**
+- Pro: one weapon to learn first; the simplest start.
+- Con: the two-weapon swap (Q19) does nothing until a second weapon
+  arrives; a player who dislikes the greatsword has no choice.
+
+**B. All four from the start**
+- Pro: full freedom; every playstyle from the first fight.
+- Con:
+  - Nothing to look forward to among weapons.
+  - Four weapons and the swap at once is a lot to learn.
+  - The lantern is made from changed materials (`combat.md`), which the
+    player has not met yet.
+
+**C. Greatsword and hammer from the farm; the bow made from Millbrook's
+orchard wood; the lantern later, from changed materials** (recommended)
+- **How it works:**
+  - The plough-share greatsword and the fence-post maul hang in the
+    workshop at the start, so the swap works from the first fight.
+  - The bow is the first weapon the player makes, from orchard wood (and
+    crow feathers for arrows), which can double as the crafting tutorial
+    for weapons.
+  - The lantern comes from the second area's changed materials.
+- Pro:
+  - Each weapon arrives where the world explains it (`combat-art-prompts.md`
+    already describes them as farm tools and an orchard-wood bow).
+  - The player learns melee first, ranged second, magic third.
+  - It gives Millbrook a reward the player can feel.
+- Con:
+  - Depends on crafting existing by the time Millbrook is built. Interim:
+    the bow lies in the cider shed until crafting exists.
+  - Magic players wait until the second area.
+
+**Recommendation:** C.
+
+## Q36. What happens when the player falls in an area
+
+Raised by the Millbrook design (2026-10-11). `combat.md` leaves "death and
+its consequences" undecided; the first area needs an answer. The player has
+no one to rescue them (ADR-0005).
+
+**A. Wake in bed at the next morning** (recommended)
+- **How it works:**
+  - The screen fades.
+  - The player wakes in the farmhouse bed at the next 6:00, with the cat
+    curled on the blanket. They keep everything they carried.
+  - The cost is the rest of the day: no more farming or exploring until
+    morning. Creatures and forage in the area have come back at 6:00
+    (`world.md`).
+  - How they got home is never explained.
+- Pro:
+  - Gentle, like farming's "costs time, never the crop" (Q24).
+  - Fits the lonely tone: no game-over screen, no punishment menu.
+  - One of the quiet uncanny moments `story.md` wants: the cat was there
+    when they woke, and it is explainable innocently (they staggered home)
+    until the player knows better.
+- Con:
+  - A light penalty: losing a fight costs little, so tension in fights is
+    lower.
+  - A fall late in the day costs almost nothing.
+
+**B. Wake in bed, and drop part of what was carried**
+- **How it works:** as A, but the player drops some of what they carried
+  (for example half the materials) where they fell, to be fetched again.
+- Pro: real stakes; makes going back meaningful.
+- Con: punishing in a game about unhurried loneliness; fetching dropped
+  things is a chore genre players dislike.
+
+**C. Get up at the area's entrance at once**
+- Pro: no lost time; quick retries for a hard fight.
+- Con: no cost at all, so fights stop mattering; misses the story moment.
+
+**Recommendation:** A. If fights feel toothless in playtests, add a small
+Mana cost on waking (the night's rest was not restful), which ties to
+farming without punishing exploration.
+
+## Q37. How the player knows what to do next
+
+Raised by the Millbrook design (2026-10-11). The story moves forward by
+objectives (ADR-0005 point 3), but nobody can give the player a quest, and
+the story is told only through the world and notes (point 5).
+
+**A. Only the world**
+- **How it works:** no log, no markers. Each objective shows itself: a road
+  under water, a signpost into it, a note saying where the crank went.
+- Pro: the purest form of environmental storytelling; the most lonely.
+- Con: a player who stops for a week comes back with no idea what they
+  were doing; a missed note means being stuck.
+
+**B. The world, plus the notes kept to re-read** (recommended)
+- **How it works:**
+  - As A, and every note the player finds is kept in a satchel they can
+    open and re-read, newest first.
+  - Notes about an unfinished objective (the miller's note) are marked
+    with a small loose thread until the objective is done.
+  - No objective text is written for the player.
+- Pro:
+  - Coming back after a break is easy: open the satchel, re-read the last
+    notes.
+  - Still no voice but the people who wrote the notes.
+  - It costs one simple menu.
+- Con: the thread mark is a light game device; a little less pure than A.
+
+**C. A journal in the player character's own words**
+- **How it works:** the player character writes short lines as things
+  happen ("The road south is flooded. The mill?").
+- Pro: the clearest guidance.
+- Con:
+  - Gives the player character a voice, which the game has avoided
+    everywhere else.
+  - The writing would have to avoid explaining the story.
+  - It breaks the "only notes" rule in spirit.
+
+**Recommendation:** B.

@@ -85,6 +85,20 @@ lead decided Q21–Q27 on 2026-10-10.
   treats are the first recipe), farming upgrades, the pet at the farm, Mana
   costs for enhanced weapon skills.
 
+## World: the farm and the first area (design started 2026-10-11)
+
+`docs/design/world.md` (how the base and the areas fit together),
+`docs/design/base.md` (the farm) and `docs/design/area-millbrook.md`
+(Millbrook, the hamlet below the farm, with its objective: open the ford).
+Proposals with layout sketches; nothing built.
+
+- **Waiting on the lead:** acceptance of the layouts, and Q32–Q37
+  (camera, base size, separate scenes, starting weapons, falling in an
+  area, how objectives are shown).
+- **Next, once accepted:** the farm layout in place of the test field, then
+  the house inside, then Millbrook as the first area, in the order in
+  `base.md`.
+
 ## Later (not planned)
 
 Decided and ready for the first gameplay system: language (ADR-0003),

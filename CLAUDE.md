@@ -83,6 +83,7 @@ prints failures as `::error` annotations: read them with
 | `tests/unit/` | Tests: `test_*.gd`, methods `test_*`, extend `TestCase` |
 | `tools/` | Scripts above; `tools/ci/` holds CI-only helpers and their Python tests |
 | `.github/` | Workflows, the `setup-godot` composite action, PR template |
+| `docs/` | The project's memory (see above). Has a `.gdignore`, so images here are never imported; exports exclude it too |
 
 ## Workflow rules (ADR-0006)
 

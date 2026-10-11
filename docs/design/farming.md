@@ -196,7 +196,7 @@ farming meanings:
 - Saving the game.
 - Where farming magic comes from (Q28).
 - How the farm looks: the base layout is a level-layout decision for the
-  lead.
+  lead; the proposal is `base.md` (2026-10-11).
 
 ## Built so far (2026-10-10)
 
