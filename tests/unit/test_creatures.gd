@@ -430,3 +430,18 @@ func test_grist_is_defeated_once_and_leaves_its_heart() -> void:
 	assert_true(&"grist_heart" in (defeated[0]["drops"] as Array), "it leaves its heart")
 	_run(sim, 600)
 	assert_eq(grist.state, Fighter.State.GONE, "and does not come back")
+
+
+func test_a_charge_that_meets_the_fence_at_an_angle_still_ends_in_a_stun() -> void:
+	# Sliding along a fence is not headway: the charge is over (found when a
+	# phase-two charge slid along the fence instead of stopping, 2026-10-11).
+	var sim: CombatSim = _yard()
+	var grist: Fighter = sim.add_creature(Vector2(250, 70), CreatureKind.grist())
+	# Heading (-0.6, 0.8) into the bottom fence, well clear of the corners: it
+	# would slide along the fence at 60% speed, more than half, while gaining
+	# only 36% along its lane.
+	sim.player.position = Vector2(130, 230)
+	_until(sim, func() -> bool: return _attacking(grist, &"grist_charge"), "the charge", 120)
+	sim.player.position = Vector2(40, 60)  # out of the lane
+	_until(sim, func() -> bool: return grist.state != Fighter.State.ATTACK, "the end of the charge", 300)
+	assert_true(grist.is_staggered(), "stunned where it met the fence at an angle")

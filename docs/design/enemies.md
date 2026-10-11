@@ -281,3 +281,51 @@ What the charge runs into decides what happens next:
   - stooks both;
   - more hedgehogs and toads at night;
   - Grist asleep at night.
+
+## Built so far (2026-10-11)
+
+In the combat simulation, playable in the combat arena: **F11** cycles the
+creature sets (the training creatures, then each of Millbrook's kinds, then
+Grist in a yard like the miller's), and **F12** toggles night (moths come
+out, Grist sleeps).
+
+- **How:**
+  - `CreatureKind` (`src/combat/creature_kind.gd`) holds each kind's values
+    and moves.
+  - `CreatureBrain` (`src/combat/creature_brain.gd`) runs each archetype's
+    behaviour and the hooks `CombatSim` calls: an attack's active part
+    starting, an attack ending, a dash running into something, a hit taken
+    or landed.
+  - New shared rules in `CombatSim`:
+    - lane telegraphs, which are the hit zone like every other telegraph;
+    - props (the yard's millstones, sacks, wallow and trough);
+    - lights;
+    - night;
+    - rolling millstones that bounce once and come to rest as obstacles;
+    - the slick that slows the player.
+- **Heavy hits:** the greatsword's heavy finishers, Follow-through, the
+  Riposte and every charged hammer strike count as heavy (they uncurl
+  hedgehogs). Light swings, the hammer's jab and arrows do not.
+- **Placeholder art:** each creature is drawn in code from the palette,
+  kept to the muted and changed colours (warm colours are reserved;
+  `art-direction.md`). Review sheets: `scenes/showcase/creature_poses.tscn`
+  and `grist_poses.tscn`.
+- **Readings settled while building** (say if any is wrong):
+  - **A charge always runs to the first thing in its way**, so in phase
+    one every charge ends in a stun or burst sacks. Phase two's double
+    charge is therefore "shrug off the fence once"; millstones always stun
+    (above).
+  - **A charge that meets a wall at a slant is over**: sliding along the
+    wall does not count as moving on.
+  - **A player standing in a millstone's lane is hit there and back.**
+  - **A moth has 1 poise** (0 would break the poise bar's arithmetic); it
+    dies to any hit anyway.
+  - **Mice from burst sacks do not come back** after they are defeated.
+  - **Grist goes back to the wallow to sleep at night unless woken;** once
+    woken it fights until dawn.
+- **Not built yet:** placing the creatures in Millbrook (the next stage),
+  drops and their uses (crafting), the boss heart's use at the farm, the
+  night roster swapping at 20:00 and 6:00 (the area's clock), creatures
+  coming back at 6:00 (the arena keeps its 3-second respawn).
+- How they feel can only be judged by playing:
+  `docs/playtests/2026-10-11-creatures-and-grist.md`.
