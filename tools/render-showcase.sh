@@ -23,6 +23,8 @@ SCENES=(
   "res://scenes/showcase/hammer_poses.tscn"
   "res://scenes/showcase/bow_poses.tscn"
   "res://scenes/showcase/magic_poses.tscn"
+  "res://scenes/showcase/creature_poses.tscn"
+  "res://scenes/showcase/grist_poses.tscn"
   "res://scenes/combat/combat_arena.tscn"
   "res://scenes/showcase/farm_times.tscn"
   "res://scenes/showcase/farm_spells.tscn"

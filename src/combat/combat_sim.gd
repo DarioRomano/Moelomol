@@ -55,6 +55,62 @@ static func make_arena() -> CombatSim:
 
 
 ## Adds a creature of `kind` (the training creature if null).
+## The arena's creature sets (F11 cycles them; docs/design/enemies.md).
+const ARENA_SETS: Array[StringName] = [&"training", &"field_mice", &"rooks", &"hedgehogs", &"flood_toads",
+	&"stooks", &"moths", &"grist"]
+
+
+## The arena with one creature set: the training creatures, or a group of one
+## of Millbrook's kinds, or Grist in a yard like the miller's.
+static func make_arena_set(set_id: StringName) -> CombatSim:
+	if set_id == &"training":
+		return make_arena()
+	var sim: CombatSim = CombatSim.new(Rect2(48, 48, 544, 288), Vector2(160, 260))
+	match set_id:
+		&"field_mice":
+			for at: Vector2 in [Vector2(420, 120), Vector2(450, 150), Vector2(430, 185), Vector2(470, 110), Vector2(480, 200)]:
+				sim.add_creature(at, CreatureKind.field_mouse())
+		&"rooks":
+			for at: Vector2 in [Vector2(400, 110), Vector2(470, 160), Vector2(420, 230)]:
+				sim.add_creature(at, CreatureKind.rook())
+		&"hedgehogs":
+			sim.obstacles.append(Rect2(300, 120, 16, 96))
+			for at: Vector2 in [Vector2(420, 130), Vector2(460, 240)]:
+				sim.add_creature(at, CreatureKind.hedgehog())
+		&"flood_toads":
+			for at: Vector2 in [Vector2(440, 110), Vector2(500, 200), Vector2(420, 290)]:
+				sim.add_creature(at, CreatureKind.flood_toad())
+		&"stooks":
+			var stooks: Array[Vector2] = [Vector2(380, 150), Vector2(460, 210), Vector2(420, 270)]
+			for row: int in range(3):
+				for col: int in range(4):
+					var at: Vector2 = Vector2(340 + col * 40, 150 + row * 60)
+					var taken: bool = false
+					for s: Vector2 in stooks:
+						taken = taken or s.distance_to(at) < 30.0
+					if not taken:
+						sim.add_prop(&"sheaf", Rect2(at - Vector2(4, 4), Vector2(8, 8)), false)
+			for at: Vector2 in stooks:
+				sim.add_creature(at, CreatureKind.stook())
+		&"moths":
+			sim.night = true
+			sim.lights = [Vector2(330, 130), Vector2(470, 240)]
+			for at: Vector2 in [Vector2(320, 120), Vector2(340, 140), Vector2(330, 145), Vector2(460, 230), Vector2(480, 250)]:
+				sim.add_creature(at, CreatureKind.moth())
+		&"grist":
+			# A yard like the miller's (enemies.md): the cottage wall along the
+			# top with two millstones leaning on it, the wallow, the trough and
+			# four stacks of grain sacks by the fence.
+			sim.add_prop(&"wallow", Rect2(64, 64, 56, 40), false)
+			sim.add_prop(&"trough", Rect2(520, 64, 48, 14), true)
+			sim.add_prop(&"millstone_leaning", Rect2(232, 48, 20, 12), true)
+			sim.add_prop(&"millstone_leaning", Rect2(392, 48, 20, 12), true)
+			for rect: Rect2 in [Rect2(48, 220, 30, 20), Rect2(562, 220, 30, 20), Rect2(250, 316, 30, 20), Rect2(420, 316, 30, 20)]:
+				sim.add_prop(&"sacks", rect, true)
+			sim.add_creature(Vector2(320, 140), CreatureKind.grist())
+	return sim
+
+
 func add_creature(at: Vector2, kind: CreatureKind = null) -> Fighter:
 	var creature: Fighter = Fighter.make_creature(at, kind)
 	creature.disguised = creature.creature_kind.behaviour == CreatureKind.AMBUSHER

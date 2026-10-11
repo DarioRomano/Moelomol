@@ -10,14 +10,21 @@ extends Node2D
 ##
 ## Developer keys: F5 render interpolation on/off (Q20), F6 creatures
 ## passive/active, F7 changes the weapon not in hand (greatsword, hammer,
-## bow).
+## bow, magic), F11 the next creature set (docs/design/enemies.md: the
+## training creatures, then each of Millbrook's kinds, then Grist's yard), F12
+## night on/off.
+
+## The night colour over the arena (F12): the clock's midnight tint.
+static var NIGHT_TINT: Color = GameClock.sky_tint_at(0.0)
 
 var sim: CombatSim = CombatSim.make_arena()
+var creature_set: int = 0  # index into CombatSim.ARENA_SETS
 var haptics: Haptics = Haptics.new()
 var render_interpolation: bool = true
 var effects: Array[Dictionary] = []
 
 var _hud: CombatHud
+var _night: CanvasModulate
 
 
 func _ready() -> void:
@@ -32,6 +39,9 @@ func _ready() -> void:
 	layer.add_child(frame)
 	_hud = CombatHud.new()
 	frame.add_child(_hud)
+	_night = CanvasModulate.new()
+	add_child(_night)
+	_night.color = Color.WHITE
 
 
 func _physics_process(_delta: float) -> void:
@@ -46,7 +56,8 @@ func _physics_process(_delta: float) -> void:
 
 func _process(_delta: float) -> void:
 	queue_redraw()
-	_hud.show_state(sim, render_interpolation)
+	_hud.show_state(sim, render_interpolation, "creatures: %s (F11)%s" % [
+		String(CombatSim.ARENA_SETS[creature_set]).replace("_", " "), "   night (F12)" if sim.night else ""])
 
 
 func _draw() -> void:
@@ -65,6 +76,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"dev_cycle_offhand_weapon", false):
 		_apply_settings(sim.cycle_offhand_weapon())
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"dev_next_creature_set", false):
+		next_creature_set()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"dev_toggle_night", false):
+		sim.night = not sim.night
+		_night.color = NIGHT_TINT if sim.night else Color.WHITE
+		get_viewport().set_input_as_handled()
+
+
+## Swaps in the next creature set, keeping the player's weapons.
+func next_creature_set() -> void:
+	creature_set = (creature_set + 1) % CombatSim.ARENA_SETS.size()
+	var weapons: Array[Weapon] = sim.player.weapons
+	var index: int = sim.player.weapon_index
+	sim = CombatSim.make_arena_set(CombatSim.ARENA_SETS[creature_set])
+	sim.player.weapons = weapons
+	sim.player.weapon_index = index
+	effects.clear()
+	_night.color = NIGHT_TINT if sim.night else Color.WHITE
 
 
 ## Player settings that change how a weapon plays (accessibility).
