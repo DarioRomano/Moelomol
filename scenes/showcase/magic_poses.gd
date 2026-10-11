@@ -1,6 +1,6 @@
 extends PoseSheet
 ## Magic review poses (PoseSheet): spells, effect stacks, Frozen, the
-## Siphon's tether and beam, the Rot pool (skill, interim) and Wardstep.
+## Siphon's tether and beam, the Rot seed jumping, and Wardstep.
 
 const MAGIC: int = 1
 
@@ -11,7 +11,7 @@ func _make_panels() -> Array[Dictionary]:
 		_pose("Frost shard: five Chill, Frozen", _frozen, MAGIC),
 		_pose("Siphon: the tether drains stacks", _siphon_draining, MAGIC),
 		_pose("Siphon beam, three effects: Shatter + Blight", _beam_all, MAGIC),
-		_pose("Skill (interim): Rot pool", _pool, MAGIC),
+		_pose("Rot seed: its host dies, it jumps", _seed_jump, MAGIC),
 		_pose("Wardstep: blink, leave a Chill pool", _wardstep, MAGIC),
 	]
 
@@ -40,11 +40,17 @@ func _frozen(sim: CombatSim, effects: Array[Dictionary]) -> void:
 	_step_until(sim, effects, func() -> bool: return _effect_age(effects, "frozen") >= 4)
 
 
-func _pool(sim: CombatSim, effects: Array[Dictionary]) -> void:
-	_creature(sim, Vector2(100, 74))
-	_creature(sim, Vector2(110, 92))
+## The seed has grown on the first creature; the creature dies and the seed
+## arcs to the one beside it.
+func _seed_jump(sim: CombatSim, effects: Array[Dictionary]) -> void:
+	var host: Fighter = _creature(sim, Vector2(110, 80))
+	_creature(sim, Vector2(140, 96))
 	sim.step(CombatInput.press(&"skill"))
-	_step_until(sim, effects, func() -> bool: return sim.zones[0].age >= 70)
+	var magic: Magic = sim.player.weapon() as Magic
+	_step_until(sim, effects, func() -> bool: return magic.seed_host == host)
+	_step_until(sim, effects, func() -> bool: return host.effects.count(StatusEffects.ROT) >= 3)
+	sim._defeat(host)
+	_step_until(sim, effects, func() -> bool: return _effect_age(effects, "seed_jump") >= 6)
 
 
 ## Holding heavy on a creature carrying all three effects, part-way through:

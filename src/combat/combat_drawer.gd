@@ -13,7 +13,7 @@ const TILE: float = 16.0
 ## How long each effect plays, in ticks.
 const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6, "shockwave": 18, "armour_break": 16,
 	"release": 14, "shatter": 16, "blight_bloom": 18, "brittle": 14, "frozen": 14, "spread": 12,
-	"wardstep": 12, "beam": 12, "perfect_brace": 16, "brace_absorb": 10}
+	"wardstep": 12, "beam": 12, "seed_jump": 14, "seed_latch": 10, "perfect_brace": 16, "brace_absorb": 10}
 ## Effect colours (docs/design/combat.md, "The three effects").
 const EFFECT_COLOURS: Dictionary = {
 	StatusEffects.SMOULDER: Color("#e0a95b"),
@@ -62,6 +62,10 @@ static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Arra
 			_draw_player(canvas, f, _at(f, alpha))
 		else:
 			_draw_creature(canvas, f, _at(f, alpha))
+	for weapon: Weapon in sim.player.weapons:
+		var magic: Magic = weapon as Magic
+		if magic != null and magic.seed_host != null:
+			_draw_seed_growth(canvas, magic, _at(magic.seed_host, alpha))
 	for arrow: Projectile in sim.projectiles:
 		_draw_arrow(canvas, arrow, arrow.previous_position.lerp(arrow.position, clampf(alpha, 0.0, 1.0)))
 	if sim.lock_target != null:
@@ -339,6 +343,21 @@ static func _draw_siphon(canvas: CanvasItem, f: Fighter, magic: Magic, at: Vecto
 			bead += 1
 
 
+## The Rot seed on its host: a growth on the creature's shoulder with
+## tendrils that lengthen as the seed ages; it fades in its last second.
+static func _draw_seed_growth(canvas: CanvasItem, magic: Magic, at: Vector2) -> void:
+	var colour: Color = EFFECT_COLOURS[StatusEffects.ROT]
+	var total: int = CombatTuning.ticks(Magic.SEED_DURATION_MS)
+	var grown: float = clampf(1.0 - float(magic.seed_ticks_left) / total, 0.0, 1.0)
+	var fade: float = minf(1.0, magic.seed_ticks_left / float(CombatTuning.TICK_RATE))
+	var root: Vector2 = at + Vector2(4, -12)
+	for i: int in range(3):
+		var direction: Vector2 = Vector2.from_angle(-PI / 2 + (i - 1) * 0.9)
+		canvas.draw_line(root, root + direction * (3.0 + grown * 5.0), Color(colour.lightened(0.2), fade), 1.0)
+	canvas.draw_circle(root, 2.5 + grown, Color(colour.darkened(0.2), fade))
+	canvas.draw_circle(root + Vector2(-0.8, -0.8), 1.0, Color(colour.lightened(0.45), fade))
+
+
 ## Up to five pips per effect above a creature, one row per effect present.
 static func _draw_effect_pips(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	var row: int = 0
@@ -368,6 +387,14 @@ static func _draw_stage_pips(canvas: CanvasItem, centre: Vector2, stage: int, cl
 static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> void:
 	var direction: Vector2 = arrow.velocity.normalized()
 	var tip: Vector2 = at + Vector2(0, -8)  # flies at chest height
+	if arrow.move == Magic.ROT_SEED.arrow:
+		# The Rot seed: a dark husk with a violet glow, tumbling slowly.
+		var colour: Color = EFFECT_COLOURS[StatusEffects.ROT]
+		canvas.draw_line(tip - direction * 5, tip, Color(colour, 0.4), 1.0)
+		canvas.draw_circle(tip, 3.0, Color(colour, 0.35))
+		canvas.draw_circle(tip, 1.8, (colour as Color).darkened(0.3))
+		canvas.draw_rect(Rect2(tip + direction.rotated(arrow.range_left * 0.2) * 1.5 - Vector2(0.5, 0.5), Vector2(1, 1)), colour.lightened(0.4))
+		return
 	if arrow.move.effect != &"":
 		# A spell: an ember (round) or a frost shard (a diamond), with a trail.
 		var colour: Color = EFFECT_COLOURS[arrow.move.effect]
@@ -388,8 +415,8 @@ static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> v
 
 
 static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:
-	if zone.kind in [&"rot_pool", &"chill_pool"]:
-		var colour: Color = EFFECT_COLOURS[StatusEffects.ROT if zone.kind == &"rot_pool" else StatusEffects.CHILL]
+	if zone.kind == &"chill_pool":
+		var colour: Color = EFFECT_COLOURS[StatusEffects.CHILL]
 		var left: float = 1.0 - float(zone.age) / (zone.period * zone.waves)
 		canvas.draw_circle(zone.position, zone.radius, Color(colour, 0.15 + 0.15 * left))
 		canvas.draw_arc(zone.position, zone.radius, 0, TAU, 32, Color(colour, 0.8), 1.0)
@@ -559,6 +586,21 @@ static func _draw_effect(canvas: CanvasItem, effect: Dictionary) -> void:
 		"brace_absorb":
 			var t: float = age / float(EFFECT_TICKS["brace_absorb"])
 			canvas.draw_arc(at + Vector2(0, -10), 14.0, 0, TAU, 20, Color(Palette.STONE[2], 1.0 - t), 2.0)
+		"seed_jump":
+			# An arc from the old host to the new one, the seed riding it.
+			var t: float = age / float(EFFECT_TICKS["seed_jump"])
+			var from: Vector2 = effect.get("from", at) + Vector2(4, -12)
+			var to: Vector2 = at + Vector2(4, -12)
+			var points: PackedVector2Array = []
+			for i: int in range(9):
+				var k: float = i / 8.0
+				points.append(from.lerp(to, k) + Vector2(0, -12.0 * sin(PI * k)))
+			canvas.draw_polyline(points, Color(EFFECT_COLOURS[StatusEffects.ROT], 0.8 * (1.0 - t)), 1.0)
+			var u: float = minf(1.0, t * 2.0)
+			canvas.draw_circle(from.lerp(to, u) + Vector2(0, -12.0 * sin(PI * u)), 2.0, Color(EFFECT_COLOURS[StatusEffects.ROT], 1.0 - t))
+		"seed_latch":
+			var t: float = age / float(EFFECT_TICKS["seed_latch"])
+			canvas.draw_arc(at + Vector2(4, -12), 3.0 + t * 6.0, 0, TAU, 16, Color(EFFECT_COLOURS[StatusEffects.ROT].lightened(0.3), 1.0 - t), 1.0)
 		"beam":
 			var t: float = age / float(EFFECT_TICKS["beam"])
 			var from: Vector2 = effect.get("from", at) + Vector2(0, -10)

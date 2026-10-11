@@ -145,18 +145,96 @@ func test_heavy_tap_is_a_frost_shard_with_two_chill() -> void:
 	assert_eq(sim.creatures[0].effects.count(C), 2, "two Chill stacks")
 
 
-func test_skill_places_a_rot_pool_that_gives_rot_without_hitting() -> void:
-	var sim: CombatSim = _field([Vector2(140, 150), Vector2(220, 150)])
+## Casts a Rot seed and steps until it latches (or stops); returns the events.
+func _seed(sim: CombatSim) -> Array[Dictionary]:
 	sim.step(CombatInput.press(&"skill"))
 	var seen: Array[Dictionary] = sim.events.duplicate()
-	assert_eq(_count(seen, "pool"), 1, "a pool at once")
-	assert_eq(sim.player.move, Magic.ROT_POOL, "the cast's recovery")
-	assert_true(absf(_magic(sim).focus - (Magic.FOCUS_MAX - Magic.POOL_FOCUS)) < 0.5, "Focus spent")
-	assert_true(sim.zones[0].position.distance_to(Vector2(140, 150)) < 1.0, "40 px in front")
-	seen = _run(sim, T.ticks(Magic.POOL_PERIOD_MS) * 3)
-	assert_eq(sim.creatures[0].effects.count(R), 4, "a Rot stack as it lands, then one every half second")
-	assert_eq(sim.creatures[1].effects.count(R), 0, "nothing outside the pool")
-	assert_eq(_count(seen, "hit"), 0, "standing in a pool is not a hit")
+	seen.append_array(_settle(sim))
+	return seen
+
+
+func test_the_rot_seed_latches_onto_the_first_creature_and_grows_rot() -> void:
+	var sim: CombatSim = _field([Vector2(160, 150), Vector2(200, 150)])
+	var c: Fighter = sim.creatures[0]
+	sim.step(CombatInput.press(&"skill"))
+	assert_eq(sim.player.move, Magic.ROT_SEED, "casting the seed")
+	assert_true(absf(_magic(sim).focus - (Magic.FOCUS_MAX - Magic.SEED_FOCUS)) < 0.5, "Focus spent")
+	var seen: Array[Dictionary] = _settle(sim)
+	assert_eq(_count(seen, "seed_latch"), 1, "it latches")
+	assert_eq(_magic(sim).seed_host, c, "onto the first creature hit")
+	var rot: int = c.effects.count(R)
+	assert_eq(rot, 1, "one Rot at once")
+	_run(sim, _magic(sim).seed_grow_wait)
+	assert_eq(c.effects.count(R), 2, "and one more after 0.6 s")
+	assert_eq(sim.creatures[1].effects.count(R), 0, "it does not fly on")
+	assert_eq(c.health, T.CREATURE_HEALTH, "the seed itself does no damage (Rot's first tick is at 1 s)")
+
+
+func test_the_seed_withers_after_four_seconds() -> void:
+	var sim: CombatSim = _field([Vector2(160, 150)])
+	_seed(sim)
+	var magic: Magic = _magic(sim)
+	var left: int = magic.seed_ticks_left
+	assert_true(left > T.ticks(Magic.SEED_DURATION_MS) - 30 and left <= T.ticks(Magic.SEED_DURATION_MS),
+		"four seconds to grow (%d ticks left)" % left)
+	_run(sim, left - 1)
+	assert_eq(magic.seed_host, sim.creatures[0], "still growing")
+	var seen: Array[Dictionary] = _run(sim, 1)
+	assert_eq(_count(seen, "seed_withered"), 1, "then it withers")
+	assert_eq(magic.seed_host, null, "gone")
+
+
+func test_a_new_seed_replaces_the_old_one() -> void:
+	var sim: CombatSim = _field([Vector2(160, 150), Vector2(100, 220)])
+	_seed(sim)
+	_run(sim, 60)
+	sim.player.facing = Vector2.DOWN
+	_seed(sim)
+	var magic: Magic = _magic(sim)
+	assert_eq(magic.seed_host, sim.creatures[1], "the new host")
+	assert_true(magic.seed_ticks_left > T.ticks(Magic.SEED_DURATION_MS) - 30, "with a fresh four seconds")
+
+
+func test_the_seed_jumps_when_its_host_dies_and_keeps_its_time() -> void:
+	var sim: CombatSim = _field([Vector2(160, 150), Vector2(190, 160), Vector2(160, 250)])
+	_seed(sim)
+	var magic: Magic = _magic(sim)
+	_run(sim, 60)
+	var left: int = magic.seed_ticks_left
+	sim._defeat(sim.creatures[0])
+	var seen: Array[Dictionary] = _run(sim, 1)
+	assert_eq(_count(seen, "seed_jump"), 1, "it jumps")
+	assert_eq(magic.seed_host, sim.creatures[1], "to the nearest creature within reach")
+	assert_eq(sim.creatures[1].effects.count(R), 1, "and takes hold there at once")
+	assert_eq(magic.seed_ticks_left, left - 1, "keeping the time it had")
+
+
+func test_the_seed_jumps_when_the_siphon_drains_its_host() -> void:
+	var sim: CombatSim = _field([Vector2(125, 150), Vector2(150, 175)])
+	_seed(sim)
+	var magic: Magic = _magic(sim)
+	assert_eq(magic.seed_host, sim.creatures[0], "seeded")
+	var seen: Array[Dictionary] = _siphon(sim, 0, false)
+	assert_eq(_count(seen, "seed_jump"), 1, "draining the host shakes it loose")
+	assert_eq(magic.seed_host, sim.creatures[1], "onto the neighbour")
+	assert_eq(magic.drained, {R: 1}, "the Siphon still takes the host's Rot")
+
+
+func test_the_seed_is_lost_with_no_creature_near() -> void:
+	var sim: CombatSim = _field([Vector2(160, 150), Vector2(300, 150)])
+	sim.creatures[1].position = Vector2(300, 260)
+	_seed(sim)
+	sim._defeat(sim.creatures[0])
+	var seen: Array[Dictionary] = _run(sim, 1)
+	assert_eq(_count(seen, "seed_lost"), 1, "nothing within 48 px")
+	assert_eq(_magic(sim).seed_host, null, "gone")
+
+
+func test_a_seed_that_hits_nothing_is_gone() -> void:
+	var sim: CombatSim = _field()
+	var seen: Array[Dictionary] = _seed(sim)
+	assert_eq(_count(seen, "seed_latch"), 0, "nothing to latch onto")
+	assert_eq(_magic(sim).seed_host, null, "no seed")
 
 
 func test_casting_slows_but_never_roots() -> void:
@@ -517,4 +595,6 @@ func test_magic_events_map_to_haptic_effects() -> void:
 	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"siphon_beam"}), &"", "no double pulse")
 	assert_eq(Haptics.effect_for_event({"type": "siphon", "fighter": p}), &"spell_cast", "the tether forms")
 	assert_eq(Haptics.effect_for_event({"type": "siphon_drain", "taken": {S: 1}}), &"siphon_drain", "a tug per pull")
+	assert_eq(Haptics.effect_for_event({"type": "hit", "target": c, "move": &"rot_seed"}), &"spell_hit", "the seed lands")
+	assert_eq(Haptics.effect_for_event({"type": "seed_jump"}), &"spell_hit", "the seed jumps")
 	assert_eq(Haptics.effect_for_event({"type": "wardstep"}), &"wardstep", "blink")
