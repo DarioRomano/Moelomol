@@ -12,6 +12,8 @@ const WEAPON_IDS: Array[StringName] = [&"greatsword", &"hammer", &"bow", &"magic
 
 var bounds: Rect2
 var obstacles: Array[Rect2] = []
+## An area's map: its solid cells block like obstacles (null in the arena).
+var map: AreaMap = null
 var player: Fighter
 var creatures: Array[Fighter] = []
 var lock_target: Fighter = null
@@ -835,6 +837,10 @@ func _step_projectiles() -> void:
 
 
 func _in_obstacle(at: Vector2, r: float = 0.0) -> bool:
+	if map != null and not map.solid_rects_near(at, r).is_empty():
+		for rect: Rect2 in map.solid_rects_near(at, r):
+			if rect.grow(r).has_point(at):
+				return true
 	for rect: Rect2 in obstacles:
 		if rect.grow(r).has_point(at):
 			return true
@@ -1026,7 +1032,10 @@ func _move_with_collision(f: Fighter, delta: Vector2) -> bool:
 func resolve_position(at: Vector2, r: float) -> Vector2:
 	var p: Vector2 = at
 	for _pass: int in range(2):
-		for rect: Rect2 in obstacles:
+		var blockers: Array[Rect2] = obstacles
+		if map != null:
+			blockers = obstacles + map.solid_rects_near(p, r + 1.0)
+		for rect: Rect2 in blockers:
 			var closest: Vector2 = Vector2(clampf(p.x, rect.position.x, rect.end.x), clampf(p.y, rect.position.y, rect.end.y))
 			var offset: Vector2 = p - closest
 			var distance: float = offset.length()

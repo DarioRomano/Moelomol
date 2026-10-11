@@ -65,6 +65,7 @@ rect(4, 11, 6, 12, 'P')            # cider press shed
 rect(2, 20, 11, 28, 'y')
 rect(2, 20, 6, 28, 'u')
 line([(2, 19), (12, 19), (12, 29)], 'h')
+put(7, 19, '.')                    # a gap in the hedge: the way into the field (fix, 2026-10-11)
 # The flooded lower meadow (south).
 rect(13, 22, 42, 28, 'w')
 for x in range(13, 43):
@@ -79,6 +80,9 @@ line([(55, 7), (50, 8), (47, 9)], '~', 2)
 rect(42, 9, 51, 16, '~')
 put(48, 12, 'i'); put(49, 12, 'i')  # island
 line([(42, 18), (42, 19), (41, 21), (40, 22)], '~', 2)
+# The race runs on south as the brook, past the yard to the map's edge, so the
+# flooded meadow is the only way to the ford (fix, 2026-10-11).
+line([(42, 22), (42, 31)], '~', 2)
 # Mill and sluice.
 rect(38, 16, 41, 18, 'M')
 put(42, 17, 'X')

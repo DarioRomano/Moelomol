@@ -115,7 +115,9 @@ encounters). Built in stages, each its own pull request:
    in the arena with F11 and F12 (2026-10-11). Playtest:
    `docs/playtests/2026-10-11-creatures-and-grist.md`.
 3. **The area:** Millbrook walkable from the accepted map; collision from
-   the map; the camera (ADR-0015); the clock with day and night rosters.
+   the map; the camera (ADR-0015); the clock with day and night rosters;
+   falling (2026-10-11). Two map corrections (wheat field gap, brook to
+   the south edge). Playtest: `docs/playtests/2026-10-11-millbrook-walkable.md`.
 4. **The objective:** notes and the satchel, the crank, the sluice, the
    flood draining, the ford, Grist's heart, falling.
 

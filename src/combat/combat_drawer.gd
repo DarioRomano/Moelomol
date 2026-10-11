@@ -49,8 +49,11 @@ static func update_effects(effects: Array[Dictionary], events: Array[Dictionary]
 	effects.assign(alive)
 
 
-static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Array[Dictionary]) -> void:
-	_draw_arena(canvas, sim)
+## `arena`: draw the test arena's floor and walls (false in an area, which
+## draws its own map underneath).
+static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Array[Dictionary], arena: bool = true) -> void:
+	if arena:
+		_draw_arena(canvas, sim)
 	_draw_props(canvas, sim)
 	for light: Vector2 in sim.lights:
 		_draw_light(canvas, light, sim.tick_count)

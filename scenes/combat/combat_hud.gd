@@ -35,6 +35,11 @@ func _make_label() -> Label:
 	return label
 
 
+## Replaces the controls line (an area's controls differ from the arena's).
+func set_help(text: String) -> void:
+	_help.text = text
+
+
 func show_state(sim: CombatSim, interpolation: bool, extra: String = "") -> void:
 	var p: Fighter = sim.player
 	_health = p.health / p.max_health
