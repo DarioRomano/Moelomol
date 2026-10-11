@@ -1,9 +1,9 @@
 # The first area: Millbrook
 
-- **Status:** Proposal (2026-10-11), for the lead. The layout, the
-  creatures' placement and the objective are the lead's decisions
-  (CLAUDE.md: level layout, balance); nothing here is built. Names are
-  working names.
+- **Status:** The layout was accepted by the lead on 2026-10-11. Creature
+  placement and values are starting values (`enemies.md`); balance is the
+  lead's call (CLAUDE.md). Names are working names. Being built in stages
+  (`docs/roadmap.md`).
 - **Binding constraints:** ADR-0005, ADR-0010, `story.md` (stage 1,
   "ordinary loss"), `art-direction.md`, `world.md` (shared rules for every
   area).
@@ -35,7 +35,7 @@ the ford south. That is the area's objective.
   schoolroom board. No people, no bodies (`art-direction.md`).
 - **Safe enough to learn in.** The creatures are weak and few, and hold
   small patches of ground. The first fight is optional and close to home.
-  The hardest fight, the Old Boar, is the area's boss: the last thing on
+  The hardest fight, Grist, is the area's boss: the last thing on
   the way to the objective, and the first boss of the game.
 - **Pretty by day, uneasy at night.** Daylight Millbrook is the gentlest
   place outside the farm. At night the windows stay dark, the night
@@ -152,7 +152,7 @@ ttttttttttttttttttttttttttt==ttttttttttttttttttttttttttt
      shut.
 10. **A, the footbridge** over the mill race to the miller's yard.
 11. **B, the miller's cottage and yard.**
-    - The yard is the Old Boar's ground: **Millbrook's boss**. It can be
+    - The yard is Grist's ground: **Millbrook's boss**. It can be
       avoided until the player is ready (below).
     - The sluice crank hangs inside the cottage, by the door.
 12. **C, the orchard and the cider press shed.**
@@ -189,8 +189,9 @@ The way on is shown by the world, not a quest log (Q37):
    - In the mill (9), past the mice, the sluice wheel has no crank.
    - The miller's note says where it went: draft below.
 3. **Fetch the crank.** It hangs in the miller's cottage (B), across the
-   footbridge, in the Old Boar's yard. The player can sneak past the boar
-   or fight it; beating it also opens the great fields at the farm.
+   footbridge, in Grist's yard. The player can sneak past Grist (by night
+   it sleeps) or fight it; beating it also opens the great fields at the
+   farm.
 4. **Open the sluice.**
    - Back at the mill, the crank fits and the sluice opens.
    - The brook runs back down the race, and the floodwater drains from
@@ -200,39 +201,58 @@ The way on is shown by the world, not a quest log (Q37):
 A first visit that does the objective takes about 30–45 minutes with
 exploring. A player who knows the way can do it in a few minutes.
 
-## Creatures (roles from `combat.md`; numbers are starting values)
+## Creatures, zone by zone
 
-Millbrook only has weak creatures. Their stats are tuned below the arena's
-training creature; numbers come with the enemy design.
+The creatures themselves, their values and the boss are in `enemies.md`.
+This is where they are and what each part of Millbrook asks of the player.
+The order below is the order a first visit usually takes.
 
-| Creature | Role | Where | When |
+| Zone | By day | By night | What it asks |
 |---|---|---|---|
-| **Changed field mice** | Swarmer: many, fast, little poise | Cottage gardens (5), the mill (9), the standing wheat (D); groups of 3–5 | Day |
-| **Changed crows** | Skirmisher: keep away, swoop | The orchard (C) and the wheat field (D); 2–3 | Day |
-| **The Old Boar** (boss) | Brute: high poise, a charge with a long telegraph | The miller's yard (B), alone | Day and night |
-| **Night moths** (Proposal) | Swarmer that flies to light; weak, erratic | Over the green and the meadow | Night |
+| **The lane (1, 2)** | Nothing | Nothing | Safe ground (`world.md`). The first look at the valley |
+| **The lane's foot and the green (3)** | One hedgehog in the hedgerow where the lane meets the green | Two hedgehogs | The first fight, alone and slow: learn to wait, and to hit hard |
+| **The cottage gardens (5, 6)** | Two packs of field mice (4 and 3) | One hedgehog | Sweeps against many |
+| **The orchard (C)** | Three rooks | Moths at the fungus | Dodging dives; waiting for the landing |
+| **The wheat field (D)** | Three stooks among the sheaves; a pack of mice in the standing wheat | Three stooks; moths at the field's edge | Reading the scene |
+| **The floodwater's edge (8, F)** | Two toads on the bank | Four toads; moths over the fireflies | Ground markers; closing the distance |
+| **The mill (9)** | A nest of mice inside (two packs of 4) | The same | A close fight indoors, past the sluice wheel |
+| **The beehives (G)** | Nothing: the bees are quiet | Nothing | A quiet place with honey |
+| **The miller's yard (B)** | **Grist**, the boss | Grist asleep in the wallow | The boss, or a night-time creep to the crank |
+| **The millpond's banks** | Two toads | Three toads | |
+| **The chapel, school, cottages** | Nothing | Nothing | Indoors is quiet (except the mill) |
 
-- **The Old Boar is Millbrook's boss** (the lead, 2026-10-11: each boss
-  defeated opens more of the farm; `base.md`).
-  - It teaches reading a big telegraph, stagger and the dodge.
-  - Its yard is fenced, so the fight never spills into the rest of the
-    area.
-  - **Defeating it is not needed for the ford:** the crank can be taken
-    while it is turned away, so the player is never forced into the
-    hardest fight to move on.
-  - **Defeating it gives back the farm's great fields:** it drops its heart,
-    which opens the first overgrown parcel at the farm (`base.md`, Q38).
-  - It is defeated once and does not come back (`world.md`).
-- **Drops** are natural materials, changed (`story.md`, Q13): grey pelts,
-  crow feathers, a boar tusk. Their uses come with crafting.
-- **No creature spawns** on the lane, in the cottages, in the chapel or in
-  the schoolhouse. Indoors is quiet, except the mill.
+- **About 30 creatures by day** across the area, never more than one group
+  in view at a time on a 16:9 screen.
+- **The route teaches in order:** one slow creature, then many weak ones,
+  then a line attack (rooks), then a marker (toads), then a crowded room
+  (the mill), then the boss.
+- The player can take any route; the order is how the zones nearest the
+  lane fall.
+
+### Grist, the miller's boar: Millbrook's boss
+
+Full design in `enemies.md`. In short:
+- **It holds the miller's yard.** It gores, charges, bursts grain sacks
+  (which brings mice), wallows in mud for armour at half health, and rolls
+  the yard's spare millstones.
+- **Its yard is fenced**, so the fight never spills into the rest of the
+  area.
+- **Defeating it is not needed for the ford:** by night Grist sleeps in the
+  wallow and the player can creep to the crank. The player is never forced
+  into the hardest fight to move on.
+- **Defeating it gives back the farm's great fields:** it leaves its heart,
+  which opens the first overgrown parcel at the farm (`base.md`, Q38).
+- **It is defeated once** and does not come back (`world.md`).
+
+**Drops** are natural materials, changed (`story.md`, Q13): pelts,
+feathers, quills, toad slime, straw and wheat seeds, wing dust, Grist's
+tusk. Their uses come with crafting.
 
 ## Day and night
 
 | | Day (6:00–20:00) | Night (20:00–6:00) |
 |---|---|---|
-| Creatures | Mice, crows, the Old Boar | Night moths, the Old Boar; mice and crows are gone |
+| Creatures | Mice, rooks, hedgehogs, toads, stooks, Grist awake | Moths, more hedgehogs and toads, stooks, Grist asleep; mice and rooks are gone |
 | Light | Full | Sight about 7 tiles around the player (`world.md`); glowing fungus in the orchard; fireflies over the meadow (and over the floodwater) |
 | Mood | Gentle, overgrown, birdsong thinning towards the south | Dark windows; the only warm things are notes and the player's own lights |
 
@@ -279,7 +299,7 @@ both are ordinary (`story.md` rules 3 and 4).
 | Materials | Changed drops (pelts, feathers, the tusk); orchard wood for the bow (Q35) | Drops at 6:00 with the creatures |
 | Weapon | The bow, made from orchard wood (or found in the cider shed until crafting exists) | Once |
 | Animal | The hen (6), if animals exist by then | Found once |
-| Farmland | The Old Boar's heart: opens the great fields at the farm | Once |
+| Farmland | Grist's heart: opens the great fields at the farm | Once |
 | Notes | About eight | Found once |
 | Trinket | One, on the island (E), reachable later | Found once |
 | Progress | The ford: the way to the second area | Once |
@@ -288,7 +308,7 @@ both are ordinary (`story.md` rules 3 and 4).
 
 - The second area beyond the ford: only its edge is drawn.
 - Crop kinds behind the new seeds; crafting uses of the drops.
-- Creature stats; the Old Boar's moves beyond "a long charge".
+- Interiors other than the mill.
 - Interiors of the cottages, beyond one room each.
 - Audio: the area's ambience follows `audio-direction.md` (fewer birds to
   the south); prompts come with the area's art.
