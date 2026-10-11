@@ -73,19 +73,19 @@ tt...........5gggHHH.,,,,,,==,,,,,...ggg..~~~~~~~~~~..tt
 tt.*.a.a.a....gggHHH.,,,,,,==,,,,,.==.MMMM~~~~~~~~~~..tt
 t.............ggg..........==........=MMMMX............t
 t.............6c.......HHH.==........9MMMM~~..........tt
-t.hhhhhhhhhhh..........HHH.==s8.......=...~~.#########tt
+t.hhhhh.hhhhh..........HHH.==s8.......=...~~.#########tt
 ttuuuuuyyyyyh..............==..........==bbb=#..HHH..#.t
 t.uuuuuyyyyyhw.w...wwww...w==..w..ww.w.w.~A..=..HHH..#tt
-ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwww~~w..#.....B.#tt
-t.uuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwwww..#.......#tt
-ttuuuuuyDyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwwww..#.......#tt
-ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwwww..#.......#tt
-ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwwww..#########.t
-ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwwww............t
-t.uuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwwww............t
-tt..........h..wv.vvww.w.ww==wv.vwv.w.ww..............tt
-t.tttt.t...tt.vvvvvvvvvvvvv==Fvvvvvvvvvvvv..t..t.ttttttt
-ttttttttttttttttttttttttttt==ttttttttttttttttttttttttttt
+ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwww~~~~.#.....B.#tt
+t.uuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwww~~.#.......#tt
+ttuuuuuyDyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwww~~.#.......#tt
+ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwww~~.#.......#tt
+ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwww~~.#########.t
+ttuuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwww~~...........t
+t.uuuuuyyyyyhwwwwwwwwwwwwwwwwwwwwwwwwwwwww~~...........t
+tt..........h..wv.vvww.w.ww==wv.vwv.w.ww..~~..........tt
+t.tttt.t...tt.vvvvvvvvvvvvv==Fvvvvvvvvvvvv~~t..t.ttttttt
+ttttttttttttttttttttttttttt==ttttttttttttt~~tttttttttttt
 ```
 
 | Key | What | Key | What |
@@ -102,6 +102,13 @@ ttttttttttttttttttttttttttt==ttttttttttttttttttttttttttt
 | `w` | Floodwater over the lower meadow | `v` | Changed land, violet-tinged |
 | `i` | Island in the millpond | `*` | Glowing fungus (lights at night) |
 | `s` | Signpost | 1–9, A–G | Places below |
+
+Two corrections made while building (2026-10-11), both found by a test
+that walks the map: the hedge round the wheat field had no way in, so it now
+has a gap on its north side; and the floodwater did not really cut off the
+ford (it could be walked round between the meadow and the miller's yard),
+so the mill race now runs on south as the brook to the map's edge, and the
+drained meadow is the only way to the ford.
 
 ## Places
 
