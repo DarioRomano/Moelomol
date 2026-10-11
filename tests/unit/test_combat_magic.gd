@@ -196,7 +196,9 @@ func test_a_new_seed_replaces_the_old_one() -> void:
 
 
 func test_the_seed_jumps_when_its_host_dies_and_keeps_its_time() -> void:
-	var sim: CombatSim = _field([Vector2(160, 150), Vector2(190, 160), Vector2(160, 250)])
+	# Both others are within reach; the nearer comes first in the list, so a
+	# jump that took the last candidate would pick the wrong one.
+	var sim: CombatSim = _field([Vector2(160, 150), Vector2(190, 160), Vector2(160, 195)])
 	_seed(sim)
 	var magic: Magic = _magic(sim)
 	_run(sim, 60)
