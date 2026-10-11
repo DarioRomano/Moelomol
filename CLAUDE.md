@@ -79,7 +79,7 @@ prints failures as `::error` annotations: read them with
 | `scenes/combat/` | Combat test arena and its HUD |
 | `scenes/farm/` | Farm test scene and its HUD |
 | `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), drawing |
-| `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), moves, drawing |
+| `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
 | `tests/runner/` | Test runner and `TestCase` base class |
@@ -186,5 +186,9 @@ note of the bug it caught.
 - **Commit before running anything that restores files.** A `git checkout`
   to undo a deliberate break also threw away uncommitted work in the same
   files; break with a copy-and-restore helper, and commit first.
+- **Break the slanted case too.** Grist's charges ended only at walls met
+  head-on; one that met the fence at a slant slid along it and never
+  stunned. The first test hit walls square, and a deliberate break survived
+  until a slanted test was added.
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.

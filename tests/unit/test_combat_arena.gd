@@ -254,3 +254,48 @@ func test_arena_holds_the_rumble_while_the_hammer_charges() -> void:
 	assert_true(held >= 10, "the charge rumble is held tick by tick (%d refreshes)" % held)
 	arena.queue_free()
 	await tree.process_frame
+
+
+func test_f11_cycles_the_creature_sets_and_keeps_the_weapons() -> void:
+	assert_true(InputMap.event_is_action(_key(KEY_F11), &"dev_next_creature_set"), "F11 is bound")
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var arena: Node2D = ARENA.instantiate()
+	tree.root.add_child(arena)
+	var weapons: Array[Weapon] = (arena.get("sim") as CombatSim).player.weapons
+	arena.call("_unhandled_input", _key(KEY_F11))
+	var sim: CombatSim = arena.get("sim")
+	assert_eq(sim.creatures[0].creature_kind.id, &"field_mouse", "the next set: field mice")
+	assert_eq(sim.player.weapons, weapons, "the same weapons")
+	for i: int in range(CombatSim.ARENA_SETS.size() - 1):
+		arena.call("_unhandled_input", _key(KEY_F11))
+	sim = arena.get("sim")
+	assert_eq(sim.creatures[0].creature_kind.id, &"training", "and round again to the training creatures")
+	arena.queue_free()
+	await tree.process_frame
+
+
+func test_f12_toggles_night() -> void:
+	assert_true(InputMap.event_is_action(_key(KEY_F12), &"dev_toggle_night"), "F12 is bound")
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var arena: Node2D = ARENA.instantiate()
+	tree.root.add_child(arena)
+	arena.call("_unhandled_input", _key(KEY_F12))
+	assert_true((arena.get("sim") as CombatSim).night, "night")
+	arena.call("_unhandled_input", _key(KEY_F12))
+	assert_false((arena.get("sim") as CombatSim).night, "and day again")
+	arena.queue_free()
+	await tree.process_frame
+
+
+func test_every_arena_set_has_its_creatures() -> void:
+	var expected: Dictionary = {&"training": &"training", &"field_mice": &"field_mouse", &"rooks": &"rook",
+		&"hedgehogs": &"hedgehog", &"flood_toads": &"flood_toad", &"stooks": &"stook", &"moths": &"moth", &"grist": &"grist"}
+	assert_eq(CombatSim.ARENA_SETS.size(), expected.size(), "one set per kind")
+	for set_id: StringName in CombatSim.ARENA_SETS:
+		var sim: CombatSim = CombatSim.make_arena_set(set_id)
+		assert_false(sim.creatures.is_empty(), "%s has creatures" % set_id)
+		assert_eq(sim.creatures[0].creature_kind.id, expected[set_id], "%s holds %s" % [set_id, expected[set_id]])
+	var yard: CombatSim = CombatSim.make_arena_set(&"grist")
+	for kind: StringName in [&"wallow", &"trough", &"millstone_leaning", &"sacks"]:
+		assert_false(yard.prop_of(kind).is_empty(), "the yard has its " + kind)
+	assert_true(CombatSim.make_arena_set(&"moths").night, "moths come at night")

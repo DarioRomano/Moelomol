@@ -51,6 +51,9 @@ static func update_effects(effects: Array[Dictionary], events: Array[Dictionary]
 
 static func draw(canvas: CanvasItem, sim: CombatSim, alpha: float, effects: Array[Dictionary]) -> void:
 	_draw_arena(canvas, sim)
+	_draw_props(canvas, sim)
+	for light: Vector2 in sim.lights:
+		_draw_light(canvas, light, sim.tick_count)
 	for zone: Zone in sim.zones:
 		_draw_zone(canvas, zone)
 	var order: Array[Fighter] = sim.fighters()
@@ -127,8 +130,20 @@ static func _zone(canvas: CanvasItem, f: Fighter, full: bool, colour: Color) -> 
 	if zone.is_empty():
 		return
 	var radius: float = zone["full_reach"] if full else zone["reach"]
-	if radius > 0.0:
+	if radius <= 0.0:
+		return
+	if zone.get("shape", &"sector") == &"lane":
+		canvas.draw_colored_polygon(_lane_points(zone["origin"], zone["facing"], radius, zone["width"]), colour)
+	else:
 		_sector(canvas, zone["origin"], zone["facing"], radius, zone["arc"], colour)
+
+
+## The four corners of a lane: `length` along `facing` from `origin`,
+## `width` across.
+static func _lane_points(origin: Vector2, facing: Vector2, length: float, width: float) -> PackedVector2Array:
+	var across: Vector2 = facing.orthogonal() * width / 2.0
+	return PackedVector2Array([origin + across, origin + facing * length + across,
+		origin + facing * length - across, origin - across])
 
 
 ## The far edge of the zone: an arc at the full reach and its sides, so the
@@ -141,6 +156,11 @@ static func _zone_outline(canvas: CanvasItem, f: Fighter, colour: Color) -> void
 	var half: float = deg_to_rad(float(zone["arc"]) / 2.0)
 	var radius: float = zone["full_reach"]
 	var origin: Vector2 = zone["origin"]
+	if zone.get("shape", &"sector") == &"lane":
+		var corners: PackedVector2Array = _lane_points(origin, facing, radius, zone["width"])
+		corners.append(corners[0])
+		canvas.draw_polyline(corners, colour, 1.0)
+		return
 	canvas.draw_arc(origin, radius, facing.angle() - half, facing.angle() + half, 16, colour, 1.0)
 	if float(zone["arc"]) < 360.0:
 		canvas.draw_line(origin, origin + Vector2.from_angle(facing.angle() - half) * radius, colour, 1.0)
@@ -405,6 +425,17 @@ static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> v
 		else:
 			canvas.draw_circle(tip, 2.0, colour)
 		return
+	if arrow.roller:
+		# A rolling millstone: a stone wheel seen on edge-ish, its spokes turning.
+		var centre: Vector2 = at + Vector2(0, -arrow.radius * 0.6)
+		canvas.draw_circle(centre, arrow.radius, Palette.STONE[1])
+		canvas.draw_arc(centre, arrow.radius, 0, TAU, 24, Palette.STONE[0], 1.0)
+		var turn: float = -arrow.range_left / arrow.radius
+		for i: int in range(3):
+			var spoke: Vector2 = Vector2.from_angle(turn + i * TAU / 3.0) * (arrow.radius - 2.0)
+			canvas.draw_line(centre - spoke, centre + spoke, Palette.STONE[2], 1.0)
+		canvas.draw_circle(centre, 2.0, Palette.SHADOW[0])
+		return
 	var length: float = 8.0 if arrow.pierce else 6.0
 	var width: float = 2.0 if arrow.pierce else 1.0
 	var colour: Color = Palette.WARMTH[3] if arrow.pierce else Palette.PAPER[1]
@@ -415,6 +446,22 @@ static func _draw_arrow(canvas: CanvasItem, arrow: Projectile, at: Vector2) -> v
 
 
 static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:
+	if zone.kind == &"glob":
+		# A toad's glob in flight: the marked circle where it will land,
+		# filling as it comes down.
+		var t: float = clampf(float(zone.age) / maxf(1.0, zone.delay), 0.0, 1.0)
+		canvas.draw_circle(zone.position, zone.radius * t, Color(Palette.DANGER[0], 0.3))
+		canvas.draw_arc(zone.position, zone.radius, 0, TAU, 24, Color(Palette.DANGER[1], 0.85), 1.0)
+		var arc_top: Vector2 = zone.position + Vector2(0, -28.0 * sin(PI * t))
+		canvas.draw_circle(arc_top, 2.5, Palette.CHANGED[1].lightened(0.2))
+		return
+	if zone.kind == &"slick":
+		if zone.age < zone.delay:
+			return
+		var left: float = 1.0 - float(zone.age - zone.delay) / maxf(1.0, zone.period)
+		canvas.draw_circle(zone.position, zone.radius, Color(Palette.CHANGED[0], 0.35 + 0.25 * left))
+		canvas.draw_arc(zone.position, zone.radius, 0, TAU, 24, Color(Palette.CHANGED[1], 0.6 * left), 1.0)
+		return
 	if zone.kind == &"chill_pool":
 		var colour: Color = EFFECT_COLOURS[StatusEffects.CHILL]
 		var left: float = 1.0 - float(zone.age) / (zone.period * zone.waves)
@@ -479,15 +526,12 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 	if f.state == Fighter.State.DOWN:
 		fade = 1.0 - float(f.state_tick) / maxf(1.0, f.state_length)
 		# Returning to the land: a patch of moss grows where it stood.
-		canvas.draw_rect(Rect2(at.x - 6, at.y - 2, 12, 4), Color(Palette.WILD[2], 1.0 - fade))
-	var body: Color = Palette.CHANGED[1]
+		canvas.draw_rect(Rect2(at.x - f.radius, at.y - 2, f.radius * 2, 4), Color(Palette.WILD[2], 1.0 - fade))
+	if f.disguised:
+		_draw_sheaf(canvas, at, 1.0)  # a stook: a sheaf like any other
+		return
 	var phase: StringName = f.attack_phase()
-	if f.is_staggered():
-		body = Palette.STONE[1]
-		if f.effects.count(StatusEffects.CHILL) >= StatusEffects.MAX_STACKS:
-			body = Palette.WATER[1].lightened(0.3)  # Frozen
-	elif phase == &"windup" and (f.state_tick / 4) % 2 == 0:
-		body = Palette.DANGER[1]  # the telegraph flash
+	var flash: bool = phase == &"windup" and (f.state_tick / 4) % 2 == 0
 	# The telegraph is the attack's whole hit zone, lunge included
 	# (CombatSim.attack_zone); during the attack it fills as the lunge travels.
 	if phase == &"windup" or phase == &"active":
@@ -495,8 +539,73 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 		_zone_outline(canvas, f, Color(Palette.DANGER[1], 0.8))
 	if phase == &"active":
 		_zone(canvas, f, false, Color(Palette.DANGER[1], 0.6))
-	body.a = fade
-	canvas.draw_rect(Rect2(at.x - 7, at.y - 12, 14, 11), body)
+	var lift: float = 10.0 if f.airborne else 0.0
+	var body_at: Vector2 = at + Vector2(0, -lift)
+	match f.creature_kind.id:
+		&"field_mouse":
+			_draw_mouse(canvas, f, body_at, flash, fade)
+		&"rook":
+			_draw_rook(canvas, f, body_at, flash, fade)
+		&"hedgehog":
+			_draw_hedgehog(canvas, f, body_at, flash, fade)
+		&"flood_toad":
+			_draw_toad(canvas, f, body_at, flash, fade)
+		&"stook":
+			_draw_stook(canvas, f, body_at, flash, fade)
+		&"moth":
+			_draw_moth(canvas, f, body_at, flash, fade)
+		&"grist":
+			_draw_grist(canvas, f, body_at, flash, fade)
+		_:
+			_draw_training(canvas, f, body_at, flash, fade)
+	if f.state == Fighter.State.DOWN or f.ai_state == &"asleep":
+		if f.ai_state == &"asleep":
+			_draw_sleep(canvas, body_at + Vector2(f.radius, -f.radius * 1.6), f.ai_timer + int(at.x))
+		return
+	if f.creature_kind.id != &"moth":
+		_draw_bars(canvas, f, body_at)  # (a moth dies to any hit: no bars)
+	_draw_effect_pips(canvas, f, body_at + Vector2(0, 14.0 - f.radius * 2.0))
+	if f.is_staggered():
+		_draw_dizzy(canvas, body_at + Vector2(0, -f.radius * 2.0 - 12.0), f.state_tick)
+
+
+## The body colour a creature shows: grey when staggered, pale blue when
+## Frozen, the danger red on a telegraph's flash.
+static func _body_colour(f: Fighter, base: Color, flash: bool) -> Color:
+	if f.is_staggered():
+		if f.effects.count(StatusEffects.CHILL) >= StatusEffects.MAX_STACKS:
+			return Palette.WATER[1].lightened(0.3)  # Frozen
+		return Palette.STONE[1]
+	if flash:
+		return Palette.DANGER[1]
+	return base
+
+
+## Health (red) and poise (pale) over a creature, as wide as it is; armour
+## (grey) above them while it lasts.
+static func _draw_bars(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
+	var half: float = maxf(8.0, f.radius * 1.2)
+	var top: float = at.y - f.radius * 2.0 - 7.0
+	canvas.draw_rect(Rect2(at.x - half, top, half * 2, 2), Palette.SHADOW[0])
+	canvas.draw_rect(Rect2(at.x - half, top, half * 2 * f.health / f.max_health, 2), Palette.DANGER[1])
+	canvas.draw_rect(Rect2(at.x - half, top + 3, half * 2, 1), Palette.SHADOW[0])
+	canvas.draw_rect(Rect2(at.x - half, top + 3, half * 2 * f.poise.ratio(), 1), Palette.PAPER[0])
+	if f.armour > 0.0:
+		canvas.draw_rect(Rect2(at.x - half, top - 3, half * 2 * f.armour / f.armour_max, 2), Palette.STONE[2])
+
+
+static func _eyes(canvas: CanvasItem, f: Fighter, centre: Vector2, gap: float, colour: Color, fade: float) -> void:
+	if f.facing.y < -0.5:
+		return  # facing away: no eyes
+	var shift: float = roundf(f.facing.x * 2.0)
+	canvas.draw_rect(Rect2(centre + Vector2(-gap - 1 + shift, 0), Vector2(2, 2)), Color(colour, fade))
+	canvas.draw_rect(Rect2(centre + Vector2(gap - 1 + shift, 0), Vector2(2, 2)), Color(colour, fade))
+
+
+## The arena's training creature (and anything without its own drawing).
+static func _draw_training(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.CHANGED[1], flash)
+	canvas.draw_rect(Rect2(at.x - 7, at.y - 12, 14, 11), Color(body, fade))
 	canvas.draw_rect(Rect2(at.x - 5, at.y - 15, 10, 4), Color(Palette.CHANGED[0], fade))
 	if f.armour > 0.0:
 		# A stone shell over the back, cracking as it is chipped.
@@ -504,22 +613,173 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 		canvas.draw_rect(Rect2(at.x - 8, at.y - 14, 16, 2), Color(Palette.STONE[2], fade))
 		if f.armour < f.armour_max * 0.5:
 			canvas.draw_line(Vector2(at.x - 3, at.y - 14), Vector2(at.x, at.y - 9), Palette.SHADOW[0], 1.0)
-	if f.facing.y > -0.5:
-		var shift: float = roundf(f.facing.x * 2.0)
-		canvas.draw_rect(Rect2(at.x - 3 + shift, at.y - 9, 2, 2), Color(Palette.PAPER[1], fade))
-		canvas.draw_rect(Rect2(at.x + 1 + shift, at.y - 9, 2, 2), Color(Palette.PAPER[1], fade))
-	if f.state == Fighter.State.DOWN:
+	_eyes(canvas, f, at + Vector2(-1, -9), 2.0, Palette.PAPER[1], fade)
+
+
+## A field mouse: a small grey body with a long tail, too many teeth.
+static func _draw_mouse(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.STONE[1], flash)
+	var back: Vector2 = -f.facing
+	canvas.draw_line(at + Vector2(0, -3) + back * 4, at + Vector2(0, -2) + back * 9 + back.orthogonal() * 2, Color(Palette.STONE[2], fade), 1.0)
+	canvas.draw_rect(Rect2(at.x - 4, at.y - 6, 8, 5), Color(body, fade))
+	canvas.draw_rect(Rect2(at.x - 3, at.y - 8, 2, 2), Color(Palette.STONE[2], fade))
+	canvas.draw_rect(Rect2(at.x + 1, at.y - 8, 2, 2), Color(Palette.STONE[2], fade))
+	_eyes(canvas, f, at + Vector2(-1, -5), 2.0, Palette.DANGER[1], fade)
+
+
+## A rook: black, wings out while aloft (its shadow on the ground below).
+static func _draw_rook(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.SHADOW[1], flash)
+	if f.airborne:
+		canvas.draw_circle(at + Vector2(0, 10), 4.0, Color(Palette.SHADOW[0], 0.35 * fade))
+		var flap: float = sin(f.ai_timer * 0.4) * 3.0
+		canvas.draw_line(at + Vector2(-1, -6), at + Vector2(-9, -8 - flap), Color(body, fade), 2.0)
+		canvas.draw_line(at + Vector2(1, -6), at + Vector2(9, -8 - flap), Color(body, fade), 2.0)
+	canvas.draw_rect(Rect2(at.x - 4, at.y - 9, 8, 7), Color(body, fade))
+	canvas.draw_rect(Rect2(at.x - 1 + f.facing.x * 4, at.y - 7 + f.facing.y * 2, 3, 2), Color(Palette.PAPER[0], fade))
+	_eyes(canvas, f, at + Vector2(-1, -8), 2.0, Palette.PAPER[1], fade)
+
+
+## A hedgehog: a brown body under a coat of spines; curled, a spiked ball.
+static func _draw_hedgehog(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.CHANGED[0], flash)
+	var spines: Color = Color(Palette.STONE[2], fade)
+	if f.curled:
+		var centre: Vector2 = at + Vector2(0, -6)
+		canvas.draw_circle(centre, 6.0, Color(body, fade))
+		for i: int in range(10):
+			var d: Vector2 = Vector2.from_angle(i * TAU / 10.0 + f.state_tick * 0.05)
+			canvas.draw_line(centre + d * 5.0, centre + d * 9.0, spines, 1.0)
 		return
-	# Health and poise above the creature.
-	canvas.draw_rect(Rect2(at.x - 8, at.y - 21, 16, 2), Palette.SHADOW[0])
-	canvas.draw_rect(Rect2(at.x - 8, at.y - 21, 16 * f.health / f.max_health, 2), Palette.DANGER[1])
-	canvas.draw_rect(Rect2(at.x - 8, at.y - 18, 16, 1), Palette.SHADOW[0])
-	canvas.draw_rect(Rect2(at.x - 8, at.y - 18, 16 * f.poise.ratio(), 1), Palette.PAPER[0])
+	canvas.draw_rect(Rect2(at.x - 6, at.y - 7, 12, 6), Color(body, fade))
+	for i: int in range(6):
+		canvas.draw_line(Vector2(at.x - 5 + i * 2, at.y - 7), Vector2(at.x - 6 + i * 2, at.y - 11), spines, 1.0)
+	_eyes(canvas, f, at + Vector2(-1 + f.facing.x * 3, -5), 1.5, Palette.SHADOW[0], fade)
+
+
+## A flood toad: squat and brown; its throat sac glows as it fills to lob.
+static func _draw_toad(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.WILD[1].darkened(0.1), flash)
+	canvas.draw_rect(Rect2(at.x - 7, at.y - 7, 14, 6), Color(body, fade))
+	canvas.draw_rect(Rect2(at.x - 5, at.y - 9, 10, 2), Color(body, fade))
+	for i: int in range(3):
+		canvas.draw_rect(Rect2(at.x - 4 + i * 3, at.y - 6, 1, 1), Color(Palette.CHANGED[1], fade))
+	if f.attack_phase() == &"windup":
+		var fill: float = float(f.state_tick) / maxf(1.0, f.move.windup_ticks())
+		canvas.draw_circle(at + Vector2(0, -3), 2.0 + fill * 3.0, Color(Palette.CHANGED[2].lightened(0.3), 0.8 * fade))
+	_eyes(canvas, f, at + Vector2(-1, -10), 3.0, Palette.CHANGED[2], fade)
+
+
+## A sheaf of wheat stood upright (scenery, or a stook in disguise).
+static func _draw_sheaf(canvas: CanvasItem, at: Vector2, fade: float) -> void:
+	var straw: Color = Color(Palette.CHANGED[2], fade)
+	for i: int in range(5):
+		var x: float = at.x - 4 + i * 2
+		canvas.draw_line(Vector2(x, at.y - 1), Vector2(at.x - 2 + i, at.y - 14), straw, 1.0)
+	canvas.draw_rect(Rect2(at.x - 3, at.y - 8, 6, 2), Color(Palette.CHANGED[0], fade))
+	canvas.draw_rect(Rect2(at.x - 3, at.y - 17, 6, 4), straw)
+
+
+## A stook risen: the sheaf straightened, straw arms unbound.
+static func _draw_stook(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var rising: float = 1.0
+	if f.ai_state == &"rising":
+		rising = 1.0 - float(f.ai_timer) / maxf(1.0, CombatTuning.ticks(CreatureBrain.STOOK_RISE_MS))
+	var straw: Color = _body_colour(f, Palette.CHANGED[2], flash)
+	var top: float = at.y - 14.0 - 6.0 * rising
+	for i: int in range(5):
+		canvas.draw_line(Vector2(at.x - 4 + i * 2, at.y - 1), Vector2(at.x - 2 + i, top), Color(straw, fade), 1.0)
+	canvas.draw_rect(Rect2(at.x - 3, top - 3, 6, 4), Color(straw, fade))
+	var reach: float = 4.0 + 7.0 * rising
+	canvas.draw_line(Vector2(at.x - 2, top + 6), Vector2(at.x - 2 - reach, top + 2), Color(straw, fade), 1.0)
+	canvas.draw_line(Vector2(at.x + 2, top + 6), Vector2(at.x + 2 + reach, top + 2), Color(straw, fade), 1.0)
+	_eyes(canvas, f, Vector2(at.x - 1, top - 2), 1.5, Palette.CHANGED[2], fade)
+
+
+## A moth: pale, dusty wings with an eye pattern, fluttering.
+static func _draw_moth(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var wing: Color = _body_colour(f, Palette.PAPER[0], flash)
+	var flutter: float = absf(sin(f.ai_timer * 0.6)) * 3.0 + 1.0
+	var centre: Vector2 = at + Vector2(0, -10)
+	canvas.draw_rect(Rect2(centre + Vector2(-1 - flutter - 2, -2), Vector2(flutter + 2, 4)), Color(wing, fade))
+	canvas.draw_rect(Rect2(centre + Vector2(1, -2), Vector2(flutter + 2, 4)), Color(wing, fade))
+	canvas.draw_rect(Rect2(centre + Vector2(-1, -2), Vector2(2, 5)), Color(Palette.STONE[1], fade))
+	canvas.draw_rect(Rect2(centre + Vector2(-flutter - 1, -1), Vector2(1, 1)), Color(Palette.CHANGED[0], fade))
+	canvas.draw_rect(Rect2(centre + Vector2(flutter + 1, -1), Vector2(1, 1)), Color(Palette.CHANGED[0], fade))
+
+
+## Grist: a huge dark boar with pale tusks; caked in mud while armoured.
+static func _draw_grist(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.SHADOW[2].darkened(0.1), flash)
+	var r: float = f.radius
+	if f.ai_state == &"wallowing":
+		canvas.draw_circle(at + Vector2(0, -4), r + 6.0, Color(Palette.CHANGED[2].darkened(0.45), 0.6 * fade))
+	canvas.draw_rect(Rect2(at.x - r, at.y - r * 1.4, r * 2, r * 1.3), Color(body, fade))
+	canvas.draw_rect(Rect2(at.x - r * 0.7, at.y - r * 1.7, r * 1.4, r * 0.4), Color(body.darkened(0.2), fade))  # the bristled back
 	if f.armour > 0.0:
-		canvas.draw_rect(Rect2(at.x - 8, at.y - 24, 16 * f.armour / f.armour_max, 2), Palette.STONE[2])
-	_draw_effect_pips(canvas, f, at)
-	if f.is_staggered():
-		_draw_dizzy(canvas, at + Vector2(0, -26), f.state_tick)
+		var mud: Color = Color(Palette.CHANGED[2].darkened(0.45), fade)
+		canvas.draw_rect(Rect2(at.x - r, at.y - r * 1.4, r * 2, r * 0.7), mud)
+		for i: int in range(5):
+			canvas.draw_rect(Rect2(at.x - r + i * r * 0.45, at.y - r * 0.6, 3, 3), mud)
+	var snout: Vector2 = at + Vector2(f.facing.x * r * 0.9, -r * 0.7 + f.facing.y * 3.0)
+	canvas.draw_rect(Rect2(snout - Vector2(4, 3), Vector2(8, 6)), Color(body.lightened(0.15), fade))
+	if f.facing.y > -0.5:
+		var tusk: Color = Color(Palette.PAPER[1], fade)
+		canvas.draw_line(snout + Vector2(-4, 2), snout + Vector2(-6, -4), tusk, 2.0)
+		canvas.draw_line(snout + Vector2(4, 2), snout + Vector2(6, -4), tusk, 2.0)
+	_eyes(canvas, f, at + Vector2(-1 + f.facing.x * r * 0.5, -r * 1.1), 4.0, Palette.DANGER[1] if f.phase == 2 else Palette.PAPER[0], fade)
+
+
+## "z"s drifting up from a sleeper.
+static func _draw_sleep(canvas: CanvasItem, at: Vector2, tick: int) -> void:
+	for i: int in range(2):
+		var rise: float = fmod(tick * 0.3 + i * 10.0, 20.0)
+		var spot: Vector2 = at + Vector2(i * 4, -rise)
+		var c: Color = Color(Palette.PAPER[1], 1.0 - rise / 20.0)
+		canvas.draw_line(spot, spot + Vector2(3, 0), c, 1.0)
+		canvas.draw_line(spot + Vector2(3, 0), spot + Vector2(0, 3), c, 1.0)
+		canvas.draw_line(spot + Vector2(0, 3), spot + Vector2(3, 3), c, 1.0)
+
+
+## The arena's props: Grist's yard and the field's sheaves.
+static func _draw_props(canvas: CanvasItem, sim: CombatSim) -> void:
+	for prop: Dictionary in sim.props:
+		var rect: Rect2 = prop["rect"]
+		match prop["kind"]:
+			&"wallow":
+				canvas.draw_rect(rect, Palette.CHANGED[2].darkened(0.55))
+				canvas.draw_rect(rect.grow(-3), Palette.CHANGED[2].darkened(0.4))
+			&"trough":
+				canvas.draw_rect(rect, Palette.STONE[1])
+				canvas.draw_rect(rect.grow(-2), Palette.WATER[0])
+			&"sacks":
+				for i: int in range(3):
+					var sack: Rect2 = Rect2(rect.position + Vector2(i * rect.size.x / 3.0, 0), Vector2(rect.size.x / 3.0 - 1, rect.size.y))
+					canvas.draw_rect(sack, Palette.PAPER[0].darkened(0.15))
+					canvas.draw_rect(Rect2(sack.position + Vector2(1, 2), Vector2(sack.size.x - 2, 2)), Palette.STONE[0])
+			&"millstone_leaning":
+				var centre: Vector2 = rect.get_center()
+				canvas.draw_rect(Rect2(centre.x - rect.size.x / 2, rect.position.y - 8, rect.size.x, rect.size.y + 8), Palette.STONE[1])
+				canvas.draw_rect(Rect2(centre.x - rect.size.x / 2, rect.position.y - 8, rect.size.x, 2), Palette.STONE[2])
+				canvas.draw_circle(Vector2(centre.x, rect.position.y), 2.0, Palette.SHADOW[0])
+			&"millstone_flat":
+				var c: Vector2 = rect.get_center()
+				canvas.draw_circle(c, rect.size.x / 2.0, Palette.STONE[1])
+				canvas.draw_arc(c, rect.size.x / 2.0, 0, TAU, 24, Palette.STONE[2], 1.0)
+				canvas.draw_circle(c, 2.0, Palette.SHADOW[0])
+			&"sheaf":
+				_draw_sheaf(canvas, rect.get_center() + Vector2(0, 6), 1.0)
+			_:
+				canvas.draw_rect(rect, Palette.STONE[1])
+
+
+## A light source: a pool of glow (glowing fungus).
+static func _draw_light(canvas: CanvasItem, at: Vector2, tick: int) -> void:
+	var pulse: float = 0.5 + 0.5 * sin(tick * 0.05)
+	canvas.draw_circle(at, 18.0, Color(Palette.CHANGED[2], 0.08 + 0.04 * pulse))
+	canvas.draw_circle(at, 6.0, Color(Palette.CROPS[1], 0.25))
+	for i: int in range(3):
+		canvas.draw_rect(Rect2(at + Vector2(-4 + i * 3, -2 - i % 2), Vector2(2, 3)), Palette.CROPS[1].lightened(0.3))
 
 
 static func _draw_dizzy(canvas: CanvasItem, centre: Vector2, tick: int) -> void:

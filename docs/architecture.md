@@ -402,3 +402,15 @@ a real controller)
   in it. Seen: with PNGs in `docs/design/images/` and no `.gdignore`,
   `--import` wrote a `.png.import` beside each; with `docs/.gdignore`, it
   wrote none. Exports already exclude `docs/*` (`export_presets.cfg`).
+
+### 2026-10-11 (creatures and Grist), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `CanvasModulate.color` tints everything on its canvas layer (the arena's
+  F12 night uses `GameClock.sky_tint_at(0.0)`); the HUD's `CanvasLayer` is
+  untouched.
+- `Rect2.grow(-3)` shrinks on every side (`Rect2(10,10,20,10)` →
+  `(13,13,14,4)`); `get_center()` is the middle; `has_point` is false on
+  the far edges (`(30, 15)` is outside `Rect2(10,10,20,10)`), so the
+  millstone's edge test uses `grow(-radius)`.
+- `CanvasItem.draw_colored_polygon` and `draw_polyline` exist (the lane
+  telegraphs).

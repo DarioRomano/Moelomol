@@ -12,6 +12,9 @@ var velocity: Vector2  # layout px per tick
 var range_left: float  # layout px it may still fly
 var pierce: bool = false
 var marker: bool = false  # the Volley marker: marks where it stops
+var radius: float = 0.0  # added to the targets' radius when testing hits (a rolling millstone is wide)
+var bounces: int = 0  # times it may still bounce off the arena's edge instead of stopping
+var roller: bool = false  # a rolling millstone: comes to rest as an obstacle (enemies.md, Grist)
 var hit: Array[Fighter] = []
 
 

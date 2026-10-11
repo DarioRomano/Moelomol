@@ -1,8 +1,9 @@
 class_name CombatMove
 extends RefCounted
 ## One attack: its timing (windup, active, recovery), what it does on hit, and
-## what it costs. Hits are tested against a circular sector in front of the
-## attacker: within reach and within arc_deg of the facing direction.
+## what it costs. Hits are tested against a shape in front of the attacker
+## (CombatSim.attack_zone): a circular sector (within reach and within arc_deg
+## of the facing direction), or a lane (a straight strip `lane_width` wide).
 
 var id: StringName
 var display_name: String
@@ -34,6 +35,10 @@ var effect_stacks: int = 0
 var releases_effects: bool = false  # consumes every stack on the target into a burst
 var spell: bool = false  # a hit during the windup interrupts it
 var move_speed: float = 0.0  # > 0: the player can walk this fast (px/s) during the move
+var shape: StringName = &"sector"  # &"sector" or &"lane" (CombatSim.attack_zone)
+var lane_width: float = 0.0  # a lane's width in layout px
+var heavy: bool = false  # a heavy hit: uncurls a curled creature (enemies.md, hedgehogs)
+var stops_at_walls: bool = false  # a dash that ends when it runs into something (CreatureBrain.on_blocked)
 
 
 static func make(p_id: StringName, p_name: String, timing: Vector3i, p_damage: float,

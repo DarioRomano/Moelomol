@@ -21,7 +21,7 @@ func _ready() -> void:
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	# Two lines: one did not fit a 4:3 screen (seen in the review render).
 	_help.text = "Move WASD / stick   Light J / X   Heavy (hold) K / RT   Skill L / Y   Dodge Space / A   Swap Tab / RB\n" \
-		+ "Lock Shift / LT   Switch Q E / right stick   F5 interpolation   F6 creatures passive   F7 other weapon"
+		+ "Lock Shift / LT   Switch Q E / right stick   F5 interpolation   F6 creatures passive   F7 other weapon   F11 creatures   F12 night"
 
 
 func _make_label() -> Label:
@@ -35,7 +35,7 @@ func _make_label() -> Label:
 	return label
 
 
-func show_state(sim: CombatSim, interpolation: bool) -> void:
+func show_state(sim: CombatSim, interpolation: bool, extra: String = "") -> void:
 	var p: Fighter = sim.player
 	_health = p.health / p.max_health
 	_stamina = p.stamina.current / p.stamina.maximum
@@ -48,6 +48,8 @@ func show_state(sim: CombatSim, interpolation: bool) -> void:
 		weapon.display_name, doing, weapon.status_text(p), swap,
 		"   locked" if sim.lock_target != null else "",
 		"on" if interpolation else "off", "   creatures passive" if passive else ""]
+	if extra != "":
+		_label.text += "\n" + extra
 	queue_redraw()
 
 

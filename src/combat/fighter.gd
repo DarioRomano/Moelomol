@@ -60,6 +60,20 @@ var tempo: float = 0.0  # Chill: time owed before the next slowed tick
 var cooldown: int = 0  # creature: ticks until it may attack again
 var ai_enabled: bool = true  # creature: false = a passive training dummy
 
+## Creatures (docs/design/enemies.md): what kind it is, and its brain's state
+## (CreatureBrain).
+var creature_kind: CreatureKind = null
+var ai_state: StringName = &""
+var ai_timer: int = 0  # ticks; what it counts depends on ai_state
+var ai_target: Vector2 = Vector2.ZERO  # a point the brain is aiming at (a lob's landing spot)
+var ai_count: int = 0  # the brain's counter (attacks made, wallows taken)
+var phase: int = 1  # a boss's phase
+var airborne: bool = false  # aloft: melee cannot reach it (rooks)
+var curled: bool = false  # curled into a ball (hedgehogs)
+var disguised: bool = false  # looks like scenery: no lock-on or soft aim (stooks)
+var untouchable: bool = false  # nothing can hit it (Grist wallowing)
+var alerted: bool = false  # woken for the night (Grist); cleared at dawn
+
 
 static func make_player(at: Vector2) -> Fighter:
 	var f: Fighter = Fighter.new()
@@ -76,16 +90,21 @@ static func make_player(at: Vector2) -> Fighter:
 	return f
 
 
-static func make_creature(at: Vector2) -> Fighter:
+## A creature of `creature` kind (the arena's training creature if null).
+static func make_creature(at: Vector2, creature: CreatureKind = null) -> Fighter:
 	var f: Fighter = Fighter.new()
 	f.kind = Kind.CREATURE
+	f.creature_kind = creature if creature != null else CreatureKind.training()
 	f.position = at
 	f.previous_position = at
 	f.spawn_position = at
-	f.radius = CombatTuning.CREATURE_RADIUS
-	f.max_health = CombatTuning.CREATURE_HEALTH
+	f.radius = f.creature_kind.radius
+	f.max_health = f.creature_kind.health
 	f.health = f.max_health
-	f.poise = Poise.new(CombatTuning.CREATURE_POISE)
+	f.poise = Poise.new(f.creature_kind.poise)
+	f.resists = f.creature_kind.resists.duplicate()
+	if f.creature_kind.armour > 0.0:
+		f.give_armour(f.creature_kind.armour)
 	return f
 
 
