@@ -126,6 +126,7 @@ static func _cleave() -> CombatMove:
 		30.0, 60.0, 4.0, 45.0, 50.0, 20.0)
 	m.hyper_armour = true
 	m.hitstop_ms = CombatTuning.HITSTOP_HEAVY_MS
+	m.heavy = true  # a heavy hit (uncurls hedgehogs; enemies.md)
 	return m
 
 
@@ -134,6 +135,7 @@ static func _shove() -> CombatMove:
 		6.0, 25.0, 64.0, 28.0, 70.0, 15.0)
 	m.dash = 24.0
 	m.hitstop_ms = CombatTuning.HITSTOP_LIGHT_MS
+	m.heavy = true  # a heavy hit (uncurls hedgehogs; enemies.md)
 	return m
 
 
@@ -141,6 +143,7 @@ static func _spin() -> CombatMove:
 	var m: CombatMove = CombatMove.make(&"spin", "Spin sweep", Vector3i(350, 150, 400),
 		14.0, 30.0, 40.0, 42.0, 360.0, 20.0)
 	m.hitstop_ms = CombatTuning.HITSTOP_HEAVY_MS
+	m.heavy = true  # a heavy hit (uncurls hedgehogs; enemies.md)
 	return m
 
 
@@ -150,6 +153,7 @@ static func _rising() -> CombatMove:
 	m.staggered_damage_multiplier = 2.0  # launches a staggered creature
 	m.extend_stagger_ms = 300
 	m.hitstop_ms = CombatTuning.HITSTOP_HEAVY_MS
+	m.heavy = true  # a heavy hit (uncurls hedgehogs; enemies.md)
 	return m
 
 
@@ -157,6 +161,7 @@ static func _follow_through() -> CombatMove:
 	var m: CombatMove = CombatMove.make(&"follow_through", "Follow-through", Vector3i(400, 150, 600),
 		45.0, 0.0, 10.0, 39.0, 90.0, 25.0)
 	m.hitstop_ms = CombatTuning.HITSTOP_BIG_MS
+	m.heavy = true  # a heavy hit (uncurls hedgehogs; enemies.md)
 	return m
 
 

@@ -227,8 +227,12 @@ What the charge runs into decides what happens next:
    takes 60% off every hit until broken (the armour rule in `combat.md`).
    The hammer's perfect strike shatters it at once. Rolling in again re-cakes
    it, at most once more.
-2. **Double charge:** after a charge it turns and charges again at once,
-   the second lane shown as it turns.
+2. **Double charge:** a charge that ends against the fence or the cottage
+   no longer stuns it. It shrugs, turns and charges again at once, the
+   second lane shown as it turns; the second charge stuns as before. **A
+   charge into a millstone always stuns it**, which is what the millstones
+   it rolls are for: steer its charges into them. (Settled while building,
+   2026-10-11.)
 3. **The millstone:**
    - Grist shoulders one of the leaning millstones, which rolls across the
      yard along a lane shown on the ground for 1.0 s.

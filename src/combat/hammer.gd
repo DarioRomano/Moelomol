@@ -175,6 +175,7 @@ func strike_for(held: int) -> CombatMove:
 	var m: CombatMove = CombatMove.make(grade, names[grade], Vector3i(100, 100, 450),
 		STRIKE_DAMAGE * share, STRIKE_POISE * minf(share, 1.0), 10.0, 42.0, 100.0, 0.0)
 	m.hitstop_ms = CombatTuning.HITSTOP_HEAVY_MS
+	m.heavy = true  # every hammer strike is a heavy hit (uncurls hedgehogs; enemies.md)
 	if grade == STRIKE_PERFECT:
 		m.hitstop_ms = CombatTuning.HITSTOP_BIG_MS
 		m.breaks_armour = true

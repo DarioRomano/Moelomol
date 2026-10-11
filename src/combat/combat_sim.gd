@@ -17,6 +17,15 @@ var creatures: Array[Fighter] = []
 var lock_target: Fighter = null
 var projectiles: Array[Projectile] = []
 var zones: Array[Zone] = []
+## Things in the arena a brain uses (enemies.md, Grist's yard): each
+## {"kind": StringName, "rect": Rect2, "solid": bool}. Solid ones are also
+## in `obstacles`.
+var props: Array[Dictionary] = []
+## Light sources creatures can see by (moths swirl round them).
+var lights: Array[Vector2] = []
+## Night: the night roster's behaviour (Grist sleeps). Set by the scene from
+## the clock.
+var night: bool = false
 var hitstop: int = 0  # ticks left in which nothing moves
 var tick_count: int = 0
 ## What happened during the last step, for feedback (haptics, effects).
@@ -45,10 +54,78 @@ static func make_arena() -> CombatSim:
 	return sim
 
 
-func add_creature(at: Vector2) -> Fighter:
-	var creature: Fighter = Fighter.make_creature(at)
+## Adds a creature of `kind` (the training creature if null).
+func add_creature(at: Vector2, kind: CreatureKind = null) -> Fighter:
+	var creature: Fighter = Fighter.make_creature(at, kind)
+	creature.disguised = creature.creature_kind.behaviour == CreatureKind.AMBUSHER
 	creatures.append(creature)
 	return creature
+
+
+## Adds a prop; a solid one also blocks movement.
+func add_prop(kind: StringName, rect: Rect2, solid: bool) -> Dictionary:
+	var prop: Dictionary = {"kind": kind, "rect": rect, "solid": solid}
+	props.append(prop)
+	if solid:
+		obstacles.append(rect)
+	return prop
+
+
+func remove_prop(prop: Dictionary) -> void:
+	props.erase(prop)
+	if prop["solid"]:
+		obstacles.erase(prop["rect"])
+
+
+## The first prop of `kind`, or {}.
+func prop_of(kind: StringName) -> Dictionary:
+	for prop: Dictionary in props:
+		if prop["kind"] == kind:
+			return prop
+	return {}
+
+
+## The first prop of `kind` within `distance` of `at` (measured to its
+## rectangle), or {}.
+func prop_near(kind: StringName, at: Vector2, distance: float) -> Dictionary:
+	for prop: Dictionary in props:
+		if prop["kind"] != kind:
+			continue
+		var rect: Rect2 = prop["rect"]
+		var closest: Vector2 = Vector2(clampf(at.x, rect.position.x, rect.end.x), clampf(at.y, rect.position.y, rect.end.y))
+		if closest.distance_to(at) <= distance:
+			return prop
+	return {}
+
+
+## Moves a creature along `direction` at `speed` px/s (slowed by Chill),
+## stopping at walls and obstacles.
+func walk_creature(c: Fighter, direction: Vector2, speed: float) -> void:
+	_move_with_collision(c, direction * CombatTuning.per_tick(speed * c.effects.slow_factor()))
+
+
+## Moves a flying creature: over obstacles, but inside the arena.
+func fly_creature(c: Fighter, direction: Vector2, speed: float) -> void:
+	var p: Vector2 = c.position + direction * CombatTuning.per_tick(speed * c.effects.slow_factor())
+	c.position = Vector2(clampf(p.x, bounds.position.x + c.radius, bounds.end.x - c.radius),
+		clampf(p.y, bounds.position.y + c.radius, bounds.end.y - c.radius))
+
+
+## How far a circle of radius r can travel from `from` along `direction`
+## before a wall or obstacle stops it (the lane a charge or a millstone runs).
+func lane_length(from: Vector2, direction: Vector2, r: float) -> float:
+	var travelled: float = 0.0
+	while travelled < 2000.0:
+		var next: Vector2 = from + direction * (travelled + 2.0)
+		if resolve_position(next, r).distance_to(next) > 0.5:
+			break
+		travelled += 2.0
+	return travelled
+
+
+## Defeats a fighter at once (a moth spent on its hit).
+func defeat(f: Fighter) -> void:
+	_defeat(f)
 
 
 static func make_weapon(weapon_id: StringName) -> Weapon:
@@ -205,7 +282,15 @@ func _free_move(p: Fighter, input: CombatInput) -> void:
 		p.facing = (lock_target.position - p.position).normalized()
 	elif direction.length() > 0.1:
 		p.facing = direction.normalized()
-	_move_with_collision(p, direction * CombatTuning.per_tick(CombatTuning.PLAYER_SPEED))
+	_move_with_collision(p, direction * CombatTuning.per_tick(CombatTuning.PLAYER_SPEED) * ground_speed_factor(p))
+
+
+## The player's speed on the ground under them: slowed on a toad's slick.
+func ground_speed_factor(f: Fighter) -> float:
+	for zone: Zone in zones:
+		if zone.kind == &"slick" and zone.age >= zone.delay and zone.position.distance_to(f.position) <= zone.radius + f.radius:
+			return CreatureBrain.SLICK_SLOW
+	return 1.0
 
 
 ## Starts the action if the player can; returns true if it started. Dodge
@@ -332,7 +417,7 @@ func _aim_player(move: CombatMove) -> void:
 	var best: Fighter = null
 	var best_distance: float = INF
 	for c: Fighter in creatures:
-		if not c.is_alive():
+		if not c.is_alive() or not CreatureBrain.can_be_aimed_at(c):
 			continue
 		var offset: Vector2 = c.position - p.position
 		var gap: float = offset.length() - p.radius - c.radius
@@ -356,14 +441,26 @@ func _advance_attack(f: Fighter) -> void:
 		f.attack_origin = f.position  # the telegraph moves with a shoved creature
 	if phase == &"active":
 		var move: CombatMove = f.move
+		if f.kind == Fighter.Kind.CREATURE and f.state_tick == move.windup_ticks():
+			CreatureBrain.on_active_start(self, f)
 		if move.dash > 0.0:
-			_move_with_collision(f, f.facing * (move.dash / move.active_ticks()))
+			var step: float = move.dash / move.active_ticks()
+			var before: Vector2 = f.position
+			_move_with_collision(f, f.facing * step)
+			# A charge is blocked when it stops making headway along its lane;
+			# sliding along a wall at an angle does not count as headway.
+			var headway: float = (f.position - before).dot(f.facing)
+			if move.stops_at_walls and f.kind == Fighter.Kind.CREATURE and headway < step * 0.5:
+				CreatureBrain.on_blocked(self, f)
+				return
 		if move.arrow != null and f.state_tick == move.windup_ticks():
 			fire(f, move.arrow)
 		var zone: Dictionary = attack_zone(f)
 		for target: Fighter in _targets_of(f):
 			if not move.melee or target.get_instance_id() in f.hit_this_move or not in_zone(zone, target):
 				continue
+			if target.airborne or target.untouchable:
+				continue  # aloft (melee cannot reach) or untouchable
 			f.hit_this_move.append(target.get_instance_id())
 			_hit(f, target, move)
 		if move.shockwave_radius > 0.0 and f.state_tick == move.windup_ticks():
@@ -405,13 +502,20 @@ static func attack_zone(f: Fighter) -> Dictionary:
 		var progress: float = float(f.state_tick - move.windup_ticks() + 1) / move.active_ticks()
 		reach = f.radius + move.reach + move.dash * minf(progress, 1.0)
 	return {"origin": f.position if phase == &"windup" else f.attack_origin, "facing": f.facing,
-		"arc": move.arc_deg, "reach": reach, "full_reach": full}
+		"arc": move.arc_deg, "reach": reach, "full_reach": full, "shape": move.shape, "width": move.lane_width}
 
 
 ## True if the target's circle touches the zone's current reach.
 static func in_zone(zone: Dictionary, target: Fighter) -> bool:
 	var origin: Vector2 = zone["origin"]
 	var offset: Vector2 = target.position - origin
+	if zone.get("shape", &"sector") == &"lane":
+		# A straight strip `width` wide from the origin, `reach` long.
+		var facing: Vector2 = zone["facing"]
+		var along: float = offset.dot(facing)
+		var across: float = absf(offset.dot(facing.orthogonal()))
+		return along >= -target.radius and along <= float(zone["reach"]) + target.radius \
+			and across <= float(zone["width"]) / 2.0 + target.radius
 	if offset.length() - target.radius > float(zone["reach"]):
 		return false
 	if float(zone["arc"]) >= 360.0 or offset.length() < 0.001:
@@ -421,6 +525,8 @@ static func in_zone(zone: Dictionary, target: Fighter) -> bool:
 
 
 func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
+	if target.untouchable:
+		return
 	if target.is_invulnerable():
 		events.append({"type": "dodged", "attacker": attacker, "target": target})
 		return
@@ -447,6 +553,8 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		events.append({"type": "armour_break", "fighter": target, "position": target.position})
 	if target.state == Fighter.State.BRACE:
 		damage *= Greatsword.BRACE_DAMAGE_TAKEN  # the guard takes most of it
+	if target.kind == Fighter.Kind.CREATURE:
+		damage = CreatureBrain.adjust_damage(target, move, damage)
 	damage = _apply_damage(target, damage)
 	hitstop = maxi(hitstop, CombatTuning.ticks(move.hitstop_ms))
 	events.append({"type": "hit", "attacker": attacker, "target": target, "move": move.id,
@@ -462,6 +570,8 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		apply_effect(target, move.effect, move.effect_stacks)
 		if not target.is_alive() or target.is_staggered():
 			was_staggered = true  # Frozen: no poise check on top
+	if target.kind == Fighter.Kind.CREATURE and CreatureBrain.resists_stagger(target, move):
+		was_staggered = true  # a curled hedgehog shrugs off light hits
 	if not was_staggered:
 		if move.stagger_ms > 0:
 			stagger(target, move.stagger_ms)
@@ -472,6 +582,10 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 		direction = direction.normalized() if direction.length() > 0.001 else attacker.facing
 		target.push_ticks = CombatTuning.ticks(CombatTuning.PUSH_MS)
 		target.push_velocity = direction * (move.push / target.push_ticks)
+	if target.kind == Fighter.Kind.CREATURE and target.is_alive():
+		CreatureBrain.after_hit(self, target, move)
+	elif attacker.kind == Fighter.Kind.CREATURE and target.kind == Fighter.Kind.PLAYER and attacker.is_alive():
+		CreatureBrain.after_landed(self, attacker)
 
 
 ## A perfect brace (Greatsword.PERFECT_BRACE_MS): the hit does nothing, the
@@ -526,7 +640,10 @@ func apply_effect(target: Fighter, kind: StringName, stacks: int) -> void:
 	var before: int = target.effects.add(kind, stacks)
 	var after: int = target.effects.count(kind)
 	events.append({"type": "effect", "fighter": target, "effect": kind, "stacks": after})
-	if before >= StatusEffects.MAX_STACKS or after < StatusEffects.MAX_STACKS:
+	var full: int = StatusEffects.MAX_STACKS
+	if kind == StatusEffects.SMOULDER:
+		full = target.creature_kind.smoulder_spread_at  # dry straw burns sooner
+	if before >= full or after < full:
 		return
 	match kind:
 		StatusEffects.SMOULDER:
@@ -621,7 +738,7 @@ func _step_projectiles() -> void:
 			if target in arrow.hit:
 				continue
 			var closest: Vector2 = Geometry2D.get_closest_point_to_segment(target.position, from, to)
-			if closest.distance_to(target.position) <= target.radius + 1.0:
+			if closest.distance_to(target.position) <= target.radius + 1.0 + arrow.radius:
 				crossed.append(target)
 		crossed.sort_custom(func(a: Fighter, b: Fighter) -> bool:
 			return a.position.distance_squared_to(from) < b.position.distance_squared_to(from))
@@ -634,10 +751,26 @@ func _step_projectiles() -> void:
 				break
 		arrow.position = to
 		arrow.range_left -= arrow.velocity.length()
-		if not stopped and (not bounds.has_point(to) or _in_obstacle(to) or arrow.range_left <= 0.0):
-			arrow.position = Vector2(clampf(to.x, bounds.position.x, bounds.end.x), clampf(to.y, bounds.position.y, bounds.end.y))
+		if not stopped and arrow.bounces > 0 and not bounds.grow(-arrow.radius).has_point(to):
+			# Bounce off the arena's edge (a rolling millstone, once).
+			var inner: Rect2 = bounds.grow(-arrow.radius)
+			if to.x < inner.position.x or to.x > inner.end.x:
+				arrow.velocity.x = -arrow.velocity.x
+			if to.y < inner.position.y or to.y > inner.end.y:
+				arrow.velocity.y = -arrow.velocity.y
+			arrow.position = Vector2(clampf(to.x, inner.position.x, inner.end.x), clampf(to.y, inner.position.y, inner.end.y))
+			arrow.bounces -= 1
+			arrow.hit.clear()  # it can cross the player again on the way back
+			events.append({"type": "bounce", "position": arrow.position})
+			flying.append(arrow)
+			continue
+		var edge: Rect2 = bounds.grow(-arrow.radius)
+		if not stopped and (not edge.has_point(to) or _in_obstacle(to, arrow.radius) or arrow.range_left <= 0.0):
+			arrow.position = Vector2(clampf(to.x, edge.position.x, edge.end.x), clampf(to.y, edge.position.y, edge.end.y))
 			stopped = true
 		if stopped:
+			if arrow.roller:
+				_settle_millstone(arrow)
 			for weapon: Weapon in player.weapons:
 				weapon.on_projectile_stopped(self, arrow)
 		else:
@@ -645,11 +778,20 @@ func _step_projectiles() -> void:
 	projectiles = flying
 
 
-func _in_obstacle(at: Vector2) -> bool:
+func _in_obstacle(at: Vector2, r: float = 0.0) -> bool:
 	for rect: Rect2 in obstacles:
-		if rect.has_point(at):
+		if rect.grow(r).has_point(at):
 			return true
 	return false
+
+
+## A rolling millstone comes to rest, lying flat: something hard for the
+## next charge to hit (enemies.md, Grist).
+func _settle_millstone(roller: Projectile) -> void:
+	var r: float = roller.radius
+	var at: Vector2 = resolve_position(roller.position, r)
+	add_prop(&"millstone_flat", Rect2(at - Vector2(r, r), Vector2(r, r) * 2.0), true)
+	events.append({"type": "millstone_rest", "position": at})
 
 
 ## Ages every zone a tick; on a wave, hits every creature inside.
@@ -674,7 +816,7 @@ func _step_zones() -> void:
 ## Staggers f for `ms`, or its kind's usual stagger when 0.
 func stagger(f: Fighter, ms: int = 0) -> void:
 	if ms <= 0:
-		ms = CombatTuning.PLAYER_STAGGER_MS if f.kind == Fighter.Kind.PLAYER else CombatTuning.CREATURE_STAGGER_MS
+		ms = CombatTuning.PLAYER_STAGGER_MS if f.kind == Fighter.Kind.PLAYER else f.creature_kind.stagger_ms
 	f.move = null
 	f.chain = 0
 	f.enter(Fighter.State.STAGGERED, CombatTuning.ticks(ms))
@@ -683,7 +825,8 @@ func stagger(f: Fighter, ms: int = 0) -> void:
 		# its cooldown, then starts a new attack with its full telegraph. (It
 		# used to lunge again the tick the stagger ended, which read as the
 		# old attack carrying on.)
-		f.cooldown = CombatTuning.ticks(CombatTuning.CREATURE_COOLDOWN_MS)
+		f.cooldown = CombatTuning.ticks(f.creature_kind.cooldown_ms)
+		f.curled = false
 	events.append({"type": "stagger", "fighter": f})
 
 
@@ -696,6 +839,8 @@ func _defeat(f: Fighter) -> void:
 	if lock_target == f:
 		lock_target = null
 	events.append({"type": "down", "fighter": f})
+	if f.kind == Fighter.Kind.CREATURE and f.creature_kind.boss:
+		events.append({"type": "boss_defeated", "fighter": f, "drops": f.creature_kind.drops, "position": f.position})
 
 
 func _respawn(f: Fighter) -> void:
@@ -709,7 +854,18 @@ func _respawn(f: Fighter) -> void:
 	f.push_ticks = 0
 	f.move = null
 	f.chain = 0
-	f.cooldown = CombatTuning.ticks(CombatTuning.CREATURE_COOLDOWN_MS)
+	if f.kind == Fighter.Kind.CREATURE:
+		var kind: CreatureKind = f.creature_kind
+		f.cooldown = CombatTuning.ticks(kind.cooldown_ms)
+		f.ai_state = &""
+		f.ai_timer = 0
+		f.ai_count = 0
+		f.phase = 1
+		f.airborne = false
+		f.curled = false
+		f.untouchable = false
+		f.alerted = false
+		f.disguised = kind.behaviour == CreatureKind.AMBUSHER
 	if f.stamina != null:
 		f.stamina.current = f.stamina.maximum
 	f.enter(Fighter.State.FREE)
@@ -721,6 +877,8 @@ func _respawn(f: Fighter) -> void:
 func _step_creature(c: Fighter) -> void:
 	match c.state:
 		Fighter.State.GONE:
+			if not c.creature_kind.respawns:
+				return  # bosses and spent creatures do not come back
 			c.state_tick += 1
 			if c.state_tick >= c.state_length:
 				_respawn(c)
@@ -735,23 +893,16 @@ func _step_creature(c: Fighter) -> void:
 		Fighter.State.ATTACK:
 			if not _creature_time_passes(c):
 				return  # Chill: the attack plays out slower
+			var move: CombatMove = c.move
 			_advance_attack(c)
 			if c.state == Fighter.State.FREE:
-				c.cooldown = CombatTuning.ticks(CombatTuning.CREATURE_COOLDOWN_MS)
+				c.cooldown = CombatTuning.ticks(c.creature_kind.cooldown_ms)
+				CreatureBrain.on_attack_end(self, c, move)
 		Fighter.State.FREE:
 			if c.cooldown > 0 and _creature_time_passes(c):
 				c.cooldown -= 1
-			if not c.ai_enabled or not player.is_alive():
-				return
-			var offset: Vector2 = player.position - c.position
-			if offset.length() > 0.001:
-				c.facing = offset.normalized()
-			var gap: float = offset.length() - c.radius - player.radius
-			if gap > CombatTuning.CREATURE_ATTACK_RANGE:
-				var speed: float = CombatTuning.CREATURE_SPEED * c.effects.slow_factor()
-				_move_with_collision(c, c.facing * CombatTuning.per_tick(speed))
-			elif c.cooldown == 0:
-				start_attack(c, _creature_lunge)
+			if c.ai_enabled:
+				CreatureBrain.think(self, c)
 
 
 ## Chill slows a creature's attacks: with slow factor s, only a share s of
@@ -795,7 +946,7 @@ func _update_lock(input: CombatInput) -> void:
 func _lock_candidates() -> Array[Fighter]:
 	var found: Array[Fighter] = []
 	for c: Fighter in creatures:
-		if c.is_alive() and c.position.distance_to(player.position) <= CombatTuning.LOCK_ON_RANGE:
+		if c.is_alive() and CreatureBrain.can_be_aimed_at(c) and c.position.distance_to(player.position) <= CombatTuning.LOCK_ON_RANGE:
 			found.append(c)
 	found.sort_custom(func(a: Fighter, b: Fighter) -> bool:
 		return a.position.distance_squared_to(player.position) < b.position.distance_squared_to(player.position))
