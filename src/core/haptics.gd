@@ -128,7 +128,7 @@ static func effect_for_event(event: Dictionary) -> StringName:
 					return &"bow_hit"
 				&"volley_rain":
 					return &""  # many small hits at once: rumble would only blur
-				&"ember", &"frost":
+				&"ember", &"frost", &"rot_seed":
 					return &"spell_hit"
 				&"siphon_beam", &"release", &"shatter":
 					return &""  # the release event plays the pulse
@@ -164,6 +164,8 @@ static func effect_for_event(event: Dictionary) -> StringName:
 			return &"spell_cast"
 		"siphon_drain":
 			return &"siphon_drain"
+		"seed_jump":
+			return &"spell_hit"  # a small tick as the seed finds a new host
 		"wardstep":
 			return &"wardstep"
 		"frozen":

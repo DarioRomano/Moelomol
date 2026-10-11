@@ -7,7 +7,9 @@ extends Weapon
 ## tether to the creature in front that drains its stacks into the lantern
 ## while the button is held, then a beam on release that turns what was
 ## drained into one burst (rules in _fire_beam and StatusEffects.release_damage).
-## Skill: Rot pool, an interim until the lead picks its rework (Q31). Spells
+## Skill: Rot seed (lead, 2026-10-11, Q31 A): a slow seed that latches onto
+## the first creature it hits and grows Rot on it; when its host dies or the
+## Siphon drains it, the seed jumps to the nearest creature. Spells
 ## cost Focus, which refills faster after a few seconds without being hit.
 ## Casting slows the player but never roots, and a hit during a cast's windup
 ## or while holding heavy interrupts it (and loses whatever was drained).
@@ -22,7 +24,7 @@ const FOCUS_FAST_AFTER_MS: int = 3000  # without being hit
 const EMBER_FOCUS: float = 5.0
 const FROST_FOCUS: float = 12.0
 const SIPHON_FOCUS: float = 10.0
-const POOL_FOCUS: float = 20.0
+const SEED_FOCUS: float = 15.0
 
 const CAST_MOVE_SPEED: float = 48.0  # layout px/s while casting (60%)
 
@@ -41,10 +43,10 @@ const BEAM_SPLASH_SHARE: float = 0.5  # creatures behind the first on the line
 const BEAM_FREEZE_CHILL: int = 3  # this much Chill drained freezes the first creature
 const BEAM_ROT_STACKS: int = 2  # drained Rot gives this to the others on the line
 
-const POOL_DISTANCE: float = 40.0  # from the player, the way they face
-const POOL_RADIUS: float = 22.0
-const POOL_PERIOD_MS: int = 500  # one Rot stack per creature inside, this often
-const POOL_WAVES: int = 8  # 4 s
+const SEED_SPEED: float = 160.0
+const SEED_DURATION_MS: int = 4000  # on its hosts, all jumps together
+const SEED_GROW_MS: int = 600  # one more Rot on the host, this often
+const SEED_JUMP_RADIUS: float = 48.0  # gap to the next host
 
 const WARDSTEP_DISTANCE: float = 40.0
 const WARDSTEP_MS: int = 200  # invulnerable throughout
@@ -65,11 +67,11 @@ static var EMBER_BOLT: CombatMove = _spell(&"ember_bolt", "Ember bolt", Vector3i
 	_bolt(&"ember", 3.0, 4.0, StatusEffects.SMOULDER, 1, EMBER_SPEED))
 static var FROST_SHARD: CombatMove = _spell(&"frost_shard", "Frost shard", Vector3i(100, 17, 200),
 	_bolt(&"frost", 4.0, 6.0, StatusEffects.CHILL, 2, FROST_SPEED))
-static var ROT_POOL: CombatMove = _spell(&"rot_pool", "Rot pool", Vector3i(0, 17, 300), null)
+static var ROT_SEED: CombatMove = _spell(&"rot_seed_cast", "Rot seed", Vector3i(150, 17, 250),
+	_bolt(&"rot_seed", 0.0, 0.0, &"", 0, SEED_SPEED))
 ## The beam's recovery; the beam itself hits at once (_fire_beam).
 static var SIPHON_BEAM: CombatMove = _spell(&"siphon_beam", "Siphon beam", Vector3i(0, 17, 250), null)
 static var SHATTER: CombatMove = CombatMove.make(&"shatter", "Shatter", Vector3i.ZERO, 20.0, 30.0, 16.0, 0.0, 0.0, 0.0)
-static var POOL_PAYLOAD: CombatMove = _pool_payload(&"rot_pool_tick", StatusEffects.ROT)
 static var CHILL_PAYLOAD: CombatMove = _pool_payload(&"chill_pool_tick", StatusEffects.CHILL)
 
 var focus: float = FOCUS_MAX
@@ -80,6 +82,11 @@ var siphoning: bool = false
 var siphon_target: Fighter = null
 var drained: Dictionary = {}
 var siphon_ticks: int = 0
+## The Rot seed: the creature it grows on (null when there is none), the time
+## it has left and the wait before it adds the next Rot.
+var seed_host: Fighter = null
+var seed_ticks_left: int = 0
+var seed_grow_wait: int = 0
 var _since_hit: int = 0  # ticks since the player was last hit
 
 
@@ -104,14 +111,7 @@ func try_action(sim: CombatSim, action: StringName, _input: CombatInput) -> bool
 			p.enter(Fighter.State.CHARGE)
 			return true
 		&"skill":
-			# Interim (Q31): the old Rot pool until its rework is decided.
-			if not _cast(sim, ROT_POOL, POOL_FOCUS):
-				return false
-			var at: Vector2 = sim.resolve_position(p.position + p.facing * POOL_DISTANCE, 0.0)
-			sim.zones.append(Zone.make(&"rot_pool", p, POOL_PAYLOAD, at, POOL_RADIUS, 0,
-				CombatTuning.ticks(POOL_PERIOD_MS), POOL_WAVES))
-			sim.events.append({"type": "pool", "kind": &"rot", "position": at, "radius": POOL_RADIUS})
-			return true
+			return _cast(sim, ROT_SEED, SEED_FOCUS)
 	return false
 
 
@@ -219,6 +219,8 @@ func _drain(sim: CombatSim) -> void:
 	if not taken.is_empty():
 		sim.events.append({"type": "siphon_drain", "fighter": siphon_target, "taken": taken,
 			"position": siphon_target.position})
+		if siphon_target == seed_host:
+			_jump_seed(sim)  # draining the host shakes the seed loose
 
 
 ## The beam: a line from the player the way they face. The first creature on
@@ -273,6 +275,53 @@ func _fire_beam(sim: CombatSim) -> void:
 			sim.apply_effect(c, StatusEffects.ROT, BEAM_ROT_STACKS)
 
 
+## The seed takes hold of `host`: 1 Rot at once, then 1 more every
+## SEED_GROW_MS while its time lasts.
+func _latch(sim: CombatSim, host: Fighter) -> void:
+	seed_host = host
+	seed_grow_wait = CombatTuning.ticks(SEED_GROW_MS)
+	sim.events.append({"type": "seed_latch", "fighter": host, "position": host.position})
+	sim.apply_effect(host, StatusEffects.ROT, 1)
+
+
+func _tick_seed(sim: CombatSim) -> void:
+	if seed_host == null:
+		return
+	if not seed_host.is_alive():
+		_jump_seed(sim)
+		if seed_host == null:
+			return
+	seed_ticks_left -= 1
+	if seed_ticks_left <= 0:
+		sim.events.append({"type": "seed_withered", "position": seed_host.position})
+		seed_host = null
+		return
+	seed_grow_wait -= 1
+	if seed_grow_wait <= 0:
+		seed_grow_wait = CombatTuning.ticks(SEED_GROW_MS)
+		sim.apply_effect(seed_host, StatusEffects.ROT, 1)
+
+
+## The seed leaves its host for the nearest other creature within
+## SEED_JUMP_RADIUS, keeping the time it has left; with none, it is lost.
+func _jump_seed(sim: CombatSim) -> void:
+	var from: Fighter = seed_host
+	var next: Fighter = null
+	for c: Fighter in sim.creatures:
+		if c == from or not c.is_alive():
+			continue
+		if c.position.distance_to(from.position) - c.radius - from.radius > SEED_JUMP_RADIUS:
+			continue
+		if next == null or c.position.distance_to(from.position) < next.position.distance_to(from.position):
+			next = c
+	if next == null:
+		sim.events.append({"type": "seed_lost", "position": from.position})
+		seed_host = null
+		return
+	sim.events.append({"type": "seed_jump", "from": from.position, "fighter": next, "position": next.position})
+	_latch(sim, next)
+
+
 func _end_siphon() -> void:
 	siphoning = false
 	siphon_target = null
@@ -285,7 +334,16 @@ func on_owner_hit(_sim: CombatSim) -> void:
 	_end_siphon()  # an interrupted Siphon loses what it drained
 
 
-func tick(_sim: CombatSim) -> void:
+func on_projectile_stopped(sim: CombatSim, projectile: Projectile) -> void:
+	if projectile.move != ROT_SEED.arrow or projectile.owner != sim.player:
+		return
+	if not projectile.hit.is_empty() and projectile.hit[0].is_alive():
+		seed_ticks_left = CombatTuning.ticks(SEED_DURATION_MS)  # a new seed replaces the old one
+		_latch(sim, projectile.hit[0])
+
+
+func tick(sim: CombatSim) -> void:
+	_tick_seed(sim)
 	if _since_hit < CombatTuning.ticks(FOCUS_FAST_AFTER_MS):
 		_since_hit += 1
 	focus = minf(FOCUS_MAX, focus + CombatTuning.per_tick(focus_regen_per_s()))
@@ -297,7 +355,8 @@ func focus_regen_per_s() -> float:
 
 
 func status_text(_p: Fighter) -> String:
-	return "focus %d%s" % [floori(focus), "  (refilling fast)" if focus < FOCUS_MAX and focus_regen_per_s() == FOCUS_FAST_REGEN_PER_S else ""]
+	var seed_text: String = "   seed %.1f s" % (seed_ticks_left / float(CombatTuning.TICK_RATE)) if seed_host != null else ""
+	return "focus %d%s%s" % [floori(focus), "  (refilling fast)" if focus < FOCUS_MAX and focus_regen_per_s() == FOCUS_FAST_REGEN_PER_S else "", seed_text]
 
 
 func _cast(sim: CombatSim, spell: CombatMove, cost: float) -> bool:

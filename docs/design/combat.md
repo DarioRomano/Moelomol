@@ -324,12 +324,11 @@ through and each button is a different tactic:
 | Light | **Ember bolt:** fast projectile, 1 Smoulder stack | Steady pressure on one target |
 | Heavy (tap) | **Frost shard:** slower projectile, 2 Chill stacks | Slowing the one that is closing in |
 | Heavy (hold) | **Siphon:** a tether to the creature in front drains its stacks into the lantern; letting go fires a beam | The payoff |
-| Skill | **Rot pool** (interim): a patch on the ground; anything standing in it gains Rot stacks | Area denial, until its rework (Q31) |
+| Skill | **Rot seed:** a slow seed that latches onto the first creature it hits and grows Rot on it; when its host dies or is siphoned, it jumps to the nearest creature | Choosing a host; spreading Rot through a group |
 
 (Lead, 2026-10-10, Q29: the Siphon goes on the heavy button; the Rot pool
-it replaced there is "rather boring" and is to be reworked; Q31 has the
-options. Until then it sits on the skill button, and Release, the old
-skill, is gone.)
+it replaced there was "rather boring". Lead, 2026-10-11, Q31 A: the Rot
+seed takes the skill button. Release, the old skill, is gone.)
 
 ### Siphon: cashing in
 
@@ -588,7 +587,7 @@ needs the lead's approval):
 | Frost shard (heavy, released within 250 ms) | 100 ms cast, 200 px/s, 4 damage, 2 Chill, 12 Focus |
 | Siphon (heavy, held 250 ms) | 10 Focus as the tether forms; to the lock target within 96 px, else the nearest creature within 96 px and 60° of the facing; pulls one stack of each kind at once and every 0.2 s; up to 1.5 s; the tether snaps beyond 144 px (what was drained is kept); walk at 48 px/s |
 | Siphon beam (letting go) | 160 px line, hits at once, 250 ms recovery. First creature: the burst (each drained stack worth 4, 6, 8, 10, 12; ×2 for two effects, ×3 for three), 20 poise, the combinations below; others on the line half. Drained Smoulder: 1 Smoulder to each creature hit; 3+ Chill: the first is Frozen; Rot: 2 Rot to the others. Nothing drained: 4 damage |
-| Rot pool (skill, interim until Q31) | 40 px in front, 22 px radius, 4 s; 1 Rot as it lands and every 0.5 s to each creature inside (not a hit); 20 Focus |
+| Rot seed (skill) | 150 ms cast, 15 Focus; a seed at 160 px/s that does no damage; latches onto the first creature it hits: 1 Rot at once and 1 more every 0.6 s, for 4 s in all; when its host dies, or a Siphon pull takes stacks from it, it jumps to the nearest other creature within 48 px (gap), keeping its time, and takes hold there at once (1 Rot); with none in reach it is lost; one seed at a time, a new one replaces it |
 | Shatter (Smoulder + Chill) | 20 damage, 30 poise to every creature within 36 px of the target |
 | Blight bloom (Smoulder + Rot) | 3 Rot to every creature within 48 px |
 | Brittle (Chill + Rot) | the target is staggered |
@@ -606,6 +605,15 @@ Readings of the design taken while building (say if any is wrong):
   are no longer on the creature.
 - **The combinations bloom even when the burst kills** the first creature,
   as Release's did (found in the review render, 2026-10-10).
+- **Draining does no damage by itself.** The tether only moves stacks
+  into the lantern; the damage is all in the beam. Stacks drained stop
+  burning on the creature (Smoulder and Rot damage over time, Rot's +damage
+  taken), so a long Siphon trades that ticking damage for a bigger burst.
+- **A seed jumps on the first Siphon pull that takes anything from its
+  host**, not when the tether forms; the host always has the seed's Rot, so
+  in practice that is the first pull.
+- **The seed outlives a weapon swap:** it keeps growing with the lantern in
+  the other slot.
 - **The Siphon is a hit taken in the open**: being hit while holding it
   loses the drained stacks (they were already taken off the creature).
 - **Brittle is a stagger** (the "massive poise damage" breaks poise at

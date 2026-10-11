@@ -53,10 +53,14 @@ Write a short note for each: fine / problem (what).
     drained. Fair, or too punishing? Result:
 11. **Siphon rumble (controller):** a pull that grows with what is drained,
     a tug at each pull, a pulse on the beam. Too much, too little? Result:
-12. **Interim Rot pool on the skill:** this is a stand-in until you pick its
-    rework (Q31). Anything that gets in the way meanwhile? Result:
+12. **Rot seed (magic, skill; added 2026-10-11):** cast it at a creature
+    in a group. It grows Rot for 4 s (a violet growth on the creature).
+    Kill the host, or Siphon it, and the seed should arc to the nearest
+    creature within reach. Is choosing a host interesting? Is the seed fast
+    enough to hit what you aim at (160 px/s)? Is the growth easy to see in
+    a busy fight? Result:
 
 ## Report back
 
 Notes per check; tuning changes come back as a PR with the new values for
-your approval. Q31 (the Rot rework) is in `docs/design/open-questions.md`.
+your approval.
