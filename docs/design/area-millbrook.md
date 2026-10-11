@@ -319,3 +319,47 @@ both are ordinary (`story.md` rules 3 and 4).
 - Interiors of the cottages, beyond one room each.
 - Audio: the area's ambience follows `audio-direction.md` (fewer birds to
   the south); prompts come with the area's art.
+
+## Built so far (2026-10-11)
+
+**Millbrook is walkable** (`scenes/world/millbrook.tscn`; F2 from the
+title, or `--start-scene millbrook`). The farm is not built yet, so the
+player starts at the top of the lane and wakes there after falling.
+
+- **The map is the accepted one**, kept in code (`src/world/millbrook_map.gd`)
+  and tested against this doc's map. Solid cells (woods, hedges, buildings,
+  water, fences, trees) block like obstacles in the combat simulation.
+- **Two corrections**, found by a test that walks the map (above, under the
+  map's key): a gap into the wheat field, and the brook running south from
+  the mill race so the flood really does cut off the ford.
+- **The camera** follows ADR-0015: a small dead zone, catching up in about
+  0.15 s, never past the map's edges on any screen shape, on whole screen
+  pixels.
+- **The clock** starts at 9:00 and runs as at the farm (`farming.md`).
+  - At 20:00 the night roster comes out and the day roster goes. At 6:00 it
+    is the other way round, and the creatures defeated the day before come
+    back.
+  - Creatures only appear or vanish where no screen can see them (more than
+    680 px from the player). Entering, or waking after a fall, places
+    everything at once.
+  - Grist, once defeated, never comes back.
+- **Creatures as planned:** 31 by day, as in the zone-by-zone table above.
+  The mill's nest is at the mill door until the mill has an inside.
+- **Night:** the clock's tint over everything, and the sight ring (clear
+  within 7 tiles, fading over 4 more); the orchard's fungus and, at night,
+  fireflies at the floodwater's edge are lights the moths swirl round.
+- **Developer keys:** F6 creatures passive, F7 the other weapon, F8 skip to
+  the next 20:00 or 6:00, F9 time 30 times faster.
+- **Placeholder art:** the map is drawn in code from the palette (ground,
+  trees, hedges, buildings as whole blocks, water, wheat, fences), listed
+  in the asset register. Buildings are drawn under the fighters, so a
+  fighter behind a cottage is drawn over its roof (draw order comes with
+  the art).
+- **Review renders:** `millbrook.tscn` (the lane by day), `millbrook_night.tscn`
+  (the green at night), `millbrook_overview.tscn` (the whole map with the day
+  roster).
+- **Not built yet (stage 4):** notes and the satchel, the crank and the
+  sluice, the flood draining, the ford's exit, Grist's heart, interiors (the
+  mill, the cottages), the exit up the lane to the farm.
+- How it feels can only be judged by playing:
+  `docs/playtests/2026-10-11-millbrook-walkable.md`.

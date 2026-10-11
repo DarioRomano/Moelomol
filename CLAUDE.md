@@ -30,7 +30,8 @@ including the watering spell's tiers up to rain (`docs/design/farming.md`;
 Q21–Q28 decided by the lead). The farm, the world's structure and the first
 area, Millbrook, are designed and their layouts accepted
 (`docs/design/base.md`, `world.md`, `area-millbrook.md`, `enemies.md`);
-Millbrook is being built first (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+Millbrook is walkable with its creatures and boss, Grist; its objective and
+notes are next (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -78,6 +79,8 @@ prints failures as `::error` annotations: read them with
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
 | `scenes/combat/` | Combat test arena and its HUD |
 | `scenes/farm/` | Farm test scene and its HUD |
+| `scenes/world/` | Adventure areas: Millbrook (`millbrook.tscn`) |
+| `src/world/` | Areas: `AreaMap` (text maps), `Area` (clock, rosters), `FollowCamera` (ADR-0015), `AreaDrawer`, Millbrook's map and roster |
 | `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), drawing |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
@@ -190,5 +193,8 @@ note of the bug it caught.
   head-on; one that met the fence at a slant slid along it and never
   stunned. The first test hit walls square, and a deliberate break survived
   until a slanted test was added.
+- **Walk the map in a test.** Millbrook's accepted map had a wheat field
+  with no way in, and a flood that did not cut off the ford; a breadth-first
+  walk from the entrance found both before anything was drawn.
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.

@@ -414,3 +414,16 @@ a real controller)
   millstone's edge test uses `grow(-radius)`.
 - `CanvasItem.draw_colored_polygon` and `draw_polyline` exist (the lane
   telegraphs).
+
+### 2026-10-11 (Millbrook walkable), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `Object.set_meta` / `get_meta` work on a `RefCounted` (the drawer caches
+  an area's building blocks on its `AreaMap`).
+- `Rect2.encloses` is true for an equal rectangle and false if the other
+  pokes out by 0.1 px (the camera tests).
+- `Vector2.round()` rounds halves away from zero (`4096.5` → `4097`):
+  rounding an edge-hugging camera centre can push the view a third of a
+  pixel past the edge at 3x, so the camera clamps after rounding.
+- `DisplayServer.window_get_size()` is `(0, 0)` headless;
+  `DisplayMath.expected_view_size` then returns the base 640 × 360.
+- `Vector2i.clamp(min, max)` clamps each axis (cell ranges in the drawer).

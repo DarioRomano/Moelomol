@@ -127,12 +127,16 @@ func test_defeated_creatures_come_back_at_dawn_and_grist_never_does() -> void:
 			grist = c
 		elif c.creature_kind.id == &"rook" and rook == null:
 			rook = c
+	area.sim.player.position = Vector2(1700, 980)  # far away: nothing stops a replacement but the rule
 	area.sim.defeat(grist)
 	area.sim.defeat(rook)
-	for i: int in range(T.ticks(T.CREATURE_DOWN_MS) + Area.SYNC_TICKS + 1):
+	for i: int in range(T.ticks(T.CREATURE_DOWN_MS) + Area.SYNC_TICKS * 3):
 		area.step(CombatInput.new())
 	assert_eq(rook.state, Fighter.State.GONE, "the rook is gone")
-	assert_eq(_kinds(area).get(&"rook", 0), 3, "and stays counted until dawn (gone, not replaced)")
+	assert_true(rook in area.sim.creatures, "and not replaced before dawn")
+	var alive: Array[Fighter] = area.sim.creatures.filter(func(c: Fighter) -> bool:
+		return c.creature_kind.id == &"rook" and c.is_alive())
+	assert_eq(alive.size(), 2, "two rooks until dawn")
 	assert_true(&"grist" in area.bosses_defeated, "Grist is recorded as defeated")
 	area.sim.player.position = Vector2(1700, 980)  # far from the orchard, out of its sight
 	area.clock.total_minutes = (area.clock.day() + 1) * GameClock.MINUTES_PER_DAY + GameClock.DAY_START_MINUTE - 0.01
@@ -141,7 +145,9 @@ func test_defeated_creatures_come_back_at_dawn_and_grist_never_does() -> void:
 	var rooks: Array[Fighter] = area.sim.creatures.filter(func(c: Fighter) -> bool:
 		return c.creature_kind.id == &"rook" and c.is_alive())
 	assert_eq(rooks.size(), 3, "all three rooks back after 6:00")
-	assert_eq(_kinds(area).get(&"grist", 0), 0, "Grist does not come back")
+	var grists: Array[Fighter] = area.sim.creatures.filter(func(c: Fighter) -> bool:
+		return c.creature_kind.id == &"grist" and c.is_alive())
+	assert_eq(grists.size(), 0, "Grist does not come back")
 
 
 func test_falling_means_waking_the_next_morning_at_the_entrance() -> void:

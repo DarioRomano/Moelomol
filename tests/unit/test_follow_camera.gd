@@ -39,9 +39,20 @@ func test_the_view_never_shows_past_the_edges_on_any_screen() -> void:
 		for target: Vector2 in [Vector2(0, 0), Vector2(1792, 1024), Vector2(0, 1024), Vector2(1792, 0), Vector2(900, 512)]:
 			var cam: FollowCamera = FollowCamera.new()
 			cam.snap(Vector2(900, 512), view, BOUNDS, scale)
-			_run(cam, target, view, 1.0, scale)
+			_run(cam, target, view, 5.0, scale)  # long enough to settle exactly at the edge
 			var shown: Rect2 = Rect2(cam.position - view / 2.0, view)
 			assert_true(BOUNDS.encloses(shown), "%s at %s shows %s" % [window, target, shown])
+
+
+func test_rounding_never_pushes_the_view_past_an_edge() -> void:
+	# 21:9 at 3x: the view is 853 px wide, so the edge-hugging centre
+	# (1792 - 426.5) is not on a whole screen pixel; rounding it would show
+	# a sliver past the edge.
+	var view: Vector2 = Vector2(853, 360)
+	var cam: FollowCamera = FollowCamera.new()
+	cam.snap(Vector2(1792, 512), view, BOUNDS, 3.0)
+	cam.update(Vector2(1792, 512), view, BOUNDS, 3.0, 1.0 / 60.0)
+	assert_true(cam.position.x + view.x / 2.0 <= BOUNDS.end.x, "right edge (%.3f)" % (cam.position.x + view.x / 2.0))
 
 
 func test_away_from_the_edges_the_camera_sits_on_whole_screen_pixels() -> void:
