@@ -99,11 +99,23 @@ parcels.
   camera (ADR-0015), separate scenes (ADR-0016), starting weapons, falling,
   objectives and the notes satchel, a boss's heart opening its parcel, and
   how farming magic looks (Q28).
-- **Waiting on the lead:** acceptance of the two layouts themselves (the
-  farm and Millbrook), which are level layout.
-- **Next, once accepted:** the farm layout in place of the test field, then
-  the house inside, then Millbrook as the first area, in the order in
-  `base.md`.
+- **Layouts accepted (2026-10-11):** the farm and Millbrook.
+- **The lead's order (2026-10-11):** more varied enemies, Millbrook and its
+  themed boss first; the farm after.
+
+## Millbrook, the first area (started 2026-10-11)
+
+`docs/design/enemies.md` (archetypes, Millbrook's six creatures, Grist the
+miller's boar) and `docs/design/area-millbrook.md` (zone-by-zone
+encounters). Built in stages, each its own pull request:
+
+1. **Design:** enemies and the boss, the encounter plan (2026-10-11).
+2. **Creatures:** creature kinds in the combat simulation, the six
+   Millbrook creatures and Grist, with tests and review renders.
+3. **The area:** Millbrook walkable from the accepted map; collision from
+   the map; the camera (ADR-0015); the clock with day and night rosters.
+4. **The objective:** notes and the satchel, the crank, the sluice, the
+   flood draining, the ford, Grist's heart, falling.
 
 ## Later (not planned)
 

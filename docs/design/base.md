@@ -1,11 +1,11 @@
 # The base: the farm
 
 - **Status:** The lead decided on 2026-10-11 (Q33): **the farm is much
-  bigger, but overgrown, and defeating bosses opens more of it.** Everything
-  else here is a proposal for the lead: the layout is the lead's decision
-  (CLAUDE.md, level layout). Nothing is built. The farm test scene
+  bigger, but overgrown, and defeating bosses opens more of it**, and
+  accepted this layout the same day. Items marked **Proposal** are still
+  suggestions. Nothing is built yet; the farm test scene
   (`scenes/farm/farm_test.tscn`) stays a test field until the layout is
-  accepted.
+  built.
 - **Binding constraints:**
   - ADR-0005: the only place farming happens; peaceful; no combat.
   - ADR-0010: the pet lives here.
@@ -88,7 +88,7 @@ puts what farming needs most first.
 | Opens | Parcel (map digit) | Size (tiles) | What it holds | What it is for |
 |---|---|---|---|---|
 | Start | **The homestead** (`h`) | 48 × 30 | House, workshop, first field, pond, pen | Everything to start with (below) |
-| 1st boss (Millbrook's Old Boar) | **The great fields** (`1`) | about 2,800 | Wide old fields in strips between hedgerows; the old track up the middle; a ruined field shelter | Crops at scale, once Mana allows |
+| 1st boss (Millbrook's boss, Grist) | **The great fields** (`1`) | about 2,800 | Wide old fields in strips between hedgerows; the old track up the middle; a ruined field shelter | Crops at scale, once Mana allows |
 | 2nd boss | **East pasture and the big barn** (`2`) | about 2,300 | Fenced pasture, a pond, the big barn (roof to mend) | Animals beyond the hen; hay |
 | 3rd boss | **The old orchard** (`3`) | about 2,300 | Rows of old fruit trees, a cider shed, beehives | Fruit trees: forage that is planted once and picked every day |
 | 4th boss | **Walled garden and glasshouse** (`4`) | about 1,600 | A walled kitchen garden, a broken glasshouse | Special crops: seeds from far areas that need shelter |
@@ -306,8 +306,9 @@ the places.
 2. **The house inside** with the bed and the seed tin.
 3. **The Clear spell** and the homestead's old fields.
 4. **The pet** in its places (ADR-0010).
-5. **Opening a parcel**: with the first boss (Millbrook's Old Boar).
+5. **Opening a parcel**: with the first boss (Millbrook's boss, Grist).
 6. **Then**, with their own design passes: the workshop's crafting, the
    stove's cooking, the pen's animals, restoring the parcels' buildings.
 
-Nothing in this list is scheduled until the lead accepts the layout.
+The layout is accepted (2026-10-11). The lead asked for Millbrook and its
+enemies first; the farm follows (`docs/roadmap.md`).

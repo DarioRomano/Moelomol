@@ -406,7 +406,9 @@ stronger further from the base. Combat needs a mix that tests each weapon:
 
 **Each area has one boss** (the lead, 2026-10-11). Defeating it opens the
 next overgrown parcel of the farm (`base.md`, `world.md`); Millbrook's is
-the Old Boar. Bosses are defeated once and do not come back.
+Grist, the miller's boar. Bosses are defeated once and do not come back.
+The roster's archetypes, Millbrook's creatures and Grist are designed in
+`enemies.md`.
 
 Every creature attack has a telegraph. Creatures do not chase forever;
 fights end when the player leaves their ground (fitting "changed wildlife").
@@ -484,7 +486,7 @@ Further starting values chosen while building the arena (all in
   (the hammer), hanging in the farm's workshop. The two-weapon swap works
   from the first fight.
 - **From Millbrook:** the orchard-wood bow, the first weapon the player
-  makes (orchard wood, crow feathers for arrows). It is the crafting
+  makes (orchard wood, rook feathers for arrows). It is the crafting
   tutorial for weapons. Until crafting exists, the bow lies in Millbrook's
   cider shed.
 - **From the second area:** the lantern (magic), made from that area's
