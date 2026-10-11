@@ -105,15 +105,4 @@ static func _apply_settings(weapon: Weapon) -> void:
 
 ## This tick's input from the InputMap actions (ADR-0013).
 static func read_input() -> CombatInput:
-	var input: CombatInput = CombatInput.new()
-	input.move = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
-	input.light_pressed = Input.is_action_just_pressed(&"attack_light")
-	input.heavy_pressed = Input.is_action_just_pressed(&"attack_heavy")
-	input.heavy_held = Input.is_action_pressed(&"attack_heavy")
-	input.skill_pressed = Input.is_action_just_pressed(&"weapon_skill")
-	input.dodge_pressed = Input.is_action_just_pressed(&"dodge")
-	input.swap_pressed = Input.is_action_just_pressed(&"weapon_swap")
-	input.lock_held = Input.is_action_pressed(&"lock_on")
-	input.target_next_pressed = Input.is_action_just_pressed(&"target_next")
-	input.target_prev_pressed = Input.is_action_just_pressed(&"target_prev")
-	return input
+	return CombatInput.read()

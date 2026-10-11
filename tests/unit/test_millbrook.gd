@@ -159,3 +159,32 @@ func test_falling_means_waking_the_next_morning_at_the_entrance() -> void:
 	assert_true(absf(area.clock.minute() - GameClock.DAY_START_MINUTE) < 1.0, "at 6:00")
 	assert_eq(area.sim.player.position, area.entrance, "at the entrance (the farm is not built yet)")
 	assert_eq(area.sim.player.health, area.sim.player.max_health, "rested")
+
+
+# --- The scene ---------------------------------------------------------------------------
+
+const SCENE: PackedScene = preload("res://scenes/world/millbrook.tscn")
+
+
+func test_millbrook_is_reachable_with_f2_and_launch_option() -> void:
+	var tools: GDScript = preload("res://src/core/dev_tools.gd")
+	var scenes: Dictionary = tools.get("SHOWCASE_SCENES")
+	assert_eq(scenes.get("millbrook", ""), "res://scenes/world/millbrook.tscn", "in the F2 list")
+	var options: Dictionary = tools.call("parse_args", PackedStringArray(["--start-scene", "millbrook"]))
+	assert_eq(options["start_scene"], "millbrook", "--start-scene millbrook")
+
+
+func test_the_scene_steps_the_area_and_keeps_the_camera_inside_the_map() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	var scene: Node2D = SCENE.instantiate()
+	tree.root.add_child(scene)
+	var area: Area = scene.get("area")
+	var minutes: float = area.clock.total_minutes
+	for i: int in range(5):
+		scene.call("_physics_process", 1.0 / 60.0)
+	assert_true(area.clock.total_minutes > minutes, "time passes")
+	var cam: FollowCamera = scene.get("camera")
+	var view: Vector2 = scene.call("view_size")
+	assert_true(area.map.rect().encloses(Rect2(cam.position - view / 2.0, view)), "the view is inside the map")
+	scene.queue_free()
+	await tree.process_frame
