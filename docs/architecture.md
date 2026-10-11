@@ -395,3 +395,10 @@ a real controller)
   `ERROR: N resources still in use at exit`. The engine's exit code stays 0
   and the runner's `Logger` hook never sees them, so `tools/run-tests.sh`
   greps the output for both.
+
+### 2026-10-11 (design sketches in docs/), Godot 4.7.2.stable.official.ed1daf0bf
+
+- An empty `.gdignore` file in a folder stops the editor importing anything
+  in it. Seen: with PNGs in `docs/design/images/` and no `.gdignore`,
+  `--import` wrote a `.png.import` beside each; with `docs/.gdignore`, it
+  wrote none. Exports already exclude `docs/*` (`export_presets.cfg`).
