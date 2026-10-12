@@ -160,6 +160,7 @@ func _leave() -> void:
 		return
 	_left = true
 	state.store_area(area)
+	state.save()  # at the gate either way, and after falling (ADR-0017)
 	leaving.emit(state.place)
 	if travels:
 		Fade.to_scene(get_tree(), state.scene_path(), Fade.colour_at(state.clock))

@@ -19,7 +19,7 @@ amended by ADR-0010.
 
 ## Current status
 
-Combat prototype. Beyond the foundation (test-card title, headless tests,
+Combat prototype. Beyond the foundation (headless tests,
 review renders, PR builds and releases), there is a **combat test arena**
 with the shared combat foundation, all four weapons (greatsword, hammer, bow,
 magic), the status-effect system, armour and the two-weapon swap
@@ -34,7 +34,10 @@ area, Millbrook, are designed and their layouts accepted
 Millbrook is playable: walkable, with its creatures, its boss Grist, its
 notes and satchel, and its objective (the sluice and the ford). One
 `GameState` holds the clock, bag and Mana across places; each place
-remembers itself. The title screen and saving are next (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+remembers itself. The title screen (the main scene) continues the one save
+or starts a new game; the game saves on sleeping, falling and at the gate
+(ADR-0017). Next, from `base.md`: the house inside, Clear, the cat
+(`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -79,7 +82,7 @@ prints failures as `::error` annotations: read them with
 |---|---|
 | `project.godot` | Engine settings (ADR-0008 display, Compatibility renderer, typing as errors) |
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
-| `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
+| `scenes/title/` | Main scene: the title screen (Continue, New game, Quit) |
 | `scenes/combat/` | Combat test arena and its HUD |
 | `scenes/farm/` | The farm (`farm.tscn`) and its HUD |
 | `scenes/world/` | Adventure areas: Millbrook (`millbrook.tscn`) |
@@ -87,7 +90,7 @@ prints failures as `::error` annotations: read them with
 | `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), the farm's layout (`FarmLayout`, `FarmMap`), drawing (`FarmGround`, `FarmDrawer`) |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
-| `src/core/game_state.gd` | The game in play: clock, bag, Mana, which place, what each place remembers |
+| `src/core/game_state.gd` | The game in play: clock, bag, Mana, which place, what each place remembers; the save (ADR-0017) |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
 | `tests/runner/` | Test runner and `TestCase` base class |
 | `tests/unit/` | Tests: `test_*.gd`, methods `test_*`, extend `TestCase` |

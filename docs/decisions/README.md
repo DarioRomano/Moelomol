@@ -30,3 +30,4 @@ Clarifications that do not change the decision (typos, links) are fine.
 | [0014](0014-top-down-three-quarter-view.md) | Camera perspective: top-down ¾ view | Accepted |
 | [0015](0015-camera-follow-with-dead-zone.md) | Camera: follow with a dead zone, clamped to the area | Accepted |
 | [0016](0016-places-as-separate-scenes.md) | The farm and each area are separate scenes, joined at exits | Accepted |
+| [0017](0017-one-save-written-at-rest-and-at-the-gate.md) | One save, written when sleeping, falling and at the gate | Accepted |
