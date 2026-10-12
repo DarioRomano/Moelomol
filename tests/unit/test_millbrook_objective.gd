@@ -165,7 +165,9 @@ const SCENE: PackedScene = preload("res://scenes/world/millbrook.tscn")
 
 func _scene() -> Node2D:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	GameState.current = null  # a new game of its own
 	var scene: Node2D = SCENE.instantiate()
+	scene.set("travels", false)
 	tree.root.add_child(scene)
 	for c: Fighter in (scene.get("area") as Area).sim.creatures:
 		c.ai_enabled = false

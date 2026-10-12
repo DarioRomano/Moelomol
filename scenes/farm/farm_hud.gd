@@ -26,7 +26,7 @@ func _ready() -> void:
 	_help = _make_label()
 	_help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_help.text = "Move WASD / stick   Cast J / X   Interact Space / A (harvest; the door: sleep)   " \
+	_help.text = "Move WASD / stick   Cast J / X   Interact Space / A (harvest; the farmhouse door: sleep)   " \
 		+ "Spells Q E / LB RB\nF8 sleep now   F9 time x30   F10 next watering tier"
 
 

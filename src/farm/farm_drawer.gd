@@ -13,10 +13,19 @@ extends RefCounted
 ## "Light and time"). No Godot lights: one multiply per colour (ADR-0007).
 
 static var _tint: Color = Color.WHITE
+## The farm's buildings and things, found in its map once:
+## [{"kind": StringName, "rect": Rect2}], sorted by their base line.
+static var _things: Array[Dictionary] = []
+static var _things_map: FarmMap = null
 
 
-static func draw(canvas: CanvasItem, sim: FarmSim, alpha: float, tint: Color = Color.WHITE) -> void:
+## Draws the farm. `view` (layout px) limits the farm's map to what is on
+## screen; the test field ignores it.
+static func draw(canvas: CanvasItem, sim: FarmSim, alpha: float, tint: Color = Color.WHITE, view: Rect2 = Rect2()) -> void:
 	_tint = tint
+	if sim.map != null:
+		_draw_farm(canvas, sim, alpha, view)
+		return
 	_draw_ground(canvas, sim)
 	for cell: Vector2i in sim.planted_cells():
 		_draw_crop(canvas, sim, cell)
@@ -25,8 +34,135 @@ static func draw(canvas: CanvasItem, sim: FarmSim, alpha: float, tint: Color = C
 	_draw_player(canvas, sim, at)
 	_draw_lights(canvas, sim)
 	if sim.raining:
-		_draw_rain(canvas, sim)
+		_draw_rain(canvas, sim, sim.bounds())
 	_draw_target(canvas, sim)
+
+
+## The farm (FarmMap): the painted ground, the soil and crops on screen, the
+## buildings and the player in order of their base line (so the player walks
+## behind the apple tree and in front of the house), then the lights.
+static func _draw_farm(canvas: CanvasItem, sim: FarmSim, alpha: float, view: Rect2) -> void:
+	if view.size == Vector2.ZERO:
+		view = sim.bounds()
+	canvas.draw_rect(view.grow(64.0), _c(Palette.WILD[0]))  # beyond the edge: more woods
+	canvas.draw_texture(FarmGround.texture_for(sim.map), sim.origin, _tint)
+	var low: Vector2i = sim.cell_at(view.position) - Vector2i.ONE
+	var high: Vector2i = sim.cell_at(view.end) + Vector2i.ONE
+	for y: int in range(maxi(low.y, 0), mini(high.y + 1, sim.plot.size.y)):
+		for x: int in range(maxi(low.x, 0), mini(high.x + 1, sim.plot.size.x)):
+			var cell: Vector2i = Vector2i(x, y)
+			if sim.plot.is_tilled(cell):
+				_draw_soil(canvas, sim, cell)
+			if sim.plot.crop_at(cell) != &"":
+				_draw_crop(canvas, sim, cell)
+	var at: Vector2 = sim.previous_position.lerp(sim.player_position, clampf(alpha, 0.0, 1.0))
+	var player_drawn: bool = false
+	for thing: Dictionary in _things_of(sim.map):
+		var rect: Rect2 = thing["rect"]
+		if not player_drawn and rect.end.y > at.y:
+			_draw_player(canvas, sim, at)
+			player_drawn = true
+		if view.grow(48.0).intersects(rect):
+			_draw_thing(canvas, sim, thing["kind"], rect)
+	if not player_drawn:
+		_draw_player(canvas, sim, at)
+	_draw_lights(canvas, sim)
+	if sim.raining:
+		_draw_rain(canvas, sim, view.intersection(sim.bounds()))
+	_draw_target(canvas, sim)
+
+
+## The buildings and things in the map, by their base line.
+static func _things_of(map: FarmMap) -> Array[Dictionary]:
+	if _things_map == map:
+		return _things
+	_things.clear()
+	_things_map = map
+	var kinds: Dictionary = {"HD": &"house", "Bb": &"workshop", "C": &"coop", "s": &"chest", "L": &"lamp",
+		"A": &"apple_tree", "m": &"mailbox"}
+	for chars: String in kinds:
+		var cells: Rect2i = map.bounds_of(chars[0])
+		for i: int in range(1, chars.length()):
+			cells = cells.merge(map.bounds_of(chars[i]))
+		if cells.size == Vector2i.ZERO:
+			continue
+		_things.append({"kind": kinds[chars], "rect": Rect2(Vector2(cells.position) * FarmSim.TILE, Vector2(cells.size) * FarmSim.TILE)})
+	_things.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a["rect"] as Rect2).end.y < (b["rect"] as Rect2).end.y)
+	return _things
+
+
+static func _draw_soil(canvas: CanvasItem, sim: FarmSim, cell: Vector2i) -> void:
+	var r: Rect2 = sim.cell_rect(Rect2i(cell, Vector2i.ONE))
+	var soil: Color = Palette.WARMTH[0].darkened(0.35) if sim.plot.is_watered(cell) else Palette.WARMTH[0]
+	canvas.draw_rect(r.grow(-1), _c(soil))
+	var furrow: Color = Palette.SHADOW[1] if sim.plot.is_watered(cell) else Palette.WARMTH[1].darkened(0.3)
+	for i: int in range(3):
+		canvas.draw_rect(Rect2(r.position + Vector2(3, 3 + i * 4), Vector2(10, 1)), _c(furrow))
+
+
+## One of the farm's buildings or things, standing in `rect` (its tiles).
+static func _draw_thing(canvas: CanvasItem, sim: FarmSim, kind: StringName, rect: Rect2) -> void:
+	match kind:
+		&"house", &"workshop":
+			_draw_building(canvas, sim, kind, rect)
+		&"coop":
+			# Small and broken: the door hangs open.
+			canvas.draw_rect(Rect2(rect.position + Vector2(3, 12), Vector2(26, 18)), _c(Palette.WARMTH[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(1, 4), Vector2(30, 10)), _c(Palette.WARMTH[0].darkened(0.3)))
+			canvas.draw_rect(Rect2(rect.position + Vector2(11, 18), Vector2(9, 12)), _c(Palette.SHADOW[1]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(20, 19), Vector2(4, 11)), _c(Palette.WARMTH[1]))
+		&"chest":
+			canvas.draw_rect(Rect2(rect.position + Vector2(5, 16), Vector2(22, 13)), _c(Palette.WARMTH[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(5, 13), Vector2(22, 5)), _c(Palette.WARMTH[1]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(15, 18), Vector2(2, 3)), _c(Palette.STONE[1]))
+		&"lamp":
+			canvas.draw_rect(Rect2(rect.position + Vector2(15, 4), Vector2(2, 26)), _c(Palette.STONE[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(12, 0), Vector2(8, 7)), _c(Palette.STONE[1]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(13, 2), Vector2(6, 4)), _c(Palette.SHADOW[2]))
+		&"apple_tree":
+			var base: Vector2 = Vector2(rect.get_center().x, rect.end.y - 2)
+			canvas.draw_rect(Rect2(base + Vector2(-3, -14), Vector2(6, 14)), _c(Palette.WARMTH[0]))
+			canvas.draw_circle(base + Vector2(0, -30), 20.0, _c(Palette.WILD[1].darkened(0.1)))
+			canvas.draw_circle(base + Vector2(-6, -34), 13.0, _c(Palette.CROPS[0]))
+			for p: Vector2 in [Vector2(-10, -26), Vector2(6, -36), Vector2(9, -24), Vector2(-3, -40)]:
+				canvas.draw_rect(Rect2(base + p, Vector2(3, 3)), _c(Palette.DANGER[1]))
+		&"mailbox":
+			canvas.draw_rect(Rect2(rect.position + Vector2(15, 14), Vector2(2, 16)), _c(Palette.WARMTH[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(10, 8), Vector2(12, 7)), _c(Palette.STONE[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(21, 6), Vector2(1, 5)), _c(Palette.DANGER[0]))  # the flag, down
+
+
+## The farmhouse and the workshop (3/4 view): a roof over the top half, the
+## front wall under it, a door where the map has one.
+static func _draw_building(canvas: CanvasItem, sim: FarmSim, kind: StringName, rect: Rect2) -> void:
+	var roof_height: float = roundf(rect.size.y * 0.55)
+	var wall: Rect2 = Rect2(rect.position + Vector2(0, roof_height), Vector2(rect.size.x, rect.size.y - roof_height))
+	var wall_colour: Color = Palette.WARMTH[1] if kind == &"house" else Palette.WARMTH[0].lightened(0.15)
+	canvas.draw_rect(wall, _c(wall_colour))
+	var roof: Rect2 = Rect2(rect.position + Vector2(-4, -6), Vector2(rect.size.x + 8, roof_height + 6))
+	canvas.draw_rect(roof, _c(Palette.WARMTH[0]))
+	canvas.draw_rect(Rect2(roof.position.x, roof.end.y - 4, roof.size.x, 4), _c(Palette.WARMTH[0].darkened(0.3)))
+	canvas.draw_rect(Rect2(roof.position.x, roof.position.y + roof.size.y * 0.35, roof.size.x, 1), _c(Palette.WARMTH[0].darkened(0.2)))
+	if kind == &"house":
+		canvas.draw_rect(Rect2(rect.end.x - 34, rect.position.y - 14, 10, 14), _c(Palette.STONE[0]))  # the chimney
+		var door: Rect2 = _house_door(sim)
+		canvas.draw_rect(door, _c(Palette.SHADOW[1]))
+		canvas.draw_rect(Rect2(door.end.x - 4, door.position.y + 11, 1, 2), _c(Palette.WARMTH[3]))
+		for window: Rect2 in _windows(sim):
+			canvas.draw_rect(window.grow(1), _c(Palette.WARMTH[0]))
+			canvas.draw_rect(window, _c(Palette.SHADOW[2]))
+	else:
+		var doorway: Rect2i = sim.map.bounds_of("b")
+		var at: Vector2 = Vector2(doorway.position) * FarmSim.TILE
+		canvas.draw_rect(Rect2(at.x + 6, wall.end.y - 24, 20, 24), _c(Palette.SHADOW[1]))
+		canvas.draw_rect(Rect2(at.x + 15, wall.end.y - 24, 2, 24), _c(Palette.WARMTH[0]))
+
+
+## The farmhouse door: at the bottom of its door tiles.
+static func _house_door(sim: FarmSim) -> Rect2:
+	var cells: Rect2i = sim.map.bounds_of("D")
+	var r: Rect2 = Rect2(Vector2(cells.position) * FarmSim.TILE, Vector2(cells.size) * FarmSim.TILE)
+	return Rect2(r.get_center().x - 7, r.end.y - 24, 14, 24)
 
 
 ## The tint to draw the world with: the time of day, dimmed and cooled
@@ -93,6 +229,9 @@ static func _draw_house(canvas: CanvasItem, sim: FarmSim) -> void:
 
 ## The house windows (lit by _draw_lights).
 static func _windows(sim: FarmSim) -> Array[Rect2]:
+	if sim.map != null:
+		var d: Rect2 = _house_door(sim)
+		return [Rect2(d.position.x - 40, d.position.y + 4, 14, 10), Rect2(d.end.x + 26, d.position.y + 4, 14, 10)]
 	var door: Rect2 = sim.cell_rect(Rect2i(sim.door_cell, Vector2i.ONE))
 	return [Rect2(door.position + Vector2(-22, 4), Vector2(10, 7)), Rect2(door.position + Vector2(28, 4), Vector2(10, 7))]
 
@@ -112,6 +251,13 @@ static func _draw_lights(canvas: CanvasItem, sim: FarmSim) -> void:
 		var pool: Vector2 = window.get_center() + Vector2(0, 20)
 		for i: int in range(6):
 			_ellipse(canvas, pool, Vector2(18.0 - i * 2.5, 8.0 - i * 1.1), Color(Palette.WARMTH[2], on * 0.06))
+	if sim.map != null:
+		# The porch lamp (base.md, B): lit with the windows.
+		var lamp: Rect2i = sim.map.bounds_of("L")
+		var head: Vector2 = Vector2(lamp.position) * FarmSim.TILE + Vector2(16, 4)
+		canvas.draw_rect(Rect2(head - Vector2(3, 2), Vector2(6, 4)), Color(Palette.WARMTH[3], on))
+		for i: int in range(6):
+			_ellipse(canvas, head + Vector2(0, 28), Vector2(24.0 - i * 3.5, 10.0 - i * 1.4), Color(Palette.WARMTH[2], on * 0.06))
 
 
 static func _ellipse(canvas: CanvasItem, centre: Vector2, radii: Vector2, colour: Color) -> void:
@@ -194,13 +340,13 @@ static func _draw_tool(canvas: CanvasItem, sim: FarmSim, hand: Vector2) -> void:
 
 
 ## Rain (the watering spell's final form): streaks over the whole field.
-static func _draw_rain(canvas: CanvasItem, sim: FarmSim) -> void:
-	var b: Rect2 = sim.bounds()
+static func _draw_rain(canvas: CanvasItem, sim: FarmSim, b: Rect2) -> void:
 	var phase: float = fposmod(sim.clock.total_minutes * 40.0, 24.0)
-	var x: float = b.position.x
-	var row: int = 0
+	# Streaks on a fixed 11 px grid, so they do not crawl as the view moves.
+	var x: float = ceilf(b.position.x / 11.0) * 11.0
+	var row: int = int(x / 11.0)
 	while x < b.end.x:
-		var y: float = b.position.y + fposmod(phase + row * 7.0, 24.0) - 12.0
+		var y: float = floorf(b.position.y / 24.0) * 24.0 + fposmod(phase + row * 7.0, 24.0) - 12.0
 		while y < b.end.y:
 			canvas.draw_line(Vector2(x, y), Vector2(x - 2, y + 6), Color(Palette.WATER[1].lightened(0.4), 0.5), 1.0)
 			y += 24.0

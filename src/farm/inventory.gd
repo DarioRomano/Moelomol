@@ -34,3 +34,21 @@ func items() -> Array[StringName]:
 		ids.append(item)
 	ids.sort()
 	return ids
+
+
+## Every item and its count, for carrying between places and the save.
+func to_dict() -> Dictionary:
+	var out: Dictionary = {}
+	for item: StringName in _counts:
+		out[String(item)] = _counts[item]
+	return out
+
+
+## Replaces the contents with a dictionary from to_dict(); counts that are
+## not whole positive numbers are skipped.
+func load_dict(counts: Dictionary) -> void:
+	_counts.clear()
+	for key: Variant in counts:
+		var n: Variant = counts[key]
+		if (n is int or n is float) and int(n) > 0:
+			_counts[StringName(str(key))] = int(n)
