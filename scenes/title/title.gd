@@ -209,7 +209,7 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	var size_now: Vector2 = size
-	var horizon: float = size_now.y * 0.72
+	var horizon: float = roundf(size_now.y * 0.72)
 	# The dusk sky in bands: deep blue overhead, amber at the hill line.
 	var bands: int = 12
 	for i: int in range(bands):
@@ -217,7 +217,11 @@ func _draw() -> void:
 		var colour: Color = Palette.SHADOW[0].lerp(Palette.SHADOW[2], t * 0.8)
 		if i >= bands - 3:
 			colour = colour.lerp(Palette.WARMTH[0], float(i - (bands - 4)) / 4.0)
-		draw_rect(Rect2(0, horizon * t, size_now.x, horizon / bands + 1), colour)
+		# Whole layout pixels, each band starting where the last ended (the
+		# first render showed dark seams between fractional bands).
+		var top: float = roundf(horizon * i / bands)
+		var bottom: float = roundf(horizon * (i + 1) / bands)
+		draw_rect(Rect2(0, top, size_now.x, bottom - top), colour)
 	# A few stars, fixed.
 	for i: int in range(28):
 		var x: float = fposmod(i * 97.3, 1.0 * 641) / 641.0 * size_now.x
@@ -240,7 +244,6 @@ func _draw() -> void:
 	draw_rect(Rect2(house + Vector2(38, 0), Vector2(6, 10)), dark)  # the chimney
 	draw_rect(Rect2(house + Vector2(10, 20), Vector2(7, 6)), Palette.WARMTH[3])  # one window lit
 	draw_rect(Rect2(house + Vector2(13, 20), Vector2(1, 6)), Palette.WARMTH[1])
-	draw_rect(Rect2(house + Vector2(4, 30), Vector2(18, 4)), Color(Palette.WARMTH[2], 0.25))  # its light on the grass
 	# The cat on the roof, against the sky.
 	var cat: Vector2 = house + Vector2(30, 1)
 	draw_rect(Rect2(cat + Vector2(0, 2), Vector2(6, 3)), dark)
@@ -248,6 +251,9 @@ func _draw() -> void:
 	draw_rect(Rect2(cat + Vector2(4, -1), Vector2(1, 1)), dark)
 	draw_rect(Rect2(cat + Vector2(6, -1), Vector2(1, 1)), dark)
 	draw_rect(Rect2(cat + Vector2(-2, 1), Vector2(2, 1)), dark)  # the tail
+	# Its eyes catch the last light, a shade too bright (ADR-0010: never
+	# explained).
+	draw_rect(Rect2(cat + Vector2(5, 1), Vector2(1, 1)), Palette.CHANGED[2])
 	# A lone tree on the hill's shoulder.
 	var tree: Vector2 = Vector2(roundf(size_now.x * 0.5) + 70, roundf(horizon) - 16)
 	draw_rect(Rect2(tree + Vector2(-1, 4), Vector2(2, 10)), dark)

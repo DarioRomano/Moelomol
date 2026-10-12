@@ -18,6 +18,7 @@ GODOT="${GODOT:-godot}"
 SCENES=(
   "res://scenes/showcase/test_card.tscn"
   "res://scenes/title/title.tscn"
+  "res://scenes/showcase/title_saved.tscn"
   "res://scenes/showcase/renderer_features.tscn"
   "res://scenes/showcase/combat_poses.tscn"
   "res://scenes/showcase/hammer_poses.tscn"
