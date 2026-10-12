@@ -1,7 +1,8 @@
 extends Node2D
-## Millbrook, the first area (docs/design/area-millbrook.md), walkable:
-## reached with F2 or `--start-scene millbrook`. The farm is not built yet, so
-## the player starts at the top of the lane and wakes there after falling.
+## Millbrook, the first area (docs/design/area-millbrook.md): reached down
+## the lane from the farm's south gate, or with F2 / `--start-scene
+## millbrook`. Built from the game in play (GameState); the top of the lane
+## leads home, and falling wakes the player in the farm bed (Q36).
 ##
 ## Each physics tick (fixed 60 Hz) it reads input, steps the Area (clock,
 ## roster, combat), plays haptics and moves the camera (ADR-0015). It draws the
@@ -21,7 +22,16 @@ const SIGHT_RADIUS: float = 112.0
 const SIGHT_FADE: float = 64.0
 const SIGHT_DARK: float = 0.85  # how dark it is beyond the fade
 
-var area: Area = Millbrook.make()
+## Emitted when the player leaves for another place; the fade and the scene
+## change follow unless `travels` is false (tests).
+signal leaving(place: StringName)
+
+var state: GameState = GameState.ensure()
+var area: Area = state.make_area(GameState.MILLBROOK)
+## False in tests: leaving stores the area and emits `leaving`, but the scene
+## stays.
+var travels: bool = true
+var _left: bool = false
 var camera: FollowCamera = FollowCamera.new()
 var haptics: Haptics = Haptics.new()
 var effects: Array[Dictionary] = []
@@ -71,7 +81,7 @@ func view_scale() -> float:
 
 
 func _physics_process(delta: float) -> void:
-	if is_paused():
+	if is_paused() or _left:
 		return
 	if _toast_ticks > 0:
 		_toast_ticks -= 1
@@ -86,13 +96,22 @@ func _physics_process(delta: float) -> void:
 		match event["type"]:
 			"woke":
 				camera.snap(area.sim.player.position, view_size(), area.map.rect(), view_scale())
+			"fell":
+				# Q36: the next 6:00, in the farm bed.
+				state.fell()
+				_leave()
+				return
 			"drained":
 				show_toast("The meadow has drained.")
 			"exit":
-				# The farm and the second area are not built yet: a developer
-				# line, not the game's voice.
 				var to: StringName = event["to"]
-				show_toast("[not built yet] " + ("the way back up to the farm" if to == &"farm" else "the road south"))
+				if to == &"farm":
+					state.travel(GameState.FARM, GameState.AT_GATE)
+					_leave()
+					return
+				# The second area is not built yet: a developer line, not the
+				# game's voice.
+				show_toast("[not built yet] the road south")
 	camera.update(area.sim.player.position, view_size(), area.map.rect(), view_scale(), delta)
 	_camera_node.position = camera.position
 
@@ -132,6 +151,18 @@ func _draw_sight(view: Rect2) -> void:
 		if view.grow(32.0).has_point(light):
 			draw_circle(light, 20.0, Color(Palette.CHANGED[2], 0.18))
 			draw_circle(light, 6.0, Color(Palette.CROPS[1], 0.5))
+
+
+## Leaving: the area remembers itself, then the fade to the next place
+## (GameState.travel has already said where).
+func _leave() -> void:
+	if _left:
+		return
+	_left = true
+	state.store_area(area)
+	leaving.emit(state.place)
+	if travels:
+		Fade.to_scene(get_tree(), state.scene_path(), Fade.colour_at(state.clock))
 
 
 ## A quiet line in the HUD for a few seconds (art-direction.md: progress is

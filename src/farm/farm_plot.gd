@@ -151,3 +151,34 @@ func new_day() -> int:
 				grew += 1
 		_watered[i] = 0
 	return grew
+
+
+## The tiles that differ from untouched ground, for carrying the farm between
+## places and into the save: [[x, y, tilled, watered, crop, grown days], ...].
+func export_cells() -> Array:
+	var cells: Array = []
+	for i: int in range(_soil.size()):
+		if _soil[i] == Soil.GRASS and _crop[i] == &"":
+			continue
+		cells.append([i % size.x, i / size.x, int(_soil[i]), int(_watered[i]), String(_crop[i]), _grown[i]])
+	return cells
+
+
+## Restores tiles exported by export_cells(). Entries outside the plot, on
+## blocked ground or naming an unknown crop are skipped and reported.
+func import_cells(cells: Array) -> void:
+	for entry: Variant in cells:
+		if not entry is Array or (entry as Array).size() != 6:
+			push_warning("FarmPlot: skipping a malformed tile %s" % [entry])
+			continue
+		var e: Array = entry
+		var cell: Vector2i = Vector2i(int(e[0]), int(e[1]))
+		var crop: StringName = StringName(str(e[4]))
+		if is_blocked(cell) or (crop != &"" and CropKind.of(crop) == null):
+			push_warning("FarmPlot: skipping tile %s (%s)" % [cell, crop])
+			continue
+		var i: int = _i(cell)
+		_soil[i] = Soil.TILLED if int(e[2]) == Soil.TILLED else Soil.GRASS
+		_watered[i] = 1 if int(e[3]) == 1 and _soil[i] == Soil.TILLED else 0
+		_crop[i] = crop if _soil[i] == Soil.TILLED else &""
+		_grown[i] = maxi(int(e[5]), 0) if _crop[i] != &"" else 0

@@ -7,8 +7,9 @@ extends RefCounted
 ## harvesting is by hand. The scene only
 ## reads input and draws; tests drive step() directly.
 ##
-## The layout is a test farm, not the base's design (level layout is the
-## lead's decision).
+## Two layouts: make_farm() is the farm as accepted (docs/design/base.md,
+## FarmMap); make_test_farm() is the small test field the farming rules were
+## first built on, kept for rule tests and the review renders of spells.
 
 const TILE: float = 16.0
 const TICK_SECONDS: float = 1.0 / 60.0
@@ -37,6 +38,9 @@ const WATER_TIERS: Array[Dictionary] = [
 	{"name": "Rain", "size": Vector2i.ZERO, "mana": 30.0},
 ]
 
+## Things brought home from the areas, by name.
+const ITEM_NAMES: Dictionary = {&"sluice_crank": "Sluice crank", &"grist_heart": "Grist's heart", &"tusk": "Tusk"}
+
 ## What the starting seed tin holds (Q25).
 const STARTING_SEEDS: Dictionary = {&"catmint_seeds": 6, &"radish_seeds": 6}
 
@@ -58,10 +62,20 @@ var facing: Vector2 = Vector2.DOWN
 var busy: int = 0  # ticks left of a cast or a harvest
 var last_action: StringName = &""  # for drawing the cast
 
-## Solid things the player cannot walk through, in layout px.
+## Solid things the player cannot walk through, in layout px (the test
+## field's house; the farm's are in its map).
 var solids: Array[Rect2] = []
+## The farm's ground (make_farm); null on the test field.
+var map: FarmMap = null
 var door_cell: Vector2i
 var wake_position: Vector2
+## Where the player arrives from Millbrook: the top of the lane below the
+## south gate (ADR-0016).
+var gate_position: Vector2
+## Exits: {"id": StringName, "rect": Rect2}. Walking into one reports
+## {"type": "exit", "to": id} once.
+var exits: Array[Dictionary] = []
+var _in_exit: StringName = &""
 ## Real seconds the clock advances per real second (a developer key speeds
 ## it up).
 var time_scale: float = 1.0
@@ -91,6 +105,43 @@ static func make_test_farm() -> FarmSim:
 	sim.player_position = sim.wake_position
 	sim.previous_position = sim.wake_position
 	return sim
+
+
+## The farm as accepted (docs/design/base.md): 160 x 96 tiles, the homestead
+## at the bottom centre. Only the first field can be tilled; the door of the
+## farmhouse is the bed until the house has an inside (base.md, "Built later",
+## step 2). The player starts in front of the door.
+static func make_farm() -> FarmSim:
+	var farm_map: FarmMap = FarmMap.make_farm()
+	var sim: FarmSim = FarmSim.new(Vector2.ZERO, farm_map.size)
+	sim.map = farm_map
+	for y: int in range(farm_map.size.y):
+		for x: int in range(farm_map.size.x):
+			if not FarmMap.TILLABLE.contains(farm_map.rows[y][x]):
+				sim.plot.block(Rect2i(x, y, 1, 1))
+	var door: Rect2i = farm_map.bounds_of("D")
+	sim.door_cell = door.position
+	# In front of the door, between its two tiles.
+	sim.wake_position = Vector2((door.position.x + door.size.x / 2.0) * TILE, (door.end.y + 0.5) * TILE)
+	var lane: Rect2i = FarmLayout.LANE
+	sim.gate_position = Vector2((lane.position.x + lane.size.x / 2.0) * TILE, (lane.position.y + 1.5) * TILE)
+	sim.exits.append({"id": &"millbrook", "rect": Rect2(lane.position.x * TILE, farm_map.size.y * TILE - 10.0,
+		lane.size.x * TILE, 10.0)})
+	sim.player_position = sim.wake_position
+	sim.previous_position = sim.wake_position
+	return sim
+
+
+## Puts the player somewhere at once, facing `towards` (entering the farm).
+func place_player(at: Vector2, towards: Vector2) -> void:
+	player_position = at
+	previous_position = at
+	facing = towards
+	busy = 0
+	_in_exit = &""
+	for exit: Dictionary in exits:
+		if (exit["rect"] as Rect2).has_point(at):
+			_in_exit = exit["id"]
 
 
 func cell_centre(cell: Vector2i) -> Vector2:
@@ -176,6 +227,18 @@ func step(input: FarmInput) -> void:
 		_interact()
 		return
 	_walk(input.move)
+	_check_exits()
+
+
+## Walking into an exit reports it once, until the player steps out again.
+func _check_exits() -> void:
+	var inside: StringName = &""
+	for exit: Dictionary in exits:
+		if (exit["rect"] as Rect2).has_point(player_position):
+			inside = exit["id"]
+	if inside != &"" and inside != _in_exit:
+		events.append({"type": "exit", "to": inside})
+	_in_exit = inside
 
 
 func _walk(move: Vector2) -> void:
@@ -193,7 +256,16 @@ func _walk(move: Vector2) -> void:
 func _fits(at: Vector2) -> bool:
 	if not bounds().grow(-PLAYER_RADIUS).has_point(at):
 		return false
-	for rect: Rect2 in solids:
+	var near: Array[Rect2] = solids
+	if map != null:
+		near = solids.duplicate()
+		var low: Vector2i = cell_at(at - Vector2(PLAYER_RADIUS, PLAYER_RADIUS))
+		var high: Vector2i = cell_at(at + Vector2(PLAYER_RADIUS, PLAYER_RADIUS))
+		for y: int in range(low.y, high.y + 1):
+			for x: int in range(low.x, high.x + 1):
+				if map.is_solid(Vector2i(x, y)):
+					near.append(cell_rect(Rect2i(x, y, 1, 1)))
+	for rect: Rect2 in near:
 		var closest: Vector2 = Vector2(clampf(at.x, rect.position.x, rect.end.x), clampf(at.y, rect.position.y, rect.end.y))
 		if closest.distance_to(at) < PLAYER_RADIUS:
 			return false
@@ -253,7 +325,7 @@ func _cast() -> void:
 
 func _interact() -> void:
 	var cell: Vector2i = target_cell()
-	if cell == door_cell:
+	if is_door(cell):
 		sleep()
 		return
 	var items: Dictionary = plot.harvest(cell)
@@ -266,6 +338,13 @@ func _interact() -> void:
 	events.append({"type": "harvest", "cell": cell, "items": items, "position": cell_centre(cell)})
 
 
+## True for the farmhouse door's tiles (the bed, for now).
+func is_door(cell: Vector2i) -> bool:
+	if map != null:
+		return map.char_at(cell) == "D"
+	return cell == door_cell
+
+
 ## Going to bed, any time: skips to the next 6:00 and refills Mana (Q22,
 ## Q27). The day also turns over at 6:00 without sleep.
 func sleep() -> void:
@@ -273,10 +352,32 @@ func sleep() -> void:
 	for i: int in range(clock.sleep_until_morning()):
 		_new_day()
 	mana.refill()
-	player_position = wake_position
-	previous_position = wake_position
-	facing = Vector2.DOWN
-	busy = 0
+	place_player(wake_position, Vector2.DOWN)
+
+
+## What the farm remembers between visits and in the save (the clock, Mana
+## and the bag belong to the game, not the farm: GameState).
+func export_state() -> Dictionary:
+	return {"cells": plot.export_cells(), "raining": raining, "day": clock.day(),
+		"spell_index": spell_index, "water_tier": water_tier}
+
+
+## Restores export_state(), then runs every 6:00 that passed since (the
+## clock may have moved on while the player was away).
+func apply_state(state: Dictionary) -> void:
+	plot.import_cells(state.get("cells", []))
+	raining = bool(state.get("raining", false))
+	water_tier = clampi(int(state.get("water_tier", 0)), 0, WATER_TIERS.size() - 1)
+	spell_index = clampi(int(state.get("spell_index", 0)), 0, spells.size() - 1)
+	catch_up(clock.day() - int(state.get("day", clock.day())))
+
+
+## The days that started while the player was away (in an area): each runs
+## the farm's 6:00, so crops watered before leaving grow once, and nothing
+## dries twice.
+func catch_up(days: int) -> void:
+	for i: int in range(maxi(days, 0)):
+		_new_day()
 
 
 ## 6:00: watered crops grow, the soil dries, any rain stops.
@@ -311,4 +412,6 @@ static func item_name(item: StringName) -> String:
 	if crop != null:
 		return "%s seeds" % crop.display_name
 	crop = CropKind.of(item)
-	return crop.display_name if crop != null else String(item)
+	if crop != null:
+		return crop.display_name
+	return ITEM_NAMES.get(item, String(item).capitalize())

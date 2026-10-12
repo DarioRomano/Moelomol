@@ -33,7 +33,8 @@ SCENES=(
   "res://scenes/combat/combat_arena.tscn"
   "res://scenes/showcase/farm_times.tscn"
   "res://scenes/showcase/farm_spells.tscn"
-  "res://scenes/farm/farm_test.tscn"
+  "res://scenes/farm/farm.tscn"
+  "res://scenes/showcase/farm_dusk.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:
 #   16:9 at 2x, 3x and 4x; a non-integer 16:9 laptop; 16:10 (Steam Deck,

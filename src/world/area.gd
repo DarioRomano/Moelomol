@@ -8,8 +8,10 @@ extends RefCounted
 ## The roster follows the world's rules: the night roster comes out at 20:00
 ## and the day roster at 6:00; creatures swap only where the player cannot see
 ## them (OFFSCREEN); defeated creatures come back at the next 6:00; a defeated
-## boss never does. Falling means waking the next morning (Q36; the farm is
-## not built yet, so the player wakes at the area's entrance).
+## boss never does. Falling means waking the next morning (Q36): in the game
+## the area reports "fell" and the scene takes the player home to the farm;
+## on its own (tests, the arena-like review scenes) the player wakes at the
+## area's entrance.
 
 ## Further than this from the player, a creature can appear or vanish unseen
 ## on every screen (32:9 sees 640 px either side).
@@ -33,6 +35,9 @@ var bosses_defeated: Array[StringName] = []
 var lights: Array[Vector2] = []  # always (glowing fungus)
 var night_lights: Array[Vector2] = []  # at night only (fireflies)
 var time_scale: float = 1.0
+## In the game (GameState), falling sends the player home to the farm bed
+## instead of waking them at the entrance.
+var wakes_at_home: bool = false
 ## Things the player can interact with (Area.interact): each
 ## {"id": StringName, "kind": &"note" | &"crank" | &"sluice" | &"heart",
 ##  "position": Vector2, "shown": bool, "taken": bool}.
@@ -137,8 +142,8 @@ func sync(force: bool) -> void:
 		var missing: bool = f == null or f.state == Fighter.State.GONE
 		if not missing:
 			continue
-		if f != null and not force and clock.day() <= int(entry["defeated_day"]):
-			continue  # defeated today: back at the next 6:00
+		if clock.day() <= int(entry["defeated_day"]):
+			continue  # defeated today (even before leaving and coming back): back at the next 6:00
 		if force or _far(entry["at"]):
 			if f != null:
 				_remove(f)
@@ -176,10 +181,14 @@ func _apply_light() -> void:
 	sim.lights = lights + night_lights if sim.night else lights.duplicate()
 
 
-## Falling (Q36): the next morning, everything back in place. The farm is
-## not built yet, so the player wakes at the area's entrance.
+## Falling (Q36): the next morning, everything back in place. In the game
+## the player wakes in the farm bed (the scene goes home on "fell");
+## otherwise at the area's entrance.
 func _wake_next_morning() -> void:
 	clock.sleep_until_morning()
+	if wakes_at_home:
+		events.append({"type": "fell"})
+		return
 	_apply_light()
 	_was_night = false
 	sim.projectiles.clear()
@@ -297,3 +306,92 @@ func _check_exits() -> void:
 	if inside != &"" and inside != _in_exit:
 		events.append({"type": "exit", "to": inside})
 	_in_exit = inside
+
+
+
+# --- Remembering the area ------------------------------------------------------------
+
+## What the area remembers between visits and in the save: notes found, the
+## objective, the drained meadow, bosses defeated (and what they left), things
+## taken, and the creatures defeated today (back at the next 6:00).
+func export_state() -> Dictionary:
+	var defeated: Dictionary = {}
+	for i: int in range(roster.size()):
+		var entry: Dictionary = roster[i]
+		var f: Fighter = entry["fighter"]
+		var day: int = int(entry["defeated_day"])
+		if f != null and not f.is_alive() and day < 0:
+			day = clock.day()
+		if day >= clock.day():
+			defeated[str(i)] = day
+	var saved_things: Array = []
+	for thing: Dictionary in things:
+		var at: Vector2 = thing["position"]
+		saved_things.append({"id": String(thing["id"]), "kind": String(thing["kind"]), "x": at.x, "y": at.y,
+			"shown": thing["shown"], "taken": thing["taken"]})
+	var found: Array = []
+	for note_id: StringName in satchel:
+		found.append(String(note_id))
+	var bosses: Array = []
+	for boss: StringName in bosses_defeated:
+		bosses.append(String(boss))
+	return {"satchel": found, "objective_done": objective_done, "drain_progress": drain_progress,
+		"drained": map.drained, "bosses_defeated": bosses, "things": saved_things, "defeated_today": defeated}
+
+
+## Restores export_state() onto a freshly made area, then places the
+## creatures for the time of day. Unknown notes are dropped; a thing the area
+## does not make itself (a boss's heart) is added where it was left.
+func apply_state(state: Dictionary) -> void:
+	satchel.clear()
+	for note_id: Variant in state.get("satchel", []):
+		if notes.has(StringName(str(note_id))) and not (StringName(str(note_id)) in satchel):
+			satchel.append(StringName(str(note_id)))
+	objective_done = bool(state.get("objective_done", false))
+	map.drained = bool(state.get("drained", false))
+	drain_progress = 1.0 if map.drained else clampf(float(state.get("drain_progress", 0.0)), 0.0, 1.0)
+	bosses_defeated.clear()
+	for boss: Variant in state.get("bosses_defeated", []):
+		bosses_defeated.append(StringName(str(boss)))
+	for saved: Variant in state.get("things", []):
+		if not saved is Dictionary:
+			continue
+		var d: Dictionary = saved
+		var thing_id: StringName = StringName(str(d.get("id", "")))
+		var thing: Dictionary = _thing(thing_id)
+		if thing.is_empty():
+			if thing_id == &"":
+				continue
+			add_thing(thing_id, StringName(str(d.get("kind", ""))), Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0))))
+			thing = things[things.size() - 1]
+		thing["shown"] = bool(d.get("shown", thing["shown"]))
+		thing["taken"] = bool(d.get("taken", false))
+	var defeated: Dictionary = state.get("defeated_today", {})
+	for key: Variant in defeated:
+		var i: int = int(str(key))
+		if i >= 0 and i < roster.size():
+			roster[i]["defeated_day"] = int(defeated[key])
+			var f: Fighter = roster[i]["fighter"]
+			if f != null and clock.day() <= int(defeated[key]):
+				_remove(f)  # placed when the area was made; not back until 6:00
+				roster[i]["fighter"] = null
+	start()
+
+
+func _thing(thing_id: StringName) -> Dictionary:
+	for thing: Dictionary in things:
+		if thing["id"] == thing_id:
+			return thing
+	return {}
+
+
+## Puts the player at the entrance, facing into the area (arriving from the
+## farm; ADR-0016).
+func enter() -> void:
+	sim.player.position = entrance
+	sim.player.previous_position = entrance
+	sim.player.facing = Vector2.DOWN
+	_in_exit = &""
+	for exit: Dictionary in exits:
+		if (exit["rect"] as Rect2).has_point(entrance):
+			_in_exit = exit["id"]

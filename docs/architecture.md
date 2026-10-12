@@ -113,10 +113,26 @@ Constraints the architecture must honour:
   day's tint; the base's lights and the target highlight stay untinted. No
   Godot lights or CanvasModulate: the tint is applied per colour, so review
   renders can show several times of day side by side.
-- `scenes/farm/farm_test.tscn` reads the farming InputMap actions; `FarmHud`
+- The farm itself (`FarmSim.make_farm()`): `FarmLayout` holds the accepted
+  maps, `FarmMap` one character per tile (solid, tillable). `FarmGround`
+  paints the static ground once into one texture; `FarmDrawer` draws the
+  soil and crops on screen, the buildings and the player by base line, and
+  the lights. `make_test_farm()` is the small field the rule tests use.
+- `scenes/farm/farm.tscn` reads the farming InputMap actions
+  (`FarmInput.read()`), follows the player with `FollowCamera`; `FarmHud`
   sits in a `UiFrame`. `scenes/showcase/farm_times.tscn` (dawn, midday,
   dusk, night) and `farm_spells.tscn` (the watering tiers and rain) are the
   review sheets.
+
+**The game across places (`src/core/game_state.gd`, ADR-0016)**
+- `GameState.current` is the game in play: the clock, the bag
+  (`Inventory`) and `Mana`, which place the player is in and how they
+  arrive (bed or gate), and what each place remembers as plain
+  dictionaries (`FarmSim.export_state()`, `Area.export_state()`).
+- Each place's scene builds its simulation from it when it opens
+  (`make_farm()`, `make_area(id)`) and stores itself when the player
+  leaves; `Fade` (on the tree's root) fades through the time of day's dark
+  and changes the scene. A scene opened on its own gets a new game.
 
 Why a custom simulation: every rule is testable headlessly and
 deterministically (tests call `step()` directly), timing windows are exact
@@ -439,3 +455,18 @@ a real controller)
 - `ThemeDB.fallback_font` is set headless and under Xvfb;
   `CanvasItem.draw_string(font, pos, text, alignment, width, size, colour)`
   draws the interact prompt.
+
+### 2026-10-12 (the farm), Godot 4.7.2.stable.official.ed1daf0bf
+
+- `Image.create_empty(2560, 1536, false, Image.FORMAT_RGBA8)` and
+  `Image.fill_rect` (46,000 rectangles in about 13 ms headless);
+  `ImageTexture.create_from_image` gives a 2560 x 1536 texture. The farm's
+  ground is one such texture (about 16 MB of video memory, inside
+  ADR-0007's 1 GB).
+- `CanvasItem.draw_texture(texture, position, modulate)` multiplies by
+  `modulate`, which is how the ground takes the time of day's tint.
+- `Rect2i.expand(point)` grows to include the point as its end (exclusive
+  use: `cell + Vector2i.ONE`); `Rect2i.merge` joins two rectangles
+  (`FarmMap.bounds_of`, tested: the farmhouse is 10 x 6 tiles).
+- `SceneTree.change_scene_to_file` and `Node.create_tween` with
+  `tween_property(node, "color:a", ...)` and `tween_callback` (the fade).

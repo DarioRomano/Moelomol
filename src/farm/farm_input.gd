@@ -26,3 +26,14 @@ static func press(action: StringName) -> FarmInput:
 		&"tool_prev": input.tool_prev_pressed = true
 		_: push_error("FarmInput.press: unknown action %s" % action)
 	return input
+
+
+## This tick's input from the InputMap actions (ADR-0013).
+static func read() -> FarmInput:
+	var input: FarmInput = FarmInput.new()
+	input.move = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
+	input.use_pressed = Input.is_action_just_pressed(&"farm_use_tool")
+	input.interact_pressed = Input.is_action_just_pressed(&"farm_interact")
+	input.tool_next_pressed = Input.is_action_just_pressed(&"farm_tool_next")
+	input.tool_prev_pressed = Input.is_action_just_pressed(&"farm_tool_prev")
+	return input

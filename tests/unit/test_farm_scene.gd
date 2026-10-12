@@ -1,8 +1,19 @@
 extends TestCase
-## The farm test scene: its bindings (ADR-0013; Q26, working assumption A),
+## The farm scene: its bindings (ADR-0013; Q26, working assumption A),
 ## stepping, developer keys, HUD and rumble.
 
-const FARM: PackedScene = preload("res://scenes/farm/farm_test.tscn")
+const FARM: PackedScene = preload("res://scenes/farm/farm.tscn")
+## A tile of the first field, and the one west of it to stand on.
+const FIELD_CELL: Vector2i = Vector2i(72, 76)
+
+
+## The farm scene in a new game of its own (scenes share GameState.current).
+func _open_farm() -> Node2D:
+	GameState.current = null
+	var farm: Node2D = FARM.instantiate()
+	farm.set("travels", false)
+	(Engine.get_main_loop() as SceneTree).root.add_child(farm)
+	return farm
 
 
 func _key(keycode: Key) -> InputEventKey:
@@ -39,8 +50,7 @@ func test_bindings_match_the_design() -> void:
 
 func test_the_scene_steps_the_farm_and_its_clock() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var farm: Node2D = FARM.instantiate()
-	tree.root.add_child(farm)
+	var farm: Node2D = _open_farm()
 	var sim: FarmSim = farm.get("sim")
 	var start: float = sim.clock.total_minutes
 	for i: int in range(30):
@@ -52,24 +62,22 @@ func test_the_scene_steps_the_farm_and_its_clock() -> void:
 
 func test_holding_use_tills_the_tile_in_front() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var farm: Node2D = FARM.instantiate()
-	tree.root.add_child(farm)
+	var farm: Node2D = _open_farm()
 	var sim: FarmSim = farm.get("sim")
-	sim.player_position = sim.cell_centre(Vector2i(12, 10))
+	sim.player_position = sim.cell_centre(FIELD_CELL + Vector2i.LEFT)
 	sim.facing = Vector2.RIGHT
 	Input.action_press(&"farm_use_tool")
 	await tree.physics_frame
 	await tree.physics_frame
 	Input.action_release(&"farm_use_tool")
-	assert_true(sim.plot.is_tilled(Vector2i(13, 10)), "Till cast through the InputMap")
+	assert_true(sim.plot.is_tilled(FIELD_CELL), "Till cast through the InputMap")
 	farm.queue_free()
 	await tree.process_frame
 
 
 func test_f10_steps_through_the_watering_tiers() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var farm: Node2D = FARM.instantiate()
-	tree.root.add_child(farm)
+	var farm: Node2D = _open_farm()
 	var sim: FarmSim = farm.get("sim")
 	var tiers: Array[int] = []
 	for i: int in range(FarmSim.WATER_TIERS.size()):
@@ -82,8 +90,7 @@ func test_f10_steps_through_the_watering_tiers() -> void:
 
 func test_f8_sleeps_and_f9_speeds_up_time() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var farm: Node2D = FARM.instantiate()
-	tree.root.add_child(farm)
+	var farm: Node2D = _open_farm()
 	var sim: FarmSim = farm.get("sim")
 	farm.call("_unhandled_input", _key(KEY_F8))
 	assert_eq(sim.clock.day(), 2, "F8: the next morning")
@@ -98,9 +105,9 @@ func test_f8_sleeps_and_f9_speeds_up_time() -> void:
 func test_the_farm_is_reachable_with_f2_and_launch_option() -> void:
 	var tools: Node = (Engine.get_main_loop() as SceneTree).root.get_node("DevTools")
 	var scenes: Dictionary = tools.get("SHOWCASE_SCENES")
-	assert_eq(scenes.get("farm_test", ""), "res://scenes/farm/farm_test.tscn", "in the F2 list")
-	var options: Dictionary = tools.call("parse_args", PackedStringArray(["--start-scene", "farm_test"]))
-	assert_eq(options["start_scene"], "farm_test", "--start-scene farm_test")
+	assert_eq(scenes.get("farm", ""), "res://scenes/farm/farm.tscn", "in the F2 list")
+	var options: Dictionary = tools.call("parse_args", PackedStringArray(["--start-scene", "farm"]))
+	assert_eq(options["start_scene"], "farm", "--start-scene farm")
 
 
 func test_farm_actions_rumble_softly() -> void:
@@ -119,15 +126,14 @@ func test_farm_actions_rumble_softly() -> void:
 
 func test_the_scene_plays_rumble_for_farm_events() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var farm: Node2D = FARM.instantiate()
-	tree.root.add_child(farm)
+	var farm: Node2D = _open_farm()
 	var sim: FarmSim = farm.get("sim")
 	var haptics: Haptics = farm.get("haptics")
 	var calls: Array[Array] = []
 	haptics.devices = func() -> Array[int]: return [0] as Array[int]
 	haptics.rumble = func(device: int, weak: float, strong: float, seconds: float) -> void:
 		calls.append([device, weak, strong, seconds])
-	sim.player_position = sim.cell_centre(Vector2i(12, 10))
+	sim.player_position = sim.cell_centre(FIELD_CELL + Vector2i.LEFT)
 	sim.facing = Vector2.RIGHT
 	Input.action_press(&"farm_use_tool")
 	await tree.physics_frame
@@ -140,8 +146,7 @@ func test_the_scene_plays_rumble_for_farm_events() -> void:
 
 func test_the_hud_shows_day_time_spell_mana_and_bag() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var farm: Node2D = FARM.instantiate()
-	tree.root.add_child(farm)
+	var farm: Node2D = _open_farm()
 	await tree.process_frame
 	var sim: FarmSim = farm.get("sim")
 	sim.inventory.add(&"radish", 3)

@@ -150,7 +150,7 @@ func test_defeated_creatures_come_back_at_dawn_and_grist_never_does() -> void:
 	assert_eq(grists.size(), 0, "Grist does not come back")
 
 
-func test_falling_means_waking_the_next_morning_at_the_entrance() -> void:
+func test_on_its_own_falling_means_waking_the_next_morning_at_the_entrance() -> void:
 	var area: Area = Millbrook.make()
 	area.sim.player.position = Vector2(900, 400)
 	var day: int = area.clock.day()
@@ -163,7 +163,7 @@ func test_falling_means_waking_the_next_morning_at_the_entrance() -> void:
 	assert_true(woke, "the player woke")
 	assert_eq(area.clock.day(), day + 1, "the next day")
 	assert_true(absf(area.clock.minute() - GameClock.DAY_START_MINUTE) < 1.0, "at 6:00")
-	assert_eq(area.sim.player.position, area.entrance, "at the entrance (the farm is not built yet)")
+	assert_eq(area.sim.player.position, area.entrance, "at the entrance (an area on its own; in the game, the farm bed)")
 	assert_eq(area.sim.player.health, area.sim.player.max_health, "rested")
 
 
@@ -182,7 +182,9 @@ func test_millbrook_is_reachable_with_f2_and_launch_option() -> void:
 
 func test_the_scene_steps_the_area_and_keeps_the_camera_inside_the_map() -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	GameState.current = null  # a new game of its own
 	var scene: Node2D = SCENE.instantiate()
+	scene.set("travels", false)
 	tree.root.add_child(scene)
 	var area: Area = scene.get("area")
 	var minutes: float = area.clock.total_minutes
