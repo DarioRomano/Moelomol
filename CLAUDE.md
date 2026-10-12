@@ -24,15 +24,17 @@ review renders, PR builds and releases), there is a **combat test arena**
 with the shared combat foundation, all four weapons (greatsword, hammer, bow,
 magic), the status-effect system, armour and the two-weapon swap
 (`docs/design/combat.md`).
-There is also a **farm test scene** with the game clock (a 20-minute day
+There is also **the farm** (`scenes/farm/farm.tscn`, the accepted layout,
+joined to Millbrook at the south gate; ADR-0016) with the game clock (a 20-minute day
 that cycles on its own), the day–night tint, and farming by magic with Mana,
 including the watering spell's tiers up to rain (`docs/design/farming.md`;
 Q21–Q28 decided by the lead). The farm, the world's structure and the first
 area, Millbrook, are designed and their layouts accepted
 (`docs/design/base.md`, `world.md`, `area-millbrook.md`, `enemies.md`);
 Millbrook is playable: walkable, with its creatures, its boss Grist, its
-notes and satchel, and its objective (the sluice and the ford); the farm is
-next (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+notes and satchel, and its objective (the sluice and the ford). One
+`GameState` holds the clock, bag and Mana across places; each place
+remembers itself. The title screen and saving are next (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -79,12 +81,13 @@ prints failures as `::error` annotations: read them with
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
 | `scenes/boot/` | Main scene: title over the test card (no gameplay yet) |
 | `scenes/combat/` | Combat test arena and its HUD |
-| `scenes/farm/` | Farm test scene and its HUD |
+| `scenes/farm/` | The farm (`farm.tscn`) and its HUD |
 | `scenes/world/` | Adventure areas: Millbrook (`millbrook.tscn`) |
 | `src/world/` | Areas: `AreaMap` (text maps), `Area` (clock, rosters), `FollowCamera` (ADR-0015), `AreaDrawer`, Millbrook's map and roster |
-| `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), drawing |
+| `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), the farm's layout (`FarmLayout`, `FarmMap`), drawing (`FarmGround`, `FarmDrawer`) |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
+| `src/core/game_state.gd` | The game in play: clock, bag, Mana, which place, what each place remembers |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
 | `tests/runner/` | Test runner and `TestCase` base class |
 | `tests/unit/` | Tests: `test_*.gd`, methods `test_*`, extend `TestCase` |

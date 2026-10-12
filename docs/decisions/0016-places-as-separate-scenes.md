@@ -45,3 +45,8 @@ When the first transition is built: a test walks the player through the
 farm's south gate and back, and asserts the entrance position and facing on
 each side, that the clock advanced, and that the farm scene contains no
 combat nodes.
+
+Implemented 2026-10-12: `tests/unit/test_places.gd` walks the player down
+the farm's lane and up Millbrook's, asserting the entrance positions and
+facing on each side and that the clock ran on, and checks that the farm
+scene holds no combat nodes, values or code.

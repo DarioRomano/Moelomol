@@ -123,9 +123,22 @@ encounters). Built in stages, each its own pull request:
    stage 3). Interact F / B and satchel I / View chosen by the lead.
    Playtest: `docs/playtests/2026-10-11-millbrook-objective.md`.
 
-**Millbrook is complete as far as it can be without the farm:** next is the
-farm (the accepted layout in `base.md`), which the lane's exit, waking in
-bed and Grist's heart all wait for.
+**Millbrook is complete as far as it can be without the farm.**
+
+## The farm, the title screen and saving (started 2026-10-12)
+
+The lead asked for a title screen that starts at the farm or the last save,
+and for saving; and chose to build the real farm first, to save when
+sleeping and at the gate, and to keep one save (2026-10-12).
+
+1. **The farm** from the accepted layout, joined to Millbrook at the south
+   gate (ADR-0016); one clock, bag and Mana for the game; each place
+   remembers itself; falling wakes the player at the farm (2026-10-12).
+   Playtest: `docs/playtests/2026-10-12-the-farm.md`.
+2. **The title screen and saving.**
+
+Then, from `base.md`'s order: the house inside with the bed, the Clear
+spell, the cat, Grist's heart opening the great fields.
 
 ## Later (not planned)
 

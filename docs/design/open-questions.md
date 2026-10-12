@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-11: every question is resolved. The lead accepted all open recommendations on 2026-10-11 (Q28, Q32, Q34–Q38).
+Status at 2026-10-12: Q39 is open. Everything before it is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -47,6 +47,7 @@ Status at 2026-10-11: every question is resolved. The lead accepted all open rec
 | Q36 | What happens when the player falls in an area | Every area; combat's "death" | **Resolved**: A, wake in bed the next morning → `combat.md`, `world.md` |
 | Q37 | How the player knows what to do next | Every area's objective | **Resolved**: B, the world plus the notes kept to re-read → `world.md` |
 | Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | **Resolved**: C, a boss's heart lets Clear open its parcel → `base.md`, `farming.md` |
+| Q39 | One interact button at the farm and in the areas? | Nothing yet (both work) | **Open** |
 
 ---
 
@@ -1710,3 +1711,33 @@ parcel** (recommended)
     while a heart is in the bag.
 
 **Recommendation:** C.
+
+
+## Q39. One interact button at the farm and in the areas?
+
+Raised 2026-10-12, when the farm and Millbrook were joined. Input model:
+the lead's call.
+
+Today the farm's interact (harvest, the door) is **Space / A** (Q26, working
+assumption A in `farming.md`), and the areas' interact (notes, the crank,
+the sluice) is **F / B** (chosen 2026-10-11, because Space / A is the
+dodge). A player walking down the lane now changes which button means
+"use this".
+
+**A. F / B everywhere** (recommended)
+- Pro: one button means "use this" in every place; the farm's notes,
+  mailbox and bench (later) work like Millbrook's.
+- Pro: Space / A stays free at the farm, matching the areas, where it is
+  the dodge (and could be a quick hop or nothing at the farm).
+- Con: changes a decided working assumption; farming players reach for
+  Space / A in many farming games.
+
+**B. Keep both as they are**
+- Pro: no change; each place has a natural button.
+- Con: two buttons for one meaning, a few seconds' walk apart.
+
+**C. Space / A everywhere, dodge moves elsewhere**
+- Con: the dodge is the most-pressed combat button; moving it costs more
+  than it gains.
+
+Recommendation: **A**.

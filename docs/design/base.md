@@ -3,9 +3,7 @@
 - **Status:** The lead decided on 2026-10-11 (Q33): **the farm is much
   bigger, but overgrown, and defeating bosses opens more of it**, and
   accepted this layout the same day. Items marked **Proposal** are still
-  suggestions. Nothing is built yet; the farm test scene
-  (`scenes/farm/farm_test.tscn`) stays a test field until the layout is
-  built.
+  suggestions. Built so far: the layout (see "Built so far" at the end).
 - **Binding constraints:**
   - ADR-0005: the only place farming happens; peaceful; no combat.
   - ADR-0010: the pet lives here.
@@ -312,3 +310,23 @@ the places.
 
 The layout is accepted (2026-10-11). The lead asked for Millbrook and its
 enemies first; the farm follows (`docs/roadmap.md`).
+
+## Built so far
+
+**Step 1, the farm layout (2026-10-12):** `scenes/farm/farm.tscn`.
+- The whole farm, 160 x 96 tiles, from the two maps above
+  (`src/farm/farm_layout.gd`, tested against `images/estate.txt` and
+  `base.txt`). The homestead's top-left tile is (56, 62): the estate gives
+  it 48 x 32 tiles and the homestead is 48 x 30, so the two rows above its
+  north hedge are the great fields' thicket. A 4-tile lane runs from the
+  south gate through the woods to the farm's edge.
+- Everything solid that should be (hedges, buildings, the pond, the woods,
+  all six parcels' thicket); the pen walkable, its fence down.
+- Only the first field can be tilled; the old fields wait for Clear.
+- The farmhouse door is the bed until the inside is built (step 2); the
+  player wakes in front of it.
+- The south gate leads down the lane to Millbrook and back (ADR-0016);
+  falling in Millbrook wakes the player here (Q36).
+- Not yet: the house inside, Clear, the cat, parcels opening, the mailbox,
+  the bench's sitting, the chest. The old track (estate column 17) is 2
+  tiles west of the north gate; to line up when the great fields open.
