@@ -135,7 +135,9 @@ sleeping and at the gate, and to keep one save (2026-10-12).
    gate (ADR-0016); one clock, bag and Mana for the game; each place
    remembers itself; falling wakes the player at the farm (2026-10-12).
    Playtest: `docs/playtests/2026-10-12-the-farm.md`.
-2. **The title screen and saving.**
+2. **The title screen and saving** (ADR-0017): Continue or a new game;
+   one save, written on sleeping, falling and at the gate (2026-10-12).
+   Playtest: `docs/playtests/2026-10-12-title-and-saving.md`.
 
 Then, from `base.md`'s order: the house inside with the bed, the Clear
 spell, the cat, Grist's heart opening the great fields.

@@ -133,6 +133,10 @@ Constraints the architecture must honour:
   (`make_farm()`, `make_area(id)`) and stores itself when the player
   leaves; `Fade` (on the tree's root) fades through the time of day's dark
   and changes the scene. A scene opened on its own gets a new game.
+- Saving (ADR-0017): `GameState.to_dict()` / `from_dict()` as JSON in
+  `user://save.json`, written through a temporary file on sleeping,
+  falling and the gate. `scenes/title/title.tscn` (the main scene) reads
+  it for Continue and starts new games.
 
 Why a custom simulation: every rule is testable headlessly and
 deterministically (tests call `step()` directly), timing windows are exact
@@ -470,3 +474,20 @@ a real controller)
   (`FarmMap.bounds_of`, tested: the farmhouse is 10 x 6 tiles).
 - `SceneTree.change_scene_to_file` and `Node.create_tween` with
   `tween_property(node, "color:a", ...)` and `tween_callback` (the fade).
+
+### 2026-10-12 (title screen and saving), Godot 4.7.2.stable.official.ed1daf0bf
+
+- The engine's default `ui_accept` is Enter, keypad Enter and Space only;
+  `ui_cancel` is Escape only: no controller button. `ui_up` / `ui_down`
+  include the D-pad and the left stick (device -1). The project adds
+  `JOY_BUTTON_A` (0) to `ui_accept` and `JOY_BUTTON_B` (1) to `ui_cancel`,
+  device -1.
+- `JSON.parse_string` logs an engine error on bad input (which would fail a
+  test); a `JSON` instance's `parse()` returns the error code
+  (`ERR_PARSE_ERROR`, 43) with `get_error_message()` / `get_error_line()`
+  and logs nothing. JSON numbers come back as floats.
+- `FileAccess.store_string` returns `true`; `DirAccess.rename_absolute`
+  returns `OK` and replaces an existing file on Linux (not checked on
+  Windows or macOS: playtest). `DirAccess.copy_absolute` and
+  `remove_absolute` exist.
+- `Control.find_valid_focus_neighbor(side)` (W / S on the title).
