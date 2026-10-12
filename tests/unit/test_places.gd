@@ -139,6 +139,9 @@ func test_millbrook_remembers_notes_things_the_sluice_and_today_s_defeats() -> v
 		if thing["id"] == &"sluice_crank":
 			assert_true(thing["taken"], "the crank is not back on its hook")
 	assert_eq(again.roster[mouse_index]["fighter"], null, "the mouse defeated today is not back today")
+	var mice: Callable = func(a: Area) -> int:
+		return a.sim.creatures.filter(func(c: Fighter) -> bool: return c.creature_kind.id == &"field_mouse").size()
+	assert_eq(mice.call(again), mice.call(Millbrook.make()) - 1, "nor anywhere in the area: one mouse fewer")
 	# The next morning it is.
 	state.clock.sleep_until_morning()
 	var next_day: Area = state.make_area(GameState.MILLBROOK)
