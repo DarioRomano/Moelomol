@@ -6,7 +6,8 @@ extends Node2D
 ## Built from the game in play (GameState). Each physics tick (fixed 60 Hz)
 ## it reads input into a FarmInput, steps the FarmSim, plays haptics for its
 ## events and moves the camera (ADR-0015). Walking out through the south gate
-## goes down the lane to Millbrook.
+## goes down the lane to Millbrook. The game saves when the player sleeps
+## and when they leave through the gate (ADR-0017).
 ##
 ## Developer keys: F8 sleeps now (skips to the next morning), F9 runs time
 ## 30 times faster, F10 switches to the next watering tier (the upgrades
@@ -63,7 +64,7 @@ func _physics_process(delta: float) -> void:
 			haptics.play(effect)
 		match event["type"]:
 			"slept":
-				camera.snap(sim.player_position, view_size(), sim.bounds(), view_scale())
+				_slept()
 			"exit":
 				leave(event["to"])
 				return
@@ -79,9 +80,19 @@ func leave(to: StringName) -> void:
 	_left = true
 	state.store_farm(sim)
 	state.travel(to, GameState.AT_GATE)
+	state.save()
 	leaving.emit(to)
 	if travels:
 		Fade.to_scene(get_tree(), state.scene_path(), Fade.colour_at(state.clock))
+
+
+## After sleeping: the camera to the door, and the game saved there, the
+## next morning (ADR-0017).
+func _slept() -> void:
+	camera.snap(sim.player_position, view_size(), sim.bounds(), view_scale())
+	state.store_farm(sim)
+	state.travel(GameState.FARM, GameState.AT_BED)
+	state.save()
 
 
 func _process(_delta: float) -> void:
@@ -97,7 +108,7 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"dev_farm_sleep", false):
 		sim.sleep()
-		camera.snap(sim.player_position, view_size(), sim.bounds(), view_scale())
+		_slept()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"dev_farm_fast_time", false):
 		sim.time_scale = 1.0 if sim.time_scale != 1.0 else FAST_TIME
