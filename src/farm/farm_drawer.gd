@@ -79,7 +79,7 @@ static func _things_of(map: FarmMap) -> Array[Dictionary]:
 	_things.clear()
 	_things_map = map
 	var kinds: Dictionary = {"HD": &"house", "Bb": &"workshop", "C": &"coop", "s": &"chest", "L": &"lamp",
-		"A": &"apple_tree", "m": &"mailbox"}
+		"A": &"apple_tree", "m": &"mailbox", "n": &"bench", "o": &"rock"}
 	for chars: String in kinds:
 		var cells: Rect2i = map.bounds_of(chars[0])
 		for i: int in range(1, chars.length()):
@@ -126,6 +126,16 @@ static func _draw_thing(canvas: CanvasItem, sim: FarmSim, kind: StringName, rect
 			canvas.draw_circle(base + Vector2(-6, -34), 13.0, _c(Palette.CROPS[0]))
 			for p: Vector2 in [Vector2(-10, -26), Vector2(6, -36), Vector2(9, -24), Vector2(-3, -40)]:
 				canvas.draw_rect(Rect2(base + p, Vector2(3, 3)), _c(Palette.DANGER[1]))
+		&"bench":
+			# Facing west, into the sunset (base.md).
+			canvas.draw_rect(Rect2(rect.position + Vector2(6, 10), Vector2(4, 16)), _c(Palette.WARMTH[0].darkened(0.2)))
+			canvas.draw_rect(Rect2(rect.position + Vector2(10, 14), Vector2(14, 4)), _c(Palette.WARMTH[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(11, 18), Vector2(2, 8)), _c(Palette.WARMTH[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(21, 18), Vector2(2, 8)), _c(Palette.WARMTH[0]))
+		&"rock":
+			canvas.draw_rect(Rect2(rect.position + Vector2(5, 12), Vector2(22, 16)), _c(Palette.STONE[0]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(8, 9), Vector2(14, 6)), _c(Palette.STONE[1]))
+			canvas.draw_rect(Rect2(rect.position + Vector2(5, 26), Vector2(22, 2)), _c(Palette.SHADOW[1]))
 		&"mailbox":
 			canvas.draw_rect(Rect2(rect.position + Vector2(15, 14), Vector2(2, 16)), _c(Palette.WARMTH[0]))
 			canvas.draw_rect(Rect2(rect.position + Vector2(10, 8), Vector2(12, 7)), _c(Palette.STONE[0]))

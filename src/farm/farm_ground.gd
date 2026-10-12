@@ -77,15 +77,6 @@ static func _tile(img: Image, map: FarmMap, cell: Vector2i) -> void:
 			for i: int in range(2):
 				var k: int = (h >> (i * 4)) & 0xff
 				_px(img, cell, 2 + k % 12, 2 + (k / 12) % 12, 2, 2, flowers[(k + i) % flowers.size()])
-		"o":
-			_grass(img, cell, h)
-			_px(img, cell, 2, 5, 12, 9, Palette.STONE[0])
-			_px(img, cell, 3, 4, 9, 4, Palette.STONE[1])
-		"n":
-			_grass(img, cell, h)
-			_px(img, cell, 1, 6, 14, 3, Palette.WARMTH[0])  # the seat
-			_px(img, cell, 2, 9, 2, 4, Palette.WARMTH[0])
-			_px(img, cell, 12, 9, 2, 4, Palette.WARMTH[0])
 		_:
 			# Grass, and the ground under buildings and things (drawn over
 			# by FarmDrawer).
@@ -122,32 +113,43 @@ static func _field_edge(img: Image, map: FarmMap, cell: Vector2i) -> void:
 		_px(img, cell, TILE - 1, 0, 1, TILE, edge)
 
 
-## The woods round the farm: dark crowns crowding each other.
+## The woods round the farm: the darkest ground, crowns in shadow.
 static func _woods(img: Image, cell: Vector2i, h: int) -> void:
-	_px(img, cell, 0, 0, TILE, TILE, Palette.WILD[0])
-	var dark: Color = Palette.SHADOW[1]
-	_px(img, cell, 2 + h % 6, 2 + (h / 6) % 6, 7, 5, dark)
-	_px(img, cell, 3 + h % 6, 1 + (h / 6) % 6, 5, 2, Palette.WILD[1].darkened(0.25))
+	_px(img, cell, 0, 0, TILE, TILE, Palette.SHADOW[1].lerp(Palette.WILD[0], 0.5))
+	# Crowns of different sizes, spilling over the tile's edge (clipped), so
+	# no grid shows.
+	var size: Vector2i = Vector2i(9 + h % 7, 7 + (h / 7) % 5)
+	var at: Vector2i = Vector2i(-3 + (h / 35) % 10, -2 + (h / 350) % 9)
+	_px(img, cell, maxi(at.x, 0), maxi(at.y + 2, 0), size.x, size.y, Palette.SHADOW[0])
+	_px(img, cell, maxi(at.x + 1, 0), maxi(at.y, 0), size.x - 2, 3, Palette.WILD[0])
 
 
-## Thicket: bramble and young trees, a dull cool green.
+## Thicket: bramble and young trees, a dull cool green, tangled with pale
+## dead canes (lighter than the woods, darker than anything tended).
 static func _thicket(img: Image, cell: Vector2i, h: int) -> void:
-	var cool: Color = Palette.WILD[1].lerp(Palette.WATER[0], 0.25).darkened(0.2)
+	var cool: Color = Palette.WILD[1].lerp(Palette.WATER[0], 0.3)
 	_px(img, cell, 0, 0, TILE, TILE, cool)
 	for i: int in range(3):
 		var k: int = (h >> (i * 4)) & 0xff
-		_px(img, cell, k % 12, (k / 12) % 12, 4, 4, Palette.WILD[0])
-	var k2: int = (h >> 13) & 0xff
-	_px(img, cell, 2 + k2 % 11, 2 + (k2 / 11) % 11, 2, 1, Palette.WILD[2].darkened(0.3))  # a bramble cane
+		_px(img, cell, k % 12, (k / 12) % 12, 5, 4, Palette.WILD[0])
+	for i: int in range(2):
+		var k2: int = (h >> (11 + i * 5)) & 0xff
+		var at: Vector2i = Vector2i(1 + k2 % 10, 2 + (k2 / 10) % 12)
+		# A bramble cane, arching.
+		_px(img, cell, at.x, at.y, 5, 1, Palette.WILD[2].lerp(Palette.STONE[1], 0.3))
+		_px(img, cell, at.x + 5, at.y + 1, 1, 2, Palette.WILD[2].lerp(Palette.STONE[1], 0.3))
 
 
-## The hedge round the homestead: dense leaves, lit along the top.
+## The hedge round the homestead: kept, a warmer green than the thicket
+## beyond it, lit along the top and shadowed along its foot.
 static func _hedge(img: Image, map: FarmMap, cell: Vector2i, h: int) -> void:
-	_px(img, cell, 0, 0, TILE, TILE, Palette.WILD[0].lerp(Palette.WILD[1], 0.4))
-	_px(img, cell, h % 10, 3 + (h / 10) % 8, 5, 4, Palette.WILD[0])
-	_px(img, cell, (h / 7) % 11, (h / 77) % 10, 3, 2, Palette.CROPS[0].darkened(0.35))
+	_px(img, cell, 0, 0, TILE, TILE, Palette.CROPS[0].darkened(0.3))
+	_px(img, cell, h % 10, 3 + (h / 10) % 8, 5, 4, Palette.CROPS[0].darkened(0.45))
+	_px(img, cell, (h / 7) % 11, (h / 77) % 10, 3, 2, Palette.CROPS[0].darkened(0.1))
 	if map.char_at(cell + Vector2i.UP) != "#":
-		_px(img, cell, 0, 0, TILE, 2, Palette.CROPS[0].darkened(0.2))
+		_px(img, cell, 0, 0, TILE, 2, Palette.CROPS[0])
+	if map.char_at(cell + Vector2i.DOWN) != "#":
+		_px(img, cell, 0, TILE - 2, TILE, 2, Palette.SHADOW[1])
 
 
 ## A gate in the hedge: a post where it meets the hedge.
