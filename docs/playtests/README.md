@@ -16,4 +16,4 @@ One file per checklist: `YYYY-MM-DD-short-topic.md`. Each contains:
 4. **Report back:** the lead fills in results; the engineer turns failures into
    issues or progress notes.
 
-No checklists yet: there is nothing to play.
+

@@ -13,6 +13,14 @@ the places you walk through and the notes left behind.
 Milestone 0 (foundation). There is no Godot project and no gameplay yet. The
 repository currently holds the project's decisions and design documents.
 
+## Play it
+
+- **Desktop builds** (Windows, macOS, Linux): every merge to `main` publishes a
+  release with downloads on the repository's Releases page.
+- **In the browser**: the latest `main` is published as a preview at
+  <https://darioromano.github.io/Moelomol/>. The web build is a preview, not a
+  supported platform (ADR-0004).
+
 ## Where to look
 
 - `CLAUDE.md`: how work is done in this repository. Read it first.

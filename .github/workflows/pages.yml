@@ -1,0 +1,59 @@
+# Publishes the web build of main to GitHub Pages as a playable preview
+# (lead's request of 2026-10-14; ADR-0004 and ADR-0009 additions). The web build
+# is a preview, not a shipping platform.
+#
+# Needs a one-time setting by the repository owner: Settings > Pages >
+# Build and deployment > Source: "GitHub Actions". Until then the deploy job
+# fails; run this workflow again by hand (Actions > Web preview > Run workflow)
+# after changing the setting.
+name: Web preview
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only the newest deployment matters; a waiting older one is dropped.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  BUILD_NUMBER: main.${{ github.run_number }}
+  BUILD_COMMIT: ${{ github.sha }}
+  BUILD_LABEL: main-${{ github.run_number }}
+
+jobs:
+  build:
+    name: Build the web preview
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/lfs-pull
+      - uses: ./.github/actions/setup-godot
+        with:
+          templates: "true"
+      - run: tools/export.sh web
+      # export.sh leaves the unzipped export in build/web (index.html at its
+      # root). The Pages artifact is kept one day, the action's default, so it
+      # barely touches the Actions storage quota.
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5
