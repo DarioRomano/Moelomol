@@ -42,3 +42,13 @@ as a test build. It exists so the lead can measure performance natively on the
 Steam Frame (Q16 option C). It is not a supported or shipping platform; making
 it one would need the lead's decision and a new ADR.
 
+
+## Addition (2026-10-14): the web build as a preview on GitHub Pages
+
+The lead asked for the web build on a GitHub Pages site (2026-10-14). Every
+push to `main` exports the web build and publishes it to the repository's
+Pages site (`.github/workflows/pages.yml`, ADR-0009 addition of the same
+date). It is a **preview**: still not a shipping platform, and no
+web-specific features are built for it (browser save storage, audio unlock,
+download size remain as Q7 describes). Making it a shipping platform would
+need the lead's decision.

@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-12: Q39 is open. Everything before it is resolved.
+Status at 2026-10-14: Q39 and Q40 are open. Everything before them is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -15,7 +15,7 @@ Status at 2026-10-12: Q39 is open. Everything before it is resolved.
 | Q4 | Performance budget values (ADR-0007) | First gameplay system | **Resolved** → ADR-0007 (test approach: Q16) |
 | Q5 | Renderer | M1 | **Resolved**: Compatibility everywhere → ADR-0012 |
 | Q6 | Input model | Player movement, first menu | **Resolved**: all recommendations → ADR-0013 |
-| Q7 | Is the web build a shipping platform? | Nothing yet | **Resolved**: validation only, never shipped |
+| Q7 | Is the web build a shipping platform? | Nothing yet | **Resolved**: not shipped; since 2026-10-14 published as a preview on GitHub Pages |
 | Q8 | Approve ADR-0003 (typed GDScript) | M1 | **Resolved**: approved → ADR-0003 |
 | Q9 | What was the calamity? | M2 art direction detail | **Resolved** → ADR-0010, `story.md` |
 | Q10 | Merging docs-only PRs before CI exists | Docs PRs | **Resolved**: CI PR went first |
@@ -48,6 +48,7 @@ Status at 2026-10-12: Q39 is open. Everything before it is resolved.
 | Q37 | How the player knows what to do next | Every area's objective | **Resolved**: B, the world plus the notes kept to re-read → `world.md` |
 | Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | **Resolved**: C, a boss's heart lets Clear open its parcel → `base.md`, `farming.md` |
 | Q39 | One interact button at the farm and in the areas? | Nothing yet (both work) | **Open** |
+| Q40 | How long to keep pull-request builds | Actions storage | **Open** |
 
 ---
 
@@ -433,6 +434,11 @@ Windows and Linux, Ctrl+Cmd+F on macOS.
 
 **Resolved 2026-10-09:** the web build is never shipped; it is only built to
 validate the export pipeline (option A). ADR-0004 updated.
+
+**Revisited 2026-10-14:** the lead asked for the web build on a GitHub Pages
+site. It is published from `main` as a playable **preview**; it is still not a
+shipping platform and no web-specific work is done for it (ADR-0004 and
+ADR-0009 additions of 2026-10-14).
 
 **A. CI-only build check** (recommended)
 - Pro: proves the export pipeline works without committing to web-specific
@@ -1741,3 +1747,37 @@ dodge). A player walking down the lane now changes which button means
   than it gains.
 
 Recommendation: **A**.
+
+## Q40. How long to keep pull-request builds
+
+**Open (2026-10-14).**
+
+On 2026-10-14 the lead reported the GitHub Actions storage as full. The cause
+was the pull-request builds: every push to a PR uploads five zips (web,
+Windows, macOS, Linux, Linux ARM64; about 700 MB together) plus the review
+renders, kept 14 days (ADR-0009). 250 of them added up to 6.7 GB in four days.
+With the lead's agreement all 250 were deleted (every PR was merged; the
+releases hold the merged builds). Release downloads do not count toward the
+Actions storage and were kept. At the current pace storage fills again within
+days.
+
+**A. Keep everything as it is**
+- Pro: no change; every push of every PR stays downloadable for 14 days.
+- Con: storage fills again; artifact uploads then fail, which turns the Web
+  build and Desktop export checks red and blocks every merge.
+
+**B. Keep PR builds 3 days instead of 14**
+- Pro: one line per upload; cuts storage to about a fifth; the builds of an
+  open PR stay downloadable long enough to try them.
+- Con: a PR left open longer than 3 days loses its downloads until the next
+  push; amends ADR-0009 ("kept 14 days").
+
+**C. B, plus delete a PR's builds when it is merged or closed**
+- Pro: storage holds only builds of open PRs; nothing lingers.
+- Con: a small extra workflow (on `pull_request: closed`, delete that PR's
+  artifacts with `gh api`); a merged PR's builds are gone at once (the release
+  holds the same build).
+
+**Recommendation:** C. The release is the lasting copy of every merged build,
+so PR builds only matter while the PR is open.
+

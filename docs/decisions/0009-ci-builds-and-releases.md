@@ -86,3 +86,20 @@ smoke-runs the Linux build, and publishes a GitHub release:
 The workflows run on their own introducing pull request. Tests for the change
 notes parser live in `tools/ci/test_change_notes.py` and run as part of
 `tools/run-tests.sh`.
+
+## Addition (2026-10-14): web preview on GitHub Pages
+
+At the lead's request, a third workflow, **Web preview**
+(`.github/workflows/pages.yml`), runs on every push to `main` (and by hand):
+it exports the web build and deploys it to GitHub Pages with
+`actions/upload-pages-artifact@v5` and `actions/deploy-pages@v5`, GitHub's
+own actions (the tooling rule above still holds). It is separate from the
+release workflow, so a failed deployment never blocks a release. It needs the
+repository's Pages source set to "GitHub Actions" once (Settings > Pages),
+which the engineer cannot do from this environment. The site always shows the
+latest `main`; earlier web builds are not kept. The Pages artifact is kept one
+day.
+
+Release downloads do not count toward the Actions storage quota; workflow
+artifacts do. On 2026-10-14 the quota was full of PR builds (6.7 GB) and they
+were deleted with the lead's agreement; how long to keep PR builds is Q40.
