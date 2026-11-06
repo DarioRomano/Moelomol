@@ -47,8 +47,10 @@ Status at 2026-10-14: Q39 and Q40 are open. Everything before them is resolved.
 | Q36 | What happens when the player falls in an area | Every area; combat's "death" | **Resolved**: A, wake in bed the next morning → `combat.md`, `world.md` |
 | Q37 | How the player knows what to do next | Every area's objective | **Resolved**: B, the world plus the notes kept to re-read → `world.md` |
 | Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | **Resolved**: C, a boss's heart lets Clear open its parcel → `base.md`, `farming.md` |
-| Q39 | One interact button at the farm and in the areas? | Nothing yet (both work) | **Open** |
-| Q40 | How long to keep pull-request builds | Actions storage | **Open** |
+| Q39 | One interact button at the farm and in the areas? | Nothing yet (both work) | **Resolved** 2026-11-06: A, F / B everywhere |
+| Q40 | How long to keep pull-request builds | Actions storage | **Resolved** 2026-11-06: C, 3 days and deleted on merge or close |
+| Q41 | What the cat does in its first build | The cat (`base.md` step 4) | **Resolved** 2026-11-06: A, a cat of places |
+| Q42 | The great fields inside, and how they open | Opening the first parcel (`base.md` step 5) | **Resolved** 2026-11-06: A, the sketch accepted |
 
 ---
 
@@ -1721,6 +1723,8 @@ parcel** (recommended)
 
 ## Q39. One interact button at the farm and in the areas?
 
+**Resolved 2026-11-06 (the lead):** A, F / B everywhere, as recommended.
+
 Raised 2026-10-12, when the farm and Millbrook were joined. Input model:
 the lead's call.
 
@@ -1750,7 +1754,8 @@ Recommendation: **A**.
 
 ## Q40. How long to keep pull-request builds
 
-**Open (2026-10-14).**
+**Resolved 2026-11-06 (the lead):** C, as recommended: PR builds kept 3
+days, and deleted when the PR is merged or closed (ADR-0009 amended).
 
 On 2026-10-14 the lead reported the GitHub Actions storage as full. The cause
 was the pull-request builds: every push to a PR uploads five zips (web,
@@ -1781,3 +1786,115 @@ days.
 **Recommendation:** C. The release is the lasting copy of every merged build,
 so PR builds only matter while the PR is open.
 
+
+
+## Q41. What the cat does in its first build
+
+**Resolved 2026-11-06 (the lead):** A, a cat of places, as recommended; the
+impossible moments come later with the story's stages. Raised by the engineer: `base.md`'s build order
+puts the cat next (step 4), and says "its behaviour is a separate design
+pass; the layout only gives it the places". What is decided: the cat never
+speaks and has no text (`story.md` rule 2); it lives at the base and never
+joins adventures (ADR-0010); its places are the porch step, the apple tree,
+the pond bench, the window seat, the basket by the stove and the workshop
+roof (`base.md`); the player wakes with it on the blanket after falling
+(Q36); feeding it treats triggers story moments only (Q14; cooking is not
+designed yet). Placeholder art drawn in code, as everywhere so far.
+
+**A. A cat of places** (recommended)
+- **How it works:**
+  - The cat is always in one of its places, chosen by the time of day: the
+    basket in the early morning, the porch step or the apple tree by day,
+    the bench at dusk, the window seat at night (the house places when the
+    player is inside).
+  - It moves only while the player cannot see the place it leaves or the
+    place it goes to, so it is simply *there* when the player looks.
+  - Interact while facing it: the player strokes it. A short purr rumble on
+    the controller, a small animation, no text.
+  - It sits on the blanket when the player wakes after falling (Q36).
+- Pro: cheap and calm; reads as a real cat that keeps its own hours.
+- Pro: never being seen to walk is the ground for the impossible moments
+  later (two places a moment apart, `story.md`), without building them now.
+- Con: no following or play; some players expect a pet to come to them.
+
+**B. A cat that follows**
+- It walks after the player around the homestead and sits near them,
+  using its places when the player stands still.
+- Pro: the most companionable.
+- Con: walking, pathing round the farm and its animation are the most work;
+  a cat always at your heels is a dog; it makes the impossible moments
+  harder to stage later.
+
+**C. A of places, plus the impossible moments now**
+- A, and from the start the rare uncanny events: seen in two places a moment
+  apart, a shadow that does not match.
+- Con: `story.md` wants them rare early and growing with the story; with
+  one area built there is no story stage to pace them by. Better built with
+  the story's stages.
+
+**Recommendation: A.** The impossible moments follow with the story (C,
+later).
+
+## Q42. The great fields inside, and how they open
+
+**Resolved 2026-11-06 (the lead):** A, the structure accepted as sketched
+below; the engineer draws it at tile scale and brings the render before
+merging. Raised by the engineer: step 5 of `base.md`'s build
+order opens the first parcel, the great fields (`1`), with Grist's heart
+and Clear (Q38 C, decided). The accepted farm map draws the parcel only as
+thicket. `base.md` says what is inside: "wide old fields in strips between
+hedgerows; the old track up the middle; a ruined field shelter", one trace
+of the farm's past (a note: "an almanac in the field shelter"), and about
+2,800 tiles in all. The layout inside is the lead's call.
+
+**A coarse proposal**, one character per 4 x 4 tiles, for the parcel's
+estate squares (columns 10-29, rows 5-14 of `images/estate.txt`; blank
+squares are other parcels):
+
+```
+     col 10              29
+r5   :::::::-:::::h::::::
+r6   :::::::-:::::=::::::
+r7   hhhhhhh-hhhhhhhhhhhh
+r8   ::::::F-:::::h::::::
+r9   :::::::-:::::=::::::
+r10  hhhhhhh-hhhhhhhhhhhh
+r11  :::::::-:::::=::::::
+r12      :::-::::::::
+r13      :::-::::::::
+r14      :::-::::::::
+```
+
+`:` old field under long grass (Clear, then till), `-` the old track up the
+middle from the north gate, `h` hedgerow (a 1-tile hedge inside its square),
+`=` a gap in a hedgerow, `F` the ruined field shelter with the almanac.
+Nine strips of old field; every one can be reached from the track
+(checked with a breadth-first walk of the sketch; the first draft had the
+east strips cut off by the hedgerow). The two thin
+rows of thicket just above the homestead's hedge (`base.md`, "Built so
+far") open with the rest. The track is moved 2 tiles east to meet the
+north gate.
+
+**How it opens** (Q38 C, as decided, with the details proposed):
+- Clear cast on any of the parcel's thicket with Grist's heart in the bag.
+  The heart is used up.
+- The thicket withers back across the parcel over about 3 seconds, outward
+  from the tile cast on; the camera follows the front of the withering
+  and returns to the player.
+- The parcel stays open; the save remembers it. The cat, once built (Q41),
+  is already sitting in the shelter when the withering reaches it.
+
+**A. Accept this structure** (recommended). The engineer draws it at tile
+scale from this sketch, walks it in a test (CLAUDE.md), and brings the
+render for a look before merging.
+- Pro: one round trip; the shape follows `base.md`'s description.
+- Con: details at tile scale (hedgerow gaps, the shelter's size) are the
+  engineer's until you see the render.
+
+**B. Sketch it at tile scale first**, for acceptance before building.
+- Pro: the lead sees every tile first. Con: a second round trip.
+
+**C. Hold step 5** until a second area exists.
+- Pro: nothing. Con: Grist's heart has no use; the farm never grows.
+
+**Recommendation: A.**

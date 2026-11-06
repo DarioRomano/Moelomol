@@ -64,7 +64,8 @@ smoke-runs the Linux build, and publishes a GitHub release:
 ## Consequences
 
 - Each PR produces downloadable builds for all three desktop platforms and the
-  web, kept 14 days; downloads need a GitHub login.
+  web, kept 3 days and deleted when the PR is merged or closed (amended
+  2026-11-06, Q40; was 14 days); downloads need a GitHub login.
 - Each merge produces a permanent public release. The repository's releases
   page is the changelog; there is no separate CHANGELOG file, because CI
   committing to `main` would break ADR-0006.
@@ -103,3 +104,13 @@ day.
 Release downloads do not count toward the Actions storage quota; workflow
 artifacts do. On 2026-10-14 the quota was full of PR builds (6.7 GB) and they
 were deleted with the lead's agreement; how long to keep PR builds is Q40.
+
+## Amendment 2026-11-06 (Q40, decided by the lead)
+
+PR builds and renders are kept **3 days** (`retention-days: 3`), and
+**deleted when the PR is merged or closed** by `.github/workflows/pr-cleanup.yml`
+(`tools/ci/pr_artifacts.py`, tested in `tools/ci/test_pr_artifacts.py`).
+Reason: at five builds of about 700 MB per push, 14 days filled the Actions
+storage within days (`docs/progress/2026-10-14-web-preview-and-storage.md`),
+and full storage fails the uploads, which turns the gate checks red. The
+release is the lasting copy of every merged build.
