@@ -39,6 +39,7 @@ SCENES=(
   "res://scenes/showcase/house_night.tscn"
   "res://scenes/showcase/pause_menu.tscn"
   "res://scenes/showcase/farm_dusk.tscn"
+  "res://scenes/showcase/farm_cleared.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:
 #   16:9 at 2x, 3x and 4x; a non-integer 16:9 laptop; 16:10 (Steam Deck,

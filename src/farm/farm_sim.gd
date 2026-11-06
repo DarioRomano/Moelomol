@@ -24,9 +24,16 @@ const CAST_MS: int = 250  # the player stands still while casting or picking
 ## seed item. Mana costs are starting values.
 const TILL: StringName = &"till"
 const WATER: StringName = &"water"
+## Clear (Q38): long grass to grass. On the old fields (`:`) the ground is
+## then ready to till; elsewhere (`,`) it becomes lawn. Thicket is too much
+## for it without a boss's heart (opening a parcel: not built yet).
+const CLEAR: StringName = &"clear"
 const TILL_MANA: float = 2.0
 const SOW_MANA: float = 1.0
-const SPELL_NAMES: Dictionary = {TILL: "Till", WATER: "Water"}
+const CLEAR_MANA: float = 2.0
+const SPELL_NAMES: Dictionary = {TILL: "Till", WATER: "Water", CLEAR: "Clear"}
+## What Clear works on: the old fields under long grass, and long grass.
+const CLEARABLE: String = ":,"
 
 ## The watering spell's tiers (Q23): areas grow with farming upgrades; the
 ## final tier makes it rain, which waters the whole farm until the next 6:00.
@@ -67,6 +74,9 @@ var last_action: StringName = &""  # for drawing the cast
 var solids: Array[Rect2] = []
 ## The farm's ground (make_farm); null on the test field.
 var map: FarmMap = null
+## Tiles the Clear spell has cleared (Vector2i -> true); the farm
+## remembers them.
+var cleared: Dictionary = {}
 var door_cell: Vector2i
 var wake_position: Vector2
 ## Where the player arrives from Millbrook: the top of the lane below the
@@ -115,6 +125,7 @@ static func make_farm() -> FarmSim:
 	var farm_map: FarmMap = FarmMap.make_farm()
 	var sim: FarmSim = FarmSim.new(Vector2.ZERO, farm_map.size)
 	sim.map = farm_map
+	sim.spells.insert(2, CLEAR)  # Till, Water, Clear, then the seeds
 	for y: int in range(farm_map.size.y):
 		for x: int in range(farm_map.size.x):
 			if not FarmMap.TILLABLE.contains(farm_map.rows[y][x]):
@@ -185,7 +196,21 @@ func spell_mana(spell_id: StringName) -> float:
 			return TILL_MANA
 		WATER:
 			return float(water_spell()["mana"])
+		CLEAR:
+			return CLEAR_MANA
 	return SOW_MANA
+
+
+## True if Clear would do something on `cell`: long grass not yet cleared.
+func can_clear(cell: Vector2i) -> bool:
+	return map != null and CLEARABLE.contains(map.char_at(cell)) and not cleared.has(cell)
+
+
+## Clears a tile: lawn, or on the old fields, ground ready to till.
+func clear_tile(cell: Vector2i) -> void:
+	cleared[cell] = true
+	if map.char_at(cell) == ":":
+		plot.unblock(cell)
 
 
 ## The tiles the watering spell covers from `target`: `size.x` across and
@@ -284,6 +309,8 @@ func _cast() -> void:
 	match spell():
 		TILL:
 			does_something = not plot.is_blocked(cell) and not plot.is_tilled(cell)
+		CLEAR:
+			does_something = can_clear(cell)
 		WATER:
 			if water_spell()["size"] == Vector2i.ZERO:
 				does_something = not raining
@@ -306,6 +333,9 @@ func _cast() -> void:
 			if raining:
 				plot.water(cell)
 			events.append({"type": "till", "cell": cell, "position": cell_centre(cell)})
+		CLEAR:
+			clear_tile(cell)
+			events.append({"type": "clear", "cell": cell, "position": cell_centre(cell)})
 		WATER:
 			if water_spell()["size"] == Vector2i.ZERO:
 				raining = true
@@ -362,13 +392,22 @@ func sleep() -> void:
 ## What the farm remembers between visits and in the save (the clock, Mana
 ## and the bag belong to the game, not the farm: GameState).
 func export_state() -> Dictionary:
-	return {"cells": plot.export_cells(), "raining": raining, "day": clock.day(),
+	var cleared_cells: Array = []
+	for cell: Vector2i in cleared:
+		cleared_cells.append([cell.x, cell.y])
+	return {"cells": plot.export_cells(), "cleared": cleared_cells, "raining": raining, "day": clock.day(),
 		"spell_index": spell_index, "water_tier": water_tier}
 
 
 ## Restores export_state(), then runs every 6:00 that passed since (the
 ## clock may have moved on while the player was away).
 func apply_state(state: Dictionary) -> void:
+	# Cleared ground first: tilled tiles on the old fields need it.
+	for entry: Variant in state.get("cleared", []):
+		if entry is Array and (entry as Array).size() == 2:
+			var cell: Vector2i = Vector2i(int(entry[0]), int(entry[1]))
+			if can_clear(cell):
+				clear_tile(cell)
 	plot.import_cells(state.get("cells", []))
 	raining = bool(state.get("raining", false))
 	water_tier = clampi(int(state.get("water_tier", 0)), 0, WATER_TIERS.size() - 1)

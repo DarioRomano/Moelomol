@@ -188,7 +188,7 @@ static func effect_for_event(event: Dictionary) -> StringName:
 ## The effect for a farm event from FarmSim, or &"" for none.
 static func effect_for_farm_event(event: Dictionary) -> StringName:
 	match event["type"]:
-		"till":
+		"till", "clear":
 			return &"farm_till"
 		"water":
 			return &"farm_water"
