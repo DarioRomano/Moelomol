@@ -114,6 +114,8 @@ func test_the_heart_opens_only_its_own_parcel() -> void:
 	sim.inventory.add(&"grist_heart")
 	assert_false(sim.can_open(Vector2i(110, 80)), "not the east pasture")
 	assert_true(sim.can_open(Vector2i(70, 61)), "the great fields")
+	var buried_track: Vector2i = sim.map.cells_of("-")[0]
+	assert_true(sim.can_open(buried_track), "the old track under the thicket is the great fields too")
 	sim.open_parcel(1)
 	assert_false(sim.can_open(Vector2i(70, 40)), "not twice")
 
