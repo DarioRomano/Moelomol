@@ -33,3 +33,6 @@ build_stamp.json
 
 # CI: list of LFS objects used as the LFS cache key
 .lfs-assets-id
+
+# Python bytecode from the CI helpers
+__pycache__/
