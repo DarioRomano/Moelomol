@@ -1848,12 +1848,12 @@ squares are other parcels):
 ```
      col 10              29
 r5   :::::::-:::::h::::::
-r6   :::::::-:::::h::::::
-r7   hhhhhhh-hhhhhh=hhhhh
+r6   :::::::-:::::=::::::
+r7   hhhhhhh-hhhhhhhhhhhh
 r8   ::::::F-:::::h::::::
-r9   :::::::-:::::h::::::
-r10  hhhhhh=-hhhhhhhhhhhh
-r11  :::::::-:::::h::::::
+r9   :::::::-:::::=::::::
+r10  hhhhhhh-hhhhhhhhhhhh
+r11  :::::::-:::::=::::::
 r12      :::-::::::::
 r13      :::-::::::::
 r14      :::-::::::::
@@ -1862,7 +1862,9 @@ r14      :::-::::::::
 `:` old field under long grass (Clear, then till), `-` the old track up the
 middle from the north gate, `h` hedgerow (a 1-tile hedge inside its square),
 `=` a gap in a hedgerow, `F` the ruined field shelter with the almanac.
-Six strips of old field, every one reachable from the track. The two thin
+Nine strips of old field; every one can be reached from the track
+(checked with a breadth-first walk of the sketch; the first draft had the
+east strips cut off by the hedgerow). The two thin
 rows of thicket just above the homestead's hedge (`base.md`, "Built so
 far") open with the rest. The track is moved 2 tiles east to meet the
 north gate.
