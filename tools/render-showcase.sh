@@ -37,6 +37,7 @@ SCENES=(
   "res://scenes/farm/farm.tscn"
   "res://scenes/farm/house.tscn"
   "res://scenes/showcase/house_night.tscn"
+  "res://scenes/showcase/pause_menu.tscn"
   "res://scenes/showcase/farm_dusk.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:

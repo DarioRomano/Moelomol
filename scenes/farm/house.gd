@@ -18,6 +18,8 @@ var sim: HouseSim = state.make_house()
 var camera: FollowCamera = FollowCamera.new()
 var haptics: Haptics = Haptics.new()
 var travels: bool = true
+## Esc / Start: Resume, Back to title, Quit.
+var pause_menu: PauseMenu
 
 var _camera_node: Camera2D
 var _hud: FarmHud
@@ -27,6 +29,8 @@ var _toast_ticks: int = 0
 
 
 func _ready() -> void:
+	pause_menu = PauseMenu.new()
+	add_child(pause_menu)
 	_camera_node = Camera2D.new()
 	add_child(_camera_node)
 	camera.snap(sim.player_position, view_size(), sim.bounds(), view_scale())
@@ -37,7 +41,7 @@ func _ready() -> void:
 	layer.add_child(frame)
 	_hud = FarmHud.new()
 	frame.add_child(_hud)
-	_hud.set_help("Move WASD / stick   Interact Space / A (the bed: sleep; the seed tin)   Out: the door\n"
+	_hud.set_help("Move WASD / stick   Interact Space / A (the bed: sleep; the seed tin)   Out: the door   Pause Esc / Start\n"
 		+ "F8 sleep now   F9 time x30")
 
 
@@ -98,6 +102,7 @@ func leave(to: StringName) -> void:
 	if _left:
 		return
 	_left = true
+	pause_menu.enabled = false
 	state.store_house(sim)
 	state.travel(to, GameState.AT_DOOR)
 	leaving.emit(to)

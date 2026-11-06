@@ -27,6 +27,8 @@ var haptics: Haptics = Haptics.new()
 ## False in tests: leaving stores the farm and emits `leaving`, but the scene
 ## stays.
 var travels: bool = true
+## Esc / Start: Resume, Back to title, Quit.
+var pause_menu: PauseMenu
 
 var _camera_node: Camera2D
 var _hud: FarmHud
@@ -34,6 +36,8 @@ var _left: bool = false
 
 
 func _ready() -> void:
+	pause_menu = PauseMenu.new()
+	add_child(pause_menu)
 	_camera_node = Camera2D.new()
 	add_child(_camera_node)
 	camera.snap(sim.player_position, view_size(), sim.bounds(), view_scale())
@@ -80,6 +84,7 @@ func leave(to: StringName) -> void:
 	if _left:
 		return
 	_left = true
+	pause_menu.enabled = false
 	state.store_farm(sim)
 	if to == GameState.HOUSE:
 		state.travel(to, GameState.AT_DOOR)
