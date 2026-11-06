@@ -58,3 +58,11 @@ broken, unknown-format and unknown-place saves are refused with a reason;
 sleeping, the developer sleep key, leaving either way and falling each save
 with the right place and arrival; the title's Continue, New game, the
 confirmation and a broken save.
+
+Update 2026-11-06 (the farmhouse inside built; the decision is unchanged):
+the bed is now in the farmhouse, so sleeping saves there, and a new game
+and waking after a fall start beside the bed (`GameState.HOUSE`,
+`AT_BED`). Going in and out of the farmhouse door does not save. The save
+gained a `"house"` entry (the seed tin); format 1 saves without it load
+with the tin emptied, and one made sleeping at the farm door wakes in the
+house.

@@ -229,9 +229,29 @@ Numbers and letters match the sketch.
       walled garden, the woods and the hill are reached through the parcels
       next to them.
 
-### The farmhouse inside (Proposal)
+### The farmhouse inside
 
-One room, about 12 × 8 tiles, entered by the door:
+Layout accepted by the lead (2026-11-06). One room, 12 × 8 tiles inside its
+walls, one character per tile, entered by the door at the bottom:
+
+```
+##############
+#^^^^ww^ww^h^#
+#BB..SS....OO#
+#BB........OO#
+#BB.......k..#
+#....cTTc....#
+#.....TT.....#
+#u...........#
+#u....__.....#
+######DD######
+```
+
+`#` wall, `^` the back wall, `w` window, `h` the cup on its hook, `B` bed,
+`S` window seat, `O` stove, `k` the cat's basket, `T` table, `c` chair, `u`
+cupboard with the seed tin on it, `_` rug, `D` door, `.` floor.
+
+What is in it:
 - **the bed** (sleep; `farming.md`);
 - **the stove** (cooking, when it is designed; the cat treats are made
   here first);
@@ -313,6 +333,18 @@ enemies first; the farm follows (`docs/roadmap.md`).
 
 ## Built so far
 
+**Step 2, the house inside (2026-11-06):** `scenes/farm/house.tscn`, its
+own place (ADR-0016), joined to the farm at the farmhouse door.
+- The room above (`src/farm/house_layout.gd`, tested against this doc).
+- **The bed** sleeps (to the next 6:00, Mana full) and saves the game
+  (ADR-0017). A new game, and waking after falling (Q36), start beside it.
+- **The seed tin** holds the first seeds (6 catmint, 6 radish; Q25): taken
+  once into the bag, then empty. A new game's bag is empty.
+- The windows show the sky; at night the stove glows and a candle burns.
+  The second chair is pushed in.
+- Not yet: the stove's cooking, the cat in its basket and window seat
+  (step 4), waking with the cat on the blanket (Q36).
+
 **Step 1, the farm layout (2026-10-12):** `scenes/farm/farm.tscn`.
 - The whole farm, 160 x 96 tiles, from the two maps above
   (`src/farm/farm_layout.gd`, tested against `images/estate.txt` and
@@ -323,10 +355,9 @@ enemies first; the farm follows (`docs/roadmap.md`).
 - Everything solid that should be (hedges, buildings, the pond, the woods,
   all six parcels' thicket); the pen walkable, its fence down.
 - Only the first field can be tilled; the old fields wait for Clear.
-- The farmhouse door is the bed until the inside is built (step 2); the
-  player wakes in front of it.
+- The farmhouse door leads inside (step 2).
 - The south gate leads down the lane to Millbrook and back (ADR-0016);
   falling in Millbrook wakes the player here (Q36).
-- Not yet: the house inside, Clear, the cat, parcels opening, the mailbox,
+- Not yet: Clear, the cat, parcels opening, the mailbox,
   the bench's sitting, the chest. The old track (estate column 17) is 2
   tiles west of the north gate; to line up when the great fields open.

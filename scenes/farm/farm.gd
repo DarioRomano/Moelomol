@@ -6,8 +6,9 @@ extends Node2D
 ## Built from the game in play (GameState). Each physics tick (fixed 60 Hz)
 ## it reads input into a FarmInput, steps the FarmSim, plays haptics for its
 ## events and moves the camera (ADR-0015). Walking out through the south gate
-## goes down the lane to Millbrook. The game saves when the player sleeps
-## and when they leave through the gate (ADR-0017).
+## goes down the lane to Millbrook; the farmhouse door goes inside. The game
+## saves when the player leaves through the gate (ADR-0017); sleeping is in
+## the house.
 ##
 ## Developer keys: F8 sleeps now (skips to the next morning), F9 runs time
 ## 30 times faster, F10 switches to the next watering tier (the upgrades
@@ -72,26 +73,30 @@ func _physics_process(delta: float) -> void:
 	_camera_node.position = camera.position
 
 
-## Out through the south gate: the farm remembers itself and the player goes
-## down the lane, arriving at the top of Millbrook's.
+## Out through the south gate (arriving at the top of Millbrook's lane) or
+## in at the farmhouse door: the farm remembers itself first. Only the gate
+## saves (ADR-0017).
 func leave(to: StringName) -> void:
 	if _left:
 		return
 	_left = true
 	state.store_farm(sim)
-	state.travel(to, GameState.AT_GATE)
-	state.save()
+	if to == GameState.HOUSE:
+		state.travel(to, GameState.AT_DOOR)
+	else:
+		state.travel(to, GameState.AT_GATE)
+		state.save()
 	leaving.emit(to)
 	if travels:
 		Fade.to_scene(get_tree(), state.scene_path(), Fade.colour_at(state.clock))
 
 
-## After sleeping: the camera to the door, and the game saved there, the
-## next morning (ADR-0017).
+## After the developer sleep key: the camera to the door, and the game
+## saved there, the next morning (ADR-0017).
 func _slept() -> void:
 	camera.snap(sim.player_position, view_size(), sim.bounds(), view_scale())
 	state.store_farm(sim)
-	state.travel(GameState.FARM, GameState.AT_BED)
+	state.travel(GameState.FARM, GameState.AT_DOOR)
 	state.save()
 
 

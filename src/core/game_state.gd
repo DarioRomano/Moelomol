@@ -14,14 +14,17 @@ extends RefCounted
 ## always resumes where it was saved.
 
 const FARM: StringName = &"farm"
+const HOUSE: StringName = &"house"
 const MILLBROOK: StringName = &"millbrook"
 const SCENES: Dictionary = {
 	FARM: "res://scenes/farm/farm.tscn",
+	HOUSE: "res://scenes/farm/house.tscn",
 	MILLBROOK: "res://scenes/world/millbrook.tscn",
 }
 ## Where the player appears on arriving at a place.
-const AT_BED: StringName = &"bed"  # the farm, in front of the farmhouse door
-const AT_GATE: StringName = &"gate"  # the place's entrance from the other
+const AT_BED: StringName = &"bed"  # the house, beside the bed (waking)
+const AT_DOOR: StringName = &"door"  # through the farmhouse door, either side
+const AT_GATE: StringName = &"gate"  # the farm's south gate or an area's entrance
 
 ## The one save (ADR-0017).
 const SAVE_PATH: String = "user://save.json"
@@ -35,10 +38,12 @@ static var last_load_error: String = ""
 var clock: GameClock = GameClock.new()
 var inventory: Inventory = Inventory.new()
 var mana: Mana = Mana.new()
-var place: StringName = FARM
+var place: StringName = HOUSE
 var arrival: StringName = AT_BED
 ## FarmSim.export_state() as the player last left the farm; empty until then.
 var farm_state: Dictionary = {}
+## HouseSim.export_state(): the seed tin.
+var house_state: Dictionary = {}
 ## Area id -> Area.export_state() as the player last left it.
 var area_states: Dictionary = {}
 ## Where save() writes; empty for a game that is never saved (a place
@@ -46,19 +51,21 @@ var area_states: Dictionary = {}
 var save_path: String = ""
 
 
-## A new game: day 1, 6:00, at the farm, with the seed tin's seeds (Q25).
+## A new game: day 1, 6:00, waking in the farmhouse bed, the bag empty and
+## the first seeds in the seed tin (Q25).
 static func new_game() -> GameState:
-	var state: GameState = GameState.new()
-	for seed_id: StringName in FarmSim.STARTING_SEEDS:
-		state.inventory.add(seed_id, FarmSim.STARTING_SEEDS[seed_id])
-	return state
+	return GameState.new()
 
 
 ## The game in play, starting a new unsaved one if there is none (a place
-## opened on its own).
+## opened on its own). Such a game starts with the seed tin already emptied
+## into the bag, so the farm can be tried straight away.
 static func ensure() -> GameState:
 	if current == null:
 		current = new_game()
+		for seed_id: StringName in FarmSim.STARTING_SEEDS:
+			current.inventory.add(seed_id, FarmSim.STARTING_SEEDS[seed_id])
+		current.house_state = {"tin_taken": true}
 	return current
 
 
@@ -74,12 +81,31 @@ func make_farm() -> FarmSim:
 	if arrival == AT_GATE:
 		sim.place_player(sim.gate_position, Vector2.UP)
 	else:
-		sim.place_player(sim.wake_position, Vector2.DOWN)
+		sim.place_player(sim.wake_position, Vector2.DOWN)  # out of the farmhouse door
 	return sim
 
 
 func store_farm(sim: FarmSim) -> void:
 	farm_state = sim.export_state()
+
+
+## The farmhouse inside, with the game's clock, Mana and bag; the player
+## beside the bed or just in from the door.
+func make_house() -> HouseSim:
+	var sim: HouseSim = HouseSim.new()
+	sim.clock = clock
+	sim.mana = mana
+	sim.inventory = inventory
+	sim.apply_state(house_state)
+	if arrival == AT_DOOR:
+		sim.place_player(sim.door_position, Vector2.UP)
+	else:
+		sim.place_player(sim.bed_position, Vector2.DOWN)
+	return sim
+
+
+func store_house(sim: HouseSim) -> void:
+	house_state = sim.export_state()
 
 
 ## An area as the player left it, on the game's clock and bag, with the
@@ -114,12 +140,12 @@ func travel(to: StringName, at: StringName) -> void:
 	arrival = at
 
 
-## Falling out in an area (Q36): the next 6:00, waking in the farm bed with
-## everything carried kept and Mana full, as after a night's sleep. The area
-## has already moved the clock on.
+## Falling out in an area (Q36): the next 6:00, waking in the farmhouse bed
+## with everything carried kept and Mana full, as after a night's sleep. The
+## area has already moved the clock on.
 func fell() -> void:
 	mana.refill()
-	travel(FARM, AT_BED)
+	travel(HOUSE, AT_BED)
 
 
 func scene_path() -> String:
@@ -140,6 +166,7 @@ func to_dict() -> Dictionary:
 		"place": String(place),
 		"arrival": String(arrival),
 		"farm": farm_state,
+		"house": house_state,
 		"areas": area_states,
 	}
 
@@ -169,9 +196,19 @@ static func from_dict(data: Dictionary) -> GameState:
 	if items is Dictionary:
 		state.inventory.load_dict(items)
 	state.place = place_name
-	state.arrival = AT_GATE if str(data.get("arrival", "")) == String(AT_GATE) else AT_BED
+	var arrival_name: StringName = StringName(str(data.get("arrival", "")))
+	state.arrival = arrival_name if arrival_name in [AT_BED, AT_DOOR, AT_GATE] else AT_BED
 	var farm: Variant = data.get("farm", {})
 	state.farm_state = farm if farm is Dictionary else {}
+	var house: Variant = data.get("house")
+	if house is Dictionary:
+		state.house_state = house
+	else:
+		# Saved before the house was built (2026-11-06): the seeds were
+		# already in the bag, and sleeping happened at the farmhouse door.
+		state.house_state = {"tin_taken": true}
+		if state.place == FARM and state.arrival == AT_BED:
+			state.place = HOUSE
 	var areas: Variant = data.get("areas", {})
 	if areas is Dictionary:
 		for key: Variant in areas:
@@ -221,5 +258,5 @@ static func load_from(path: String = SAVE_PATH) -> GameState:
 
 ## A short line about a save for the title screen: "Day 3, 18:40, at the farm".
 func summary() -> String:
-	var where: String = "at the farm" if place == FARM else "in " + String(place).capitalize()
+	var where: String = {FARM: "at the farm", HOUSE: "in the farmhouse"}.get(place, "in " + String(place).capitalize())
 	return "Day %d, %s, %s" % [clock.day(), clock.time_text(), where]

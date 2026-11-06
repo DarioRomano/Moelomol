@@ -36,8 +36,8 @@ notes and satchel, and its objective (the sluice and the ford). One
 `GameState` holds the clock, bag and Mana across places; each place
 remembers itself. The title screen (the main scene) continues the one save
 or starts a new game; the game saves on sleeping, falling and at the gate
-(ADR-0017). Next, from `base.md`: the house inside, Clear, the cat
-(`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+(ADR-0017). The farmhouse inside (`house.tscn`) has the bed and the seed
+tin. Next, from `base.md`: Clear, the cat (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -84,10 +84,10 @@ prints failures as `::error` annotations: read them with
 | `export_presets.cfg` | Presets `Windows Desktop`, `macOS`, `Linux`, `Web`, `Linux ARM64` (test build); names are used by CI |
 | `scenes/title/` | Main scene: the title screen (Continue, New game, Quit) |
 | `scenes/combat/` | Combat test arena and its HUD |
-| `scenes/farm/` | The farm (`farm.tscn`) and its HUD |
+| `scenes/farm/` | The farm (`farm.tscn`), the farmhouse inside (`house.tscn`) and their HUD |
 | `scenes/world/` | Adventure areas: Millbrook (`millbrook.tscn`) |
 | `src/world/` | Areas: `AreaMap` (text maps), `Area` (clock, rosters), `FollowCamera` (ADR-0015), `AreaDrawer`, Millbrook's map and roster |
-| `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), the farm's layout (`FarmLayout`, `FarmMap`), drawing (`FarmGround`, `FarmDrawer`) |
+| `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), the farm's layout (`FarmLayout`, `FarmMap`), drawing (`FarmGround`, `FarmDrawer`); the house (`HouseLayout`, `HouseSim`, `HouseDrawer`) |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/core/game_state.gd` | The game in play: clock, bag, Mana, which place, what each place remembers; the save (ADR-0017) |
