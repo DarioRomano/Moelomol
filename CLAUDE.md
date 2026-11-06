@@ -37,7 +37,8 @@ notes and satchel, and its objective (the sluice and the ford). One
 remembers itself. The title screen (the main scene) continues the one save
 or starts a new game; the game saves on sleeping, falling and at the gate
 (ADR-0017). The farmhouse inside (`house.tscn`) has the bed and the seed
-tin. Next, from `base.md`: Clear, the cat (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+tin. Esc / Start opens the pause menu (`PauseMenu`) in every place. Next,
+from `base.md`: Clear, the cat (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -203,5 +204,9 @@ note of the bug it caught.
 - **Walk the map in a test.** Millbrook's accepted map had a wheat field
   with no way in, and a flood that did not cut off the ford; a breadth-first
   walk from the entrance found both before anything was drawn.
+- **Run the whole suite, not only the new tests; leave global state as you
+  found it.** The pause tests passed alone, but the scene-loading test
+  loaded the pause review scene, which left the game paused and failed the
+  combat arena's tests later in the run.
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.

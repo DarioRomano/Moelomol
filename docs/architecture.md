@@ -494,3 +494,15 @@ a real controller)
   Windows or macOS: playtest). `DirAccess.copy_absolute` and
   `remove_absolute` exist.
 - `Control.find_valid_focus_neighbor(side)` (W / S on the title).
+
+### 2026-11-06 (the farmhouse and the pause menu), Godot 4.7.2.stable.official
+
+- `SceneTree.paused = true` stops `_process`, `_physics_process` and
+  `_unhandled_input` of nodes with the default process mode; a node with
+  `process_mode = PROCESS_MODE_ALWAYS` (the pause menu, and its buttons by
+  inheritance) keeps running and taking input. Tested: the clock stands
+  still for ten physics frames.
+- `JOY_BUTTON_START` is 6 (the Xbox Menu, DualSense Options, Switch +
+  button in SDL's mapping); bound with device -1.
+- A paused tree stays paused after the node that paused it is freed;
+  `PauseMenu._exit_tree` unpauses it.

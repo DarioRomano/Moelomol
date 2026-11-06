@@ -144,6 +144,10 @@ sleeping and at the gate, and to keep one save (2026-10-12).
    falling wake beside the bed. Playtest:
    `docs/playtests/2026-11-06-farmhouse-inside.md`.
 
+4. **The pause menu** (Esc / Start; 2026-11-06): Resume, Back to title,
+   Quit; the game stands still. Playtest:
+   `docs/playtests/2026-11-06-pause-menu.md`.
+
 Then, from `base.md`'s order: the Clear spell, the cat, Grist's heart
 opening the great fields.
 
