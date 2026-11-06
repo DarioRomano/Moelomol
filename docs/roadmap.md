@@ -151,8 +151,12 @@ sleeping and at the gate, and to keep one save (2026-10-12).
 5. **The Clear spell** (`base.md` step 3; 2026-11-06): the old fields can
    be cleared and farmed. Playtest: `docs/playtests/2026-11-06-clear-spell.md`.
 
-Then, from `base.md`'s order: the cat (step 4) and Grist's heart opening
-the great fields (step 5); each needs the lead's design decisions first.
+6. **One interact button** (Q39, 2026-11-06): F / B in every place.
+7. **The cat** (`base.md` step 4; Q41 A, 2026-11-06): a cat of places.
+   Playtest: `docs/playtests/2026-11-06-the-cat.md`.
+
+Then: Grist's heart opening the great fields (`base.md` step 5; Q42 A,
+decided 2026-11-06).
 
 ## Later (not planned)
 

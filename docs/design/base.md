@@ -333,6 +333,12 @@ enemies first; the farm follows (`docs/roadmap.md`).
 
 ## Built so far
 
+**Step 4, the cat (2026-11-06; Q41 A):** a cat of places. It keeps its own
+hours across the places above (the basket, porch step, apple tree, bench,
+window seat, workshop roof), moves only where the player cannot see, is
+stroked with Interact, and is on the blanket after a fall. The impossible
+moments come later with the story. `src/farm/cat.gd`.
+
 **Step 3, the Clear spell (2026-11-06):** Clear (2 Mana a tile) turns the
 old fields' long grass into ground ready to till, and long grass elsewhere
 into lawn. Thicket stays until a boss's heart opens its parcel (step 5).
@@ -364,6 +370,6 @@ own place (ADR-0016), joined to the farm at the farmhouse door.
 - The farmhouse door leads inside (step 2).
 - The south gate leads down the lane to Millbrook and back (ADR-0016);
   falling in Millbrook wakes the player here (Q36).
-- Not yet: the cat, parcels opening, the mailbox,
+- Not yet: parcels opening, the mailbox,
   the bench's sitting, the chest. The old track (estate column 17) is 2
   tiles west of the north gate; to line up when the great fields open.
