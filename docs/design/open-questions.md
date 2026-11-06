@@ -51,6 +51,7 @@ Status at 2026-10-14: Q39 and Q40 are open. Everything before them is resolved.
 | Q40 | How long to keep pull-request builds | Actions storage | **Resolved** 2026-11-06: C, 3 days and deleted on merge or close |
 | Q41 | What the cat does in its first build | The cat (`base.md` step 4) | **Resolved** 2026-11-06: A, a cat of places |
 | Q42 | The great fields inside, and how they open | Opening the first parcel (`base.md` step 5) | **Resolved** 2026-11-06: A, the sketch accepted |
+| Q43 | What the second area is | The second area's design | **Open** |
 
 ---
 
@@ -1898,3 +1899,71 @@ render for a look before merging.
 - Pro: nothing. Con: Grist's heart has no use; the farm never grows.
 
 **Recommendation: A.**
+
+
+## Q43. What the second area is
+
+**Open (2026-11-06).** Raised by the engineer: the farm's build order is
+done through step 5, and the next steps (`docs/roadmap.md`) wait on the
+second area. What is decided about it:
+- It lies **south of Millbrook, across the ford** that Millbrook's
+  objective opens; the grass beyond the ford already has the changed
+  land's violet tinge (`area-millbrook.md`).
+- **The second ring** (`world.md`): more changed than Millbrook, stronger
+  creatures, and `story.md`'s stage 2 beginning (**the pattern**: accounts
+  of a stray cat seen in a town shortly before it emptied; carvings of a
+  small, many-eyed animal god; failed treat recipes).
+- **The lantern** (magic) is crafted from its changed materials (Q35 C).
+- **Its boss's heart opens the east pasture and the big barn** (`base.md`:
+  animals beyond the hen, hay).
+- One objective opens the way on; places seen but not yet reachable wait
+  for exploration upgrades.
+
+This question is only the area's theme and purpose. Its layout, creatures
+and boss come in a design pass after, for acceptance as Millbrook's did.
+
+**A. A market town on the river** (recommended)
+- **What:** a larger town than Millbrook (streets, a market square with
+  empty stalls, the drovers' pens, a church, a chandler's), on a river
+  crossing. Emptied a little after Millbrook.
+- **Notes:** the first of the pattern. A traveller's diary: "a little grey
+  cat on the Millbrook road, following the carts". A church carving of a
+  small beast with many eyes, explained innocently as an old saint's
+  story.
+- **Lantern:** the chandler's changed candle-glass and wax.
+- **Boss:** the drovers' great bull in the market pens, changed. Its heart
+  opens the pasture and barn: the animals' parcel from the animals' fight.
+- **Objective (to design):** the river bridge is drawn up; its winch
+  house is locked (a key in the town).
+- Pro: a town is where the pattern's notes belong (many writers, travel,
+  gossip); the bull ties the boss to the parcel it opens; streets make a
+  new kind of ground after Millbrook's fields.
+- Con: the most to draw (many buildings); towns risk feeling like
+  Millbrook again unless the change shows strongly.
+
+**B. The marsh and the peat cuttings**
+- **What:** low wet ground: boardwalks, a drowned hamlet, peat stacks, mist,
+  lights over the water at night.
+- **Lantern:** marsh-light caught in changed glass.
+- **Boss:** a great heron or an eel in the drowned church.
+- **Objective (to design):** a boardwalk to be raised or a causeway
+  cleared.
+- Pro: strongly different ground from Millbrook; the lights fit the
+  lantern; eerie at night.
+- Con: few writers for the pattern's notes; the boss does not tie to the
+  pasture; water everywhere makes a hard first test of the camera and
+  paths.
+
+**C. The downs and the shepherds' huts**
+- **What:** open chalk hills, sheepfolds, dew ponds, a hill fort with old
+  carved stones (the many-eyed god's shrine), wind.
+- **Lantern:** chalk and changed flint glass from the hill fort.
+- **Boss:** the shepherds' great ram, or their dog.
+- **Objective (to design):** a drove road through the hill fort's gate.
+- Pro: wide open, lonely (the tone); the shrine is stage 2's strongest
+  image; sheep tie to the pasture.
+- Con: open hills are hard to make dense with things to find; few notes;
+  the shrine may say too much too early.
+
+**Recommendation: A.** It carries stage 2's notes best, ties the boss to
+the parcel it opens, and brings streets as new ground.
