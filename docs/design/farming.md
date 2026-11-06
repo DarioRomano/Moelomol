@@ -183,7 +183,7 @@ farming meanings:
 |---|---|---|
 | Move | W A S D | Left stick |
 | Cast the selected spell | J | X / Square (the light-attack button) |
-| Interact (harvest, sleep, later doors and notes) | Space | A / Cross |
+| Interact (harvest, the farmhouse door, the bed, the seed tin; the same action as in the areas, Q39) | F | B / Circle |
 | Next / previous spell | E / Q | RB / LB |
 
 ## Readings taken (say if any is wrong)

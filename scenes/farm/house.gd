@@ -41,7 +41,7 @@ func _ready() -> void:
 	layer.add_child(frame)
 	_hud = FarmHud.new()
 	frame.add_child(_hud)
-	_hud.set_help("Move WASD / stick   Interact Space / A (the bed: sleep; the seed tin)   Out: the door   Pause Esc / Start\n"
+	_hud.set_help("Move WASD / stick   Interact F / B (the bed: sleep; the seed tin)   Out: the door   Pause Esc / Start\n"
 		+ "F8 sleep now   F9 time x30")
 
 

@@ -37,9 +37,9 @@ notes and satchel, and its objective (the sluice and the ford). One
 remembers itself. The title screen (the main scene) continues the one save
 or starts a new game; the game saves on sleeping, falling and at the gate
 (ADR-0017). The farmhouse inside (`house.tscn`) has the bed and the seed
-tin. Esc / Start opens the pause menu (`PauseMenu`) in every place. Next,
-The Clear spell opens the old fields. Next, from `base.md`: the cat, then
-opening the first parcel (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+tin. Esc / Start opens the pause menu (`PauseMenu`) in every place; F / B
+interacts in every place (Q39). The Clear spell opens the old fields. Next,
+from `base.md`: the cat, then opening the first parcel (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
