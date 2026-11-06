@@ -58,7 +58,7 @@ jobs:
         with:
           path: dist/Moelomol-${{ env.BUILD_LABEL }}-web.zip
           archive: false
-          retention-days: 14
+          retention-days: 3
 
   desktop:
     name: Desktop export
@@ -84,25 +84,25 @@ jobs:
         with:
           path: dist/Moelomol-${{ env.BUILD_LABEL }}-windows.zip
           archive: false
-          retention-days: 14
+          retention-days: 3
       - id: macos
         uses: actions/upload-artifact@v7
         with:
           path: dist/Moelomol-${{ env.BUILD_LABEL }}-macos.zip
           archive: false
-          retention-days: 14
+          retention-days: 3
       - id: linux
         uses: actions/upload-artifact@v7
         with:
           path: dist/Moelomol-${{ env.BUILD_LABEL }}-linux.zip
           archive: false
-          retention-days: 14
+          retention-days: 3
       - id: linux_arm64
         uses: actions/upload-artifact@v7
         with:
           path: dist/Moelomol-${{ env.BUILD_LABEL }}-linux-arm64.zip
           archive: false
-          retention-days: 14
+          retention-days: 3
 
   renders:
     name: Visual review renders
@@ -121,7 +121,7 @@ jobs:
         with:
           name: renders-${{ env.BUILD_LABEL }}
           path: renders/*.png
-          retention-days: 14
+          retention-days: 3
 
   comment:
     name: Post build links

@@ -47,10 +47,10 @@ Status at 2026-10-14: Q39 and Q40 are open. Everything before them is resolved.
 | Q36 | What happens when the player falls in an area | Every area; combat's "death" | **Resolved**: A, wake in bed the next morning → `combat.md`, `world.md` |
 | Q37 | How the player knows what to do next | Every area's objective | **Resolved**: B, the world plus the notes kept to re-read → `world.md` |
 | Q38 | How defeating a boss opens part of the farm | The farm's parcels, every boss | **Resolved**: C, a boss's heart lets Clear open its parcel → `base.md`, `farming.md` |
-| Q39 | One interact button at the farm and in the areas? | Nothing yet (both work) | **Open** |
-| Q40 | How long to keep pull-request builds | Actions storage | **Open** |
-| Q41 | What the cat does in its first build | The cat (`base.md` step 4) | **Open** |
-| Q42 | The great fields inside, and how they open | Opening the first parcel (`base.md` step 5) | **Open** |
+| Q39 | One interact button at the farm and in the areas? | Nothing yet (both work) | **Resolved** 2026-11-06: A, F / B everywhere |
+| Q40 | How long to keep pull-request builds | Actions storage | **Resolved** 2026-11-06: C, 3 days and deleted on merge or close |
+| Q41 | What the cat does in its first build | The cat (`base.md` step 4) | **Resolved** 2026-11-06: A, a cat of places |
+| Q42 | The great fields inside, and how they open | Opening the first parcel (`base.md` step 5) | **Resolved** 2026-11-06: A, the sketch accepted |
 
 ---
 
@@ -1723,6 +1723,8 @@ parcel** (recommended)
 
 ## Q39. One interact button at the farm and in the areas?
 
+**Resolved 2026-11-06 (the lead):** A, F / B everywhere, as recommended.
+
 Raised 2026-10-12, when the farm and Millbrook were joined. Input model:
 the lead's call.
 
@@ -1752,7 +1754,8 @@ Recommendation: **A**.
 
 ## Q40. How long to keep pull-request builds
 
-**Open (2026-10-14).**
+**Resolved 2026-11-06 (the lead):** C, as recommended: PR builds kept 3
+days, and deleted when the PR is merged or closed (ADR-0009 amended).
 
 On 2026-10-14 the lead reported the GitHub Actions storage as full. The cause
 was the pull-request builds: every push to a PR uploads five zips (web,
@@ -1787,7 +1790,8 @@ so PR builds only matter while the PR is open.
 
 ## Q41. What the cat does in its first build
 
-**Open (2026-11-06).** Raised by the engineer: `base.md`'s build order
+**Resolved 2026-11-06 (the lead):** A, a cat of places, as recommended; the
+impossible moments come later with the story's stages. Raised by the engineer: `base.md`'s build order
 puts the cat next (step 4), and says "its behaviour is a separate design
 pass; the layout only gives it the places". What is decided: the cat never
 speaks and has no text (`story.md` rule 2); it lives at the base and never
@@ -1833,7 +1837,9 @@ later).
 
 ## Q42. The great fields inside, and how they open
 
-**Open (2026-11-06).** Raised by the engineer: step 5 of `base.md`'s build
+**Resolved 2026-11-06 (the lead):** A, the structure accepted as sketched
+below; the engineer draws it at tile scale and brings the render before
+merging. Raised by the engineer: step 5 of `base.md`'s build
 order opens the first parcel, the great fields (`1`), with Grist's heart
 and Clear (Q38 C, decided). The accepted farm map draws the parcel only as
 thicket. `base.md` says what is inside: "wide old fields in strips between
