@@ -35,7 +35,7 @@ func test_bindings_match_the_design() -> void:
 	# docs/design/farming.md, "Controls at the base".
 	var bindings: Dictionary = {
 		&"farm_use_tool": [_key(KEY_J), _button(JOY_BUTTON_X)],
-		&"farm_interact": [_key(KEY_SPACE), _button(JOY_BUTTON_A)],
+		&"interact": [_key(KEY_F), _button(JOY_BUTTON_B)],  # Q39: the same button in every place
 		&"farm_tool_next": [_key(KEY_E), _button(JOY_BUTTON_RIGHT_SHOULDER)],
 		&"farm_tool_prev": [_key(KEY_Q), _button(JOY_BUTTON_LEFT_SHOULDER)],
 		&"dev_farm_sleep": [_key(KEY_F8)],
@@ -162,3 +162,27 @@ func test_the_hud_shows_day_time_spell_mana_and_bag() -> void:
 	assert_true(text.contains("Radish 3"), "the produce carried")
 	farm.queue_free()
 	await tree.process_frame
+
+
+func test_interact_is_one_button_in_every_place() -> void:
+	# Q39 (2026-11-06): F / B everywhere; Space / A is the dodge in areas and
+	# does nothing at the farm.
+	assert_false(InputMap.has_action(&"farm_interact"), "no farm-only interact action")
+	var space: InputEventKey = _key(KEY_SPACE)
+	var a: InputEventJoypadButton = _button(JOY_BUTTON_A)
+	assert_false(InputMap.event_is_action(space, &"interact"), "Space does not interact")
+	assert_false(InputMap.event_is_action(a, &"interact"), "A does not interact")
+	GameState.current = null
+	var farm: Node2D = _open_farm()
+	var sim: FarmSim = farm.get("sim")
+	sim.place_player(sim.wake_position, Vector2.UP)  # facing the farmhouse door
+	var went: Array[StringName] = []
+	farm.connect("leaving", func(to: StringName) -> void: went.append(to))
+	Input.action_press(&"interact")
+	await (Engine.get_main_loop() as SceneTree).physics_frame
+	await (Engine.get_main_loop() as SceneTree).physics_frame
+	Input.action_release(&"interact")
+	assert_eq(went, [&"house"] as Array[StringName], "F / B opens the farmhouse door")
+	farm.queue_free()
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	GameState.current = null

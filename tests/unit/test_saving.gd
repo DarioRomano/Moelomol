@@ -164,10 +164,10 @@ func test_sleeping_saves_at_the_bed_the_next_morning() -> void:
 	var house: Node2D = _scene(HOUSE_SCENE, state)
 	var sim: HouseSim = house.get("sim")
 	sim.place_player(sim.bed_position, Vector2.LEFT)  # facing the bed
-	Input.action_press(&"farm_interact")
+	Input.action_press(&"interact")
 	await (Engine.get_main_loop() as SceneTree).physics_frame
 	await (Engine.get_main_loop() as SceneTree).physics_frame
-	Input.action_release(&"farm_interact")
+	Input.action_release(&"interact")
 	var saved: GameState = GameState.load_from(PATH)
 	assert_true(saved != null, "saved on sleeping")
 	if saved != null:
