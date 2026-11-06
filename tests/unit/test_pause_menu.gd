@@ -163,5 +163,19 @@ func test_no_pausing_while_leaving_a_place() -> void:
 	scene.call("leave", GameState.HOUSE)
 	_press(menu, &"pause")
 	assert_false(menu.is_open(), "not during the fade")
+	menu.open()
+	assert_false(menu.is_open(), "not even when asked directly")
 	assert_false(_tree().paused, "running")
 	await _close_place(scene)
+
+
+func test_a_place_freed_while_paused_lets_the_game_run() -> void:
+	# The review scene opens its menu; loading every scene once left the
+	# whole test run paused.
+	var scene: Node = _open_place(SCENES[0], GameState.new_game())
+	(scene.get("pause_menu") as PauseMenu).open()
+	assert_true(_tree().paused, "paused")
+	scene.queue_free()
+	await _tree().process_frame
+	assert_false(_tree().paused, "running again once the place is gone")
+	GameState.current = null

@@ -94,6 +94,14 @@ func open() -> void:
 	_resume.grab_focus()
 
 
+## A place freed while paused (a scene change, a test) must not leave the
+## whole game standing still.
+func _exit_tree() -> void:
+	if is_open():
+		_panel.visible = false
+		get_tree().paused = false
+
+
 func close() -> void:
 	if not is_open():
 		return
