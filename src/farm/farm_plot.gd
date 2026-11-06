@@ -47,6 +47,12 @@ func block(rect: Rect2i) -> void:
 				_blocked[_i(Vector2i(x, y))] = 1
 
 
+## Opens a tile to tilling (cleared ground; the Clear spell).
+func unblock(cell: Vector2i) -> void:
+	if contains(cell):
+		_blocked[_i(cell)] = 0
+
+
 func is_blocked(cell: Vector2i) -> bool:
 	return not contains(cell) or _blocked[_i(cell)] == 1
 

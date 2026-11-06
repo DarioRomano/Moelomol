@@ -51,6 +51,8 @@ static func _draw_farm(canvas: CanvasItem, sim: FarmSim, alpha: float, view: Rec
 	for y: int in range(maxi(low.y, 0), mini(high.y + 1, sim.plot.size.y)):
 		for x: int in range(maxi(low.x, 0), mini(high.x + 1, sim.plot.size.x)):
 			var cell: Vector2i = Vector2i(x, y)
+			if sim.cleared.has(cell):
+				_draw_cleared(canvas, sim, cell)
 			if sim.plot.is_tilled(cell):
 				_draw_soil(canvas, sim, cell)
 			if sim.plot.crop_at(cell) != &"":
@@ -89,6 +91,19 @@ static func _things_of(map: FarmMap) -> Array[Dictionary]:
 		_things.append({"kind": kinds[chars], "rect": Rect2(Vector2(cells.position) * FarmSim.TILE, Vector2(cells.size) * FarmSim.TILE)})
 	_things.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a["rect"] as Rect2).end.y < (b["rect"] as Rect2).end.y)
 	return _things
+
+
+## Ground the Clear spell has cut: short grass over the painted long grass.
+## On the old fields a faint line of the old furrows still shows.
+static func _draw_cleared(canvas: CanvasItem, sim: FarmSim, cell: Vector2i) -> void:
+	var r: Rect2 = sim.cell_rect(Rect2i(cell, Vector2i.ONE))
+	canvas.draw_rect(r, _c(Palette.WILD[1]))
+	var h: int = _hash(cell)
+	if h % 3 == 0:
+		canvas.draw_rect(Rect2(r.position + Vector2(3 + h % 9, 3 + (h / 9) % 9), Vector2(1, 2)), _c(Palette.WILD[2]))
+	if sim.map.char_at(cell) == ":":
+		canvas.draw_rect(Rect2(r.position + Vector2(0, 5), Vector2(16, 1)), _c(Palette.WARMTH[0].darkened(0.1)))
+		canvas.draw_rect(Rect2(r.position + Vector2(0, 12), Vector2(16, 1)), _c(Palette.WARMTH[0].darkened(0.1)))
 
 
 static func _draw_soil(canvas: CanvasItem, sim: FarmSim, cell: Vector2i) -> void:
@@ -328,6 +343,14 @@ static func _draw_tool(canvas: CanvasItem, sim: FarmSim, hand: Vector2) -> void:
 	var tip: Vector2 = hand + sim.facing * 8.0
 	if sim.last_action == &"harvest":
 		canvas.draw_rect(Rect2(tip - Vector2(2, 2), Vector2(4, 4)), _c(Palette.CROPS[1]))
+		return
+	if sim.last_action == FarmSim.CLEAR:
+		# Cut grass lifting away from the target.
+		var at: Vector2 = sim.cell_centre(sim.target_cell())
+		canvas.draw_circle(tip, 2.0 + progress * 2.0, Color(Palette.CROPS[1], 0.55 * (1.0 - progress * 0.5)))
+		for i: int in range(4):
+			var bit: Vector2 = at + Vector2(-6 + i * 4, -progress * 10.0 - (i % 2) * 3)
+			canvas.draw_rect(Rect2(bit, Vector2(1, 3)), Color(_c(Palette.WILD[2]), 1.0 - progress))
 		return
 	# The glow: untinted, like a light, so casting reads at night.
 	var glow: Color = Palette.WARMTH[3] if sim.last_action != FarmSim.WATER else Palette.CROPS[1]

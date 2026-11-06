@@ -148,8 +148,11 @@ sleeping and at the gate, and to keep one save (2026-10-12).
    Quit; the game stands still. Playtest:
    `docs/playtests/2026-11-06-pause-menu.md`.
 
-Then, from `base.md`'s order: the Clear spell, the cat, Grist's heart
-opening the great fields.
+5. **The Clear spell** (`base.md` step 3; 2026-11-06): the old fields can
+   be cleared and farmed. Playtest: `docs/playtests/2026-11-06-clear-spell.md`.
+
+Then, from `base.md`'s order: the cat (step 4) and Grist's heart opening
+the great fields (step 5); each needs the lead's design decisions first.
 
 ## Later (not planned)
 
