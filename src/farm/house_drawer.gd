@@ -88,6 +88,7 @@ static func _floor(canvas: CanvasItem, cell: Vector2i, r: Rect2) -> void:
 static func _window(canvas: CanvasItem, sim: HouseSim, r: Rect2) -> void:
 	var sky: Color = sim.clock.sky_tint()
 	var pane: Color = Color(Palette.WATER[1].r * sky.r, Palette.WATER[1].g * sky.g, Palette.WATER[1].b * sky.b)
+	pane = pane.lerp(Palette.SHADOW[0], sim.clock.lights() * 0.8)  # dark outside at night
 	canvas.draw_rect(Rect2(r.position + Vector2(1, 2), Vector2(14, 10)), _c(Palette.WARMTH[0]))
 	canvas.draw_rect(Rect2(r.position + Vector2(2, 3), Vector2(12, 8)), pane)
 	canvas.draw_rect(Rect2(r.position + Vector2(7, 3), Vector2(2, 8)), _c(Palette.WARMTH[0]))
@@ -165,9 +166,10 @@ static func _lights(canvas: CanvasItem, sim: HouseSim) -> void:
 	var flame: Vector2 = table.get_center() + Vector2(0, -8)
 	canvas.draw_rect(Rect2(flame - Vector2(1, 1), Vector2(2, 2)), Color(Palette.WARMTH[3], on))
 	var stove: Rect2 = _things(sim.map, "O")
-	for i: int in range(5):
-		canvas.draw_circle(flame, 26.0 - i * 5.0, Color(Palette.WARMTH[2], on * 0.05))
-		canvas.draw_circle(stove.position + Vector2(16, 26), 30.0 - i * 6.0, Color(Palette.WARMTH[3], on * 0.04))
+	# Many faint steps, so the glow has no visible rings.
+	for i: int in range(10):
+		canvas.draw_circle(flame, 28.0 - i * 2.6, Color(Palette.WARMTH[2], on * 0.022))
+		canvas.draw_circle(stove.position + Vector2(12, 28), 22.0 - i * 2.0, Color(Palette.WARMTH[3], on * 0.022))
 
 
 ## A quiet outline on what Interact would use.
