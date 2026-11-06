@@ -40,6 +40,9 @@ var inventory: Inventory = Inventory.new()
 var mana: Mana = Mana.new()
 ## The cat (Q41): where it is, wherever the player is.
 var cat: Cat = Cat.new()
+## Every note found, anywhere, in the order found (one satchel, Q37). An
+## area being played shares this very array as its `satchel`.
+var satchel: Array[StringName] = []
 var place: StringName = HOUSE
 var arrival: StringName = AT_BED
 ## FarmSim.export_state() as the player last left the farm; empty until then.
@@ -130,6 +133,12 @@ func make_area(area_id: StringName) -> Area:
 		area.apply_state(area_states[area_id])
 	else:
 		area.start()
+	# One satchel: notes the area remembered finding (saves from before the
+	# satchel was the game's) join it, then the area adds to it directly.
+	for note_id: StringName in area.satchel:
+		if not (note_id in satchel):
+			satchel.append(note_id)
+	area.satchel = satchel
 	area.enter()
 	return area
 
@@ -174,6 +183,7 @@ func to_dict() -> Dictionary:
 		"farm": farm_state,
 		"house": house_state,
 		"cat": cat.to_dict(),
+		"satchel": satchel.map(func(n: StringName) -> String: return String(n)),
 		"areas": area_states,
 	}
 
@@ -207,6 +217,12 @@ static func from_dict(data: Dictionary) -> GameState:
 	state.arrival = arrival_name if arrival_name in [AT_BED, AT_DOOR, AT_GATE] else AT_BED
 	var farm: Variant = data.get("farm", {})
 	state.farm_state = farm if farm is Dictionary else {}
+	var found: Variant = data.get("satchel", [])
+	if found is Array:
+		for note_id: Variant in found:
+			var n: StringName = StringName(str(note_id))
+			if not Notes.find(n).is_empty() and not (n in state.satchel):
+				state.satchel.append(n)
 	var cat_data: Variant = data.get("cat")
 	if cat_data is Dictionary:
 		state.cat.load_dict(cat_data)
@@ -224,6 +240,11 @@ static func from_dict(data: Dictionary) -> GameState:
 		for key: Variant in areas:
 			if areas[key] is Dictionary:
 				state.area_states[StringName(str(key))] = areas[key]
+				# Saves from before one satchel kept each area's notes there.
+				for note_id: Variant in (areas[key] as Dictionary).get("satchel", []):
+					var n: StringName = StringName(str(note_id))
+					if not Notes.find(n).is_empty() and not (n in state.satchel):
+						state.satchel.append(n)
 	return state
 
 

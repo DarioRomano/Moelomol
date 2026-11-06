@@ -218,6 +218,11 @@ static func _shelter(img: Image, map: FarmMap, cell: Vector2i, h: int) -> void:
 	if map.char_at(cell + Vector2i.DOWN) != "F" and map.char_at(cell + Vector2i.LEFT) == "F":
 		_px(img, cell, 0, TILE - 3, 6, 3, wall)  # the doorway beside it
 	_px(img, cell, 4 + h % 6, 6 + (h / 6) % 6, 3, 2, top)  # rubble
+	if map.char_at(cell + Vector2i.LEFT) == "F" and map.char_at(cell + Vector2i.RIGHT) == "F" \
+			and map.char_at(cell + Vector2i.DOWN) != "F":
+		# The field book, on a fallen stone by the doorway.
+		_px(img, cell, 5, 7, 7, 5, Palette.PAPER[0])
+		_px(img, cell, 8, 7, 1, 5, Palette.WARMTH[0])
 
 
 ## A gate in the hedge: a post where it meets the hedge.
