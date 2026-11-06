@@ -509,3 +509,7 @@ a real controller)
   button in SDL's mapping); bound with device -1.
 - A paused tree stays paused after the node that paused it is freed;
   `PauseMenu._exit_tree` unpauses it.
+- `ImageTexture.update(image)` replaces the texture's pixels from an image
+  of the same size (the farm's ground, while a parcel opens);
+  `Image.fill_rect` clips a rectangle that runs off the image. Headless
+  timing of `update` says nothing (the dummy renderer); real cost: playtest.
