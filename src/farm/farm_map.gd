@@ -16,10 +16,14 @@ const TILLABLE: String = "T"
 
 var rows: Array[String] = []
 var size: Vector2i
+## The characters that block walking (the farm's by default; the house has
+## its own).
+var solid: String = SOLID
 
 
-func _init(p_rows: Array[String]) -> void:
+func _init(p_rows: Array[String], p_solid: String = SOLID) -> void:
 	rows = p_rows
+	solid = p_solid
 	size = Vector2i(rows[0].length(), rows.size())
 
 
@@ -31,13 +35,14 @@ func contains(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < size.x and cell.y < size.y
 
 
-## The character at a tile; outside the farm, woods.
+## The character at a tile; outside the map, the first solid character
+## (the farm's woods, the house's wall).
 func char_at(cell: Vector2i) -> String:
-	return rows[cell.y][cell.x] if contains(cell) else "t"
+	return rows[cell.y][cell.x] if contains(cell) else solid[0]
 
 
 func is_solid(cell: Vector2i) -> bool:
-	return SOLID.contains(char_at(cell))
+	return solid.contains(char_at(cell))
 
 
 ## Every tile holding character `c`, row by row.

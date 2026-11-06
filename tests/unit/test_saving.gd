@@ -5,6 +5,7 @@ extends TestCase
 
 const PATH: String = "user://test_save.json"
 const FARM_SCENE: PackedScene = preload("res://scenes/farm/farm.tscn")
+const HOUSE_SCENE: PackedScene = preload("res://scenes/farm/house.tscn")
 const MILLBROOK_SCENE: PackedScene = preload("res://scenes/world/millbrook.tscn")
 const TITLE_SCENE: PackedScene = preload("res://scenes/title/title.tscn")
 
@@ -160,9 +161,9 @@ func test_sleeping_saves_at_the_bed_the_next_morning() -> void:
 	_remove_save()
 	var state: GameState = GameState.new_game()
 	state.save_path = PATH
-	var farm: Node2D = _scene(FARM_SCENE, state)
-	var sim: FarmSim = farm.get("sim")
-	sim.place_player(sim.wake_position, Vector2.UP)  # against the door
+	var house: Node2D = _scene(HOUSE_SCENE, state)
+	var sim: HouseSim = house.get("sim")
+	sim.place_player(sim.bed_position, Vector2.LEFT)  # facing the bed
 	Input.action_press(&"farm_interact")
 	await (Engine.get_main_loop() as SceneTree).physics_frame
 	await (Engine.get_main_loop() as SceneTree).physics_frame
@@ -171,8 +172,8 @@ func test_sleeping_saves_at_the_bed_the_next_morning() -> void:
 	assert_true(saved != null, "saved on sleeping")
 	if saved != null:
 		assert_eq(saved.clock.day(), 2, "the next morning")
-		assert_eq([saved.place, saved.arrival], [GameState.FARM, GameState.AT_BED], "at the bed")
-	await _close(farm)
+		assert_eq([saved.place, saved.arrival], [GameState.HOUSE, GameState.AT_BED], "beside the bed")
+	await _close(house)
 
 
 func test_the_developer_sleep_key_saves_too() -> void:
@@ -236,7 +237,7 @@ func test_falling_saves_in_the_farm_bed() -> void:
 	var saved: GameState = GameState.load_from(PATH)
 	assert_true(saved != null, "saved")
 	if saved != null:
-		assert_eq([saved.place, saved.arrival], [GameState.FARM, GameState.AT_BED], "in the farm bed")
+		assert_eq([saved.place, saved.arrival], [GameState.HOUSE, GameState.AT_BED], "in the farmhouse bed")
 		assert_eq(saved.clock.day(), 2, "the next morning")
 	await _close(scene)
 
@@ -291,7 +292,7 @@ func test_menus_answer_the_controller() -> void:
 		assert_true(InputMap.event_is_action(k, &"ui_accept"), "%s presses" % OS.get_keycode_string(key))
 
 
-func test_with_no_save_new_game_starts_at_the_farm_and_saves() -> void:
+func test_with_no_save_new_game_starts_in_the_farmhouse_and_saves() -> void:
 	_remove_save()
 	GameState.current = null
 	var title: Control = _title()
@@ -304,7 +305,8 @@ func test_with_no_save_new_game_starts_at_the_farm_and_saves() -> void:
 	(buttons["New game"] as Button).pressed.emit()
 	assert_eq(started.size(), 1, "a game starts")
 	assert_eq(GameState.current, started[0], "it is the game in play")
-	assert_eq([started[0].place, started[0].arrival], [GameState.FARM, GameState.AT_BED], "at the farm, by the door")
+	assert_eq([started[0].place, started[0].arrival], [GameState.HOUSE, GameState.AT_BED], "waking in the farmhouse bed")
+	assert_eq(started[0].inventory.items().size(), 0, "the bag empty: the first seeds are in the seed tin")
 	assert_eq(started[0].clock.day(), 1, "day 1")
 	assert_true(GameState.has_save(PATH), "saved at once, so Continue finds it")
 	await _close(title)

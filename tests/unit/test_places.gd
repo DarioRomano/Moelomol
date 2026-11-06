@@ -110,7 +110,10 @@ func test_the_bag_and_mana_are_the_game_s_not_a_place_s() -> void:
 	state.travel(GameState.FARM, GameState.AT_GATE)
 	var farm: FarmSim = state.make_farm()
 	assert_eq(farm.inventory.count(&"sluice_crank"), 1, "the crank came home")
-	assert_eq(farm.inventory.count(&"radish_seeds"), 6, "the seed tin's seeds are in the same bag")
+	var house: HouseSim = state.make_house()
+	house.place_player(Vector2(2.5, 7.5) * HouseSim.TILE, Vector2.LEFT)  # facing the cupboard
+	house.interact()
+	assert_eq(farm.inventory.count(&"radish_seeds"), 6, "the seed tin's seeds went into the same bag")
 	assert_eq(farm.mana.current, 70.0, "the same Mana")
 	assert_eq(FarmSim.item_name(&"sluice_crank"), "Sluice crank", "named in the HUD")
 
@@ -169,7 +172,7 @@ func test_grist_stays_defeated_and_its_heart_stays_where_it_fell() -> void:
 	assert_eq(heart[0]["kind"], &"heart", "a heart to take")
 
 
-func test_falling_out_there_wakes_the_player_in_the_farm_bed() -> void:
+func test_falling_out_there_wakes_the_player_in_the_farmhouse_bed() -> void:
 	var state: GameState = GameState.new_game()
 	state.mana.try_spend(60.0)
 	var area: Area = state.make_area(GameState.MILLBROOK)
@@ -185,13 +188,13 @@ func test_falling_out_there_wakes_the_player_in_the_farm_bed() -> void:
 	assert_true(fell, "the area reports the fall")
 	state.store_area(area)
 	state.fell()
-	assert_eq(state.place, GameState.FARM, "home")
-	var farm: FarmSim = state.make_farm()
+	assert_eq([state.place, state.arrival], [GameState.HOUSE, GameState.AT_BED], "home, in bed")
+	var house: HouseSim = state.make_house()
 	assert_eq(state.clock.day(), day + 1, "the next day")
 	assert_true(absf(state.clock.minute() - GameClock.DAY_START_MINUTE) < 1.0, "at 6:00")
-	assert_eq(farm.player_position, farm.wake_position, "in front of the farmhouse door (the bed, for now)")
-	assert_eq(farm.mana.current, farm.mana.maximum, "rested: Mana full")
-	assert_eq(farm.inventory.count(&"tusk"), 1, "everything carried is kept")
+	assert_eq(house.player_position, house.bed_position, "beside the bed")
+	assert_eq(house.mana.current, house.mana.maximum, "rested: Mana full")
+	assert_eq(house.inventory.count(&"tusk"), 1, "everything carried is kept")
 
 
 func test_the_scenes_hand_over_at_the_exits() -> void:

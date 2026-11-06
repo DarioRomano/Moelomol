@@ -109,8 +109,8 @@ static func make_test_farm() -> FarmSim:
 
 ## The farm as accepted (docs/design/base.md): 160 x 96 tiles, the homestead
 ## at the bottom centre. Only the first field can be tilled; the door of the
-## farmhouse is the bed until the house has an inside (base.md, "Built later",
-## step 2). The player starts in front of the door.
+## farmhouse opens on the house inside (HouseSim). The player starts in
+## front of the door.
 static func make_farm() -> FarmSim:
 	var farm_map: FarmMap = FarmMap.make_farm()
 	var sim: FarmSim = FarmSim.new(Vector2.ZERO, farm_map.size)
@@ -326,7 +326,11 @@ func _cast() -> void:
 func _interact() -> void:
 	var cell: Vector2i = target_cell()
 	if is_door(cell):
-		sleep()
+		if map != null:
+			# The farm's door opens on the farmhouse inside (its own place).
+			events.append({"type": "exit", "to": &"house"})
+		else:
+			sleep()  # the test field: the door is the bed
 		return
 	var items: Dictionary = plot.harvest(cell)
 	if items.is_empty():
@@ -338,7 +342,7 @@ func _interact() -> void:
 	events.append({"type": "harvest", "cell": cell, "items": items, "position": cell_centre(cell)})
 
 
-## True for the farmhouse door's tiles (the bed, for now).
+## True for the farmhouse door's tiles (on the test field, the bed).
 func is_door(cell: Vector2i) -> bool:
 	if map != null:
 		return map.char_at(cell) == "D"

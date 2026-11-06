@@ -96,18 +96,15 @@ func test_only_the_first_field_can_be_tilled() -> void:
 	assert_false(sim.plot.till(grass), "not the lawn")
 
 
-func test_the_farmhouse_door_is_the_bed_for_now() -> void:
+func test_the_farmhouse_door_leads_inside() -> void:
 	var sim: FarmSim = FarmSim.make_farm()
-	sim.clock.total_minutes += 600.0
-	sim.mana.try_spend(50.0)
 	sim.place_player(sim.wake_position + Vector2(0, 20), Vector2.UP)
 	for i: int in range(30):
 		sim.step(FarmInput.with_move(Vector2.UP))
 	sim.step(FarmInput.press(&"interact"))
-	assert_eq(sim.clock.day(), 2, "slept to the next morning")
-	assert_eq(sim.mana.current, sim.mana.maximum, "Mana full")
-	assert_eq(sim.player_position, sim.wake_position, "up in front of the door")
-	assert_eq(sim.facing, Vector2.DOWN, "facing out")
+	assert_eq(sim.events.filter(func(e: Dictionary) -> bool: return e["type"] == "exit" and e["to"] == &"house").size(), 1,
+		"in through the door")
+	assert_eq(sim.clock.day(), 1, "not a bed: no sleep")
 
 
 func test_walking_down_the_lane_leaves_for_millbrook_once() -> void:

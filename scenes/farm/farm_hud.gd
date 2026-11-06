@@ -26,8 +26,26 @@ func _ready() -> void:
 	_help = _make_label()
 	_help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	_help.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_help.text = "Move WASD / stick   Cast J / X   Interact Space / A (harvest; the farmhouse door: sleep)   " \
+	_help.text = "Move WASD / stick   Cast J / X   Interact Space / A (harvest; the farmhouse door)   " \
 		+ "Spells Q E / LB RB\nF8 sleep now   F9 time x30   F10 next watering tier"
+
+
+func set_help(text: String) -> void:
+	_help.text = text
+
+
+## The farmhouse inside: the day and time, Mana and the bag (no spells
+## indoors), and a quiet line for what just happened.
+func show_house(sim: HouseSim, toast: String) -> void:
+	_clock.text = "Day %d   %s   %s%s" % [sim.clock.day(), sim.clock.time_text(), sim.clock.phase(),
+		"   (time x%d)" % roundi(sim.time_scale) if sim.time_scale != 1.0 else ""]
+	_tool.text = toast
+	var parts: PackedStringArray = PackedStringArray(["Mana %d" % roundi(sim.mana.current)])
+	for item: StringName in sim.inventory.items():
+		parts.append("%s %d" % [FarmSim.item_name(item), sim.inventory.count(item)])
+	_bag.text = "   ".join(parts)
+	_mana = sim.mana.ratio()
+	queue_redraw()
 
 
 func _make_label() -> Label:
