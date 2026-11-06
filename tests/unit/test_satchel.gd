@@ -84,7 +84,10 @@ func test_the_field_book_is_read_in_the_shelter_and_time_stands_still() -> void:
 	assert_eq(state.clock.total_minutes, minutes, "time stands still while reading")
 	_press(farm, &"interact")
 	assert_false(reader.is_open(), "F / B puts it back")
-	Input.action_press(&"interact")  # still held from the press that closed it
+	# The press that closed it also reaches the next physics tick (the
+	# physics_frame signal comes before the scene's tick, so hold for two).
+	Input.action_press(&"interact")
+	await _tree().physics_frame
 	await _tree().physics_frame
 	Input.action_release(&"interact")
 	assert_false(reader.is_open(), "and does not open it again at once")

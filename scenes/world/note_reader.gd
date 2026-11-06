@@ -11,9 +11,9 @@ extends Control
 var state: GameState
 var _note: NoteView
 var _satchel: SatchelView
-## Set when a note or the satchel closes; the scene's next physics tick
-## takes it (just_closed) and ignores Interact, so the press that closed it
-## does not interact again.
+## Set when a note or the satchel closes; the scene ignores Interact until
+## the button is let go (just_closed), so the press that closed it does not
+## interact again.
 var _just_closed: bool = false
 
 
@@ -85,8 +85,9 @@ func _close_satchel() -> void:
 	_just_closed = true
 
 
-## True once after a note or the satchel closed (see `_just_closed`).
+## True from a note or the satchel closing until Interact is let go: the
+## press that put the note back must not interact again on a later tick.
 func just_closed() -> bool:
-	var was: bool = _just_closed
-	_just_closed = false
-	return was
+	if _just_closed and not Input.is_action_pressed(&"interact"):
+		_just_closed = false
+	return _just_closed
