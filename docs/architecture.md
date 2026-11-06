@@ -118,6 +118,9 @@ Constraints the architecture must honour:
   paints the static ground once into one texture; `FarmDrawer` draws the
   soil and crops on screen, the buildings and the player by base line, and
   the lights. `make_test_farm()` is the small field the rule tests use.
+- The farmhouse inside (`HouseSim`, `HouseLayout`, `HouseDrawer`): its own
+  small simulation (walking, the bed, the seed tin, the door), sharing the
+  game's clock, Mana and bag; `scenes/farm/house.tscn`.
 - `scenes/farm/farm.tscn` reads the farming InputMap actions
   (`FarmInput.read()`), follows the player with `FollowCamera`; `FarmHud`
   sits in a `UiFrame`. `scenes/showcase/farm_times.tscn` (dawn, midday,

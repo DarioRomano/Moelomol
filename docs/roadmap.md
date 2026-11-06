@@ -139,8 +139,13 @@ sleeping and at the gate, and to keep one save (2026-10-12).
    one save, written on sleeping, falling and at the gate (2026-10-12).
    Playtest: `docs/playtests/2026-10-12-title-and-saving.md`.
 
-Then, from `base.md`'s order: the house inside with the bed, the Clear
-spell, the cat, Grist's heart opening the great fields.
+3. **The farmhouse inside** (`base.md` step 2; layout accepted
+   2026-11-06): the bed, the seed tin, the door to the farm; new games and
+   falling wake beside the bed. Playtest:
+   `docs/playtests/2026-11-06-farmhouse-inside.md`.
+
+Then, from `base.md`'s order: the Clear spell, the cat, Grist's heart
+opening the great fields.
 
 ## Later (not planned)
 
