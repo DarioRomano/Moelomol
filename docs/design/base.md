@@ -126,6 +126,36 @@ puts what farming needs most first.
 3. **Inside, the ground is long grass and old field.** The ordinary Clear
    spell clears it a patch at a time, like the homestead's old fields.
 
+### The great fields inside (Q42 A, accepted 2026-11-06)
+
+One character per estate square (4 x 4 tiles), estate columns 10-29 and
+rows 5-14; blank squares are other parcels:
+
+```
+     col 10              29
+r5   :::::::-:::::h::::::
+r6   :::::::-:::::=::::::
+r7   hhhhhhh-hhhhhhhhhhhh
+r8   ::::::F-:::::h::::::
+r9   :::::::-:::::=::::::
+r10  hhhhhhh-hhhhhhhhhhhh
+r11  :::::::-:::::=::::::
+r12      :::-::::::::
+r13      :::-::::::::
+r14      :::-::::::::
+```
+
+`:` old field under long grass (Clear, then till), `-` the old track from
+the north gate, `h` hedgerow, `=` a gap in a hedgerow, `F` the ruined field
+shelter. At tile scale (`src/farm/farm_layout.gd`, `opened_tiles`):
+- the track is path, 4 tiles wide, moved 2 tiles east to meet the north
+  gate (tiles 70-73), running from the gate to the parcel's far edge;
+- a hedgerow is a 1-tile hedge through its square (across the second tile
+  row, or down the second tile column where hedgerows meet), long grass
+  either side; gaps are long grass;
+- the shelter is 3 x 2 tiles of broken stone walls, roofless;
+- the two rows of thicket above the homestead's hedge become long grass.
+
 **Thicket** is a hedge of bramble and young trees. It is drawn in the
 farm's ordinary greens, not the changed land's violets: the farm's
 overgrowth is neglect, not the calamity (`story.md`: the base is
@@ -333,6 +363,15 @@ enemies first; the farm follows (`docs/roadmap.md`).
 
 ## Built so far
 
+**Step 5, opening the great fields (2026-11-06; Q42 A):** Clear cast on
+the great fields' thicket with Grist's heart in the bag uses the heart up
+and withers the thicket back over 3 s, outward from the tile cast on; the
+camera follows the front out and comes back; the player stands and
+watches; the cat is already in the shelter. The fields inside are then
+cleared and tilled like the homestead's old fields. Remembered in the
+save. Not yet: the almanac in the shelter (needs the farm to show notes),
+the other parcels' insides.
+
 **Step 4, the cat (2026-11-06; Q41 A):** a cat of places. It keeps its own
 hours across the places above (the basket, porch step, apple tree, bench,
 window seat, workshop roof), moves only where the player cannot see, is
@@ -370,6 +409,6 @@ own place (ADR-0016), joined to the farm at the farmhouse door.
 - The farmhouse door leads inside (step 2).
 - The south gate leads down the lane to Millbrook and back (ADR-0016);
   falling in Millbrook wakes the player here (Q36).
-- Not yet: parcels opening, the mailbox,
+- Not yet: the other parcels opening, the mailbox,
   the bench's sitting, the chest. The old track (estate column 17) is 2
   tiles west of the north gate; to line up when the great fields open.

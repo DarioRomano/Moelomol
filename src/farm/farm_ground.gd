@@ -13,15 +13,45 @@ extends RefCounted
 const TILE: int = 16
 
 static var _cached: ImageTexture = null
+static var _image: Image = null
 static var _cached_rows: Array[String] = []
+static var _dirty: bool = false
 
 
-## The ground as a texture, painted on first use and kept.
+## The ground as a texture, painted on first use and kept; painted again in
+## full if the map changed in ways paint_cells() was not told about.
 static func texture_for(map: FarmMap) -> ImageTexture:
 	if _cached == null or _cached_rows != map.rows:
-		_cached = ImageTexture.create_from_image(paint(map))
+		_image = paint(map)
+		_cached = ImageTexture.create_from_image(_image)
 		_cached_rows = map.rows.duplicate()
+		_dirty = false
 	return _cached
+
+
+## Paints a few changed tiles (and their neighbours, whose edges depend on
+## them) into the kept image; flush() sends it to the texture. Used while a
+## parcel's thicket withers, so the whole farm is not painted again.
+static func paint_cells(map: FarmMap, cells: Array[Vector2i]) -> void:
+	if _image == null or _cached_rows.size() != map.rows.size():
+		return  # nothing painted yet: texture_for() paints it all
+	var done: Dictionary = {}
+	for cell: Vector2i in cells:
+		for dy: int in range(-1, 2):
+			for dx: int in range(-1, 2):
+				var c: Vector2i = cell + Vector2i(dx, dy)
+				if map.contains(c) and not done.has(c):
+					done[c] = true
+					_tile(_image, map, c)
+	_cached_rows = map.rows.duplicate()
+	_dirty = true
+
+
+## Sends the image painted by paint_cells() to the texture (one upload).
+static func flush() -> void:
+	if _dirty and _cached != null:
+		_cached.update(_image)
+		_dirty = false
 
 
 ## Paints every tile of the map.
@@ -52,6 +82,10 @@ static func _tile(img: Image, map: FarmMap, cell: Vector2i) -> void:
 			_thicket(img, cell, h)
 		"#":
 			_hedge(img, map, cell, h)
+		"r":
+			_hedgerow(img, map, cell, h)
+		"F":
+			_shelter(img, map, cell, h)
 		"=", "G":
 			_px(img, cell, 0, 0, TILE, TILE, Palette.WILD[3])
 			_px(img, cell, 3 + h % 9, 4 + (h / 9) % 8, 2, 1, Palette.WILD[2])
@@ -150,6 +184,40 @@ static func _hedge(img: Image, map: FarmMap, cell: Vector2i, h: int) -> void:
 		_px(img, cell, 0, 0, TILE, 2, Palette.CROPS[0])
 	if map.char_at(cell + Vector2i.DOWN) != "#":
 		_px(img, cell, 0, TILE - 2, TILE, 2, Palette.SHADOW[1])
+
+
+## A hedgerow between the great fields' strips: an old, gappy field hedge,
+## lower and wilder than the homestead's.
+static func _hedgerow(img: Image, map: FarmMap, cell: Vector2i, h: int) -> void:
+	_long_grass(img, cell, h)
+	var leaf: Color = Palette.WILD[0].lerp(Palette.CROPS[0], 0.25)
+	_px(img, cell, 1, 2, 14, 12, leaf)
+	_px(img, cell, h % 8, 3 + (h / 8) % 6, 6, 4, Palette.WILD[0])
+	_px(img, cell, 2 + (h / 5) % 10, 2, 3, 2, Palette.CROPS[0].darkened(0.3))
+	for side: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT]:
+		if map.char_at(cell + side) == "r":
+			_px(img, cell, 0 if side == Vector2i.LEFT else 14, 3, 2, 10, leaf)
+	for side: Vector2i in [Vector2i.UP, Vector2i.DOWN]:
+		if map.char_at(cell + side) == "r":
+			_px(img, cell, 2, 0 if side == Vector2i.UP else 13, 12, 3, leaf)
+
+
+## The ruined field shelter: broken stone walls, no roof, a gap for a door.
+static func _shelter(img: Image, map: FarmMap, cell: Vector2i, h: int) -> void:
+	_long_grass(img, cell, h)
+	var wall: Color = Palette.STONE[0]
+	var top: Color = Palette.STONE[1]
+	_px(img, cell, 0, 0, TILE, TILE, Palette.WARMTH[0].darkened(0.35))  # the earth floor
+	if map.char_at(cell + Vector2i.UP) != "F":
+		_px(img, cell, 0, 0, TILE, 4, wall)
+		_px(img, cell, 0, 0, TILE, 1, top)
+	if map.char_at(cell + Vector2i.LEFT) != "F":
+		_px(img, cell, 0, 0, 3, TILE, wall)
+	if map.char_at(cell + Vector2i.RIGHT) != "F":
+		_px(img, cell, TILE - 3, 0, 3, TILE - 5 + h % 4, wall)  # fallen in places
+	if map.char_at(cell + Vector2i.DOWN) != "F" and map.char_at(cell + Vector2i.LEFT) == "F":
+		_px(img, cell, 0, TILE - 3, 6, 3, wall)  # the doorway beside it
+	_px(img, cell, 4 + h % 6, 6 + (h / 6) % 6, 3, 2, top)  # rubble
 
 
 ## A gate in the hedge: a post where it meets the hedge.

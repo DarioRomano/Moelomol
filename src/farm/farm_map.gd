@@ -8,7 +8,7 @@ extends RefCounted
 
 const TILE: float = 16.0
 ## Characters that block walking.
-const SOLID: String = "t123456-#HDBbs~nALCom"
+const SOLID: String = "t123456-#HDBbs~nALComrF"
 const THICKET: String = "123456-"
 ## The first field: the only ground that can be tilled from the start (the
 ## old fields, `:`, need the Clear spell first; not built yet).
@@ -54,6 +54,12 @@ func cells_of(c: String) -> Array[Vector2i]:
 			found.append(Vector2i(at, y))
 			at = rows[y].find(c, at + 1)
 	return found
+
+
+## Changes one tile (a parcel opening).
+func set_tile(cell: Vector2i, c: String) -> void:
+	if contains(cell):
+		rows[cell.y] = rows[cell.y].left(cell.x) + c + rows[cell.y].substr(cell.x + 1)
 
 
 ## The smallest rectangle of tiles holding every `c` (a building, the pond).
