@@ -41,6 +41,7 @@ func _ready() -> void:
 	layer.add_child(frame)
 	_hud = FarmHud.new()
 	frame.add_child(_hud)
+	_place_cat()  # there from the first frame
 	_hud.set_help("Move WASD / stick   Interact F / B (the bed: sleep; the seed tin)   Out: the door   Pause Esc / Start\n"
 		+ "F8 sleep now   F9 time x30")
 
@@ -58,6 +59,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if _toast_ticks > 0:
 		_toast_ticks -= 1
+	_place_cat()
 	sim.step(FarmInput.read())
 	for event: Dictionary in sim.events:
 		_handle(event)
@@ -83,6 +85,19 @@ func _handle(event: Dictionary) -> void:
 			haptics.play(&"farm_nothing")
 		"exit":
 			leave(event["to"])
+		"stroke":
+			state.cat.stroke()
+			haptics.play(&"cat_purr")
+
+
+## The cat (Q41): the whole room is in view, so it never comes or goes while
+## the player is inside; it is in the house only at its house places.
+func _place_cat() -> void:
+	state.cat.settle(state.clock, func(p: StringName) -> bool: return Cat.in_house(p))
+	var here: bool = Cat.in_house(state.cat.place)
+	sim.cat_position = Cat.house_position(state.cat.place, sim.map) if here else Vector2.INF
+	sim.cat_purring = state.cat.purr_ticks > 0
+	sim.cat_curled = state.cat.place == Cat.BLANKET
 
 
 func show_toast(text: String) -> void:

@@ -38,6 +38,8 @@ static var last_load_error: String = ""
 var clock: GameClock = GameClock.new()
 var inventory: Inventory = Inventory.new()
 var mana: Mana = Mana.new()
+## The cat (Q41): where it is, wherever the player is.
+var cat: Cat = Cat.new()
 var place: StringName = HOUSE
 var arrival: StringName = AT_BED
 ## FarmSim.export_state() as the player last left the farm; empty until then.
@@ -148,6 +150,7 @@ func travel(to: StringName, at: StringName) -> void:
 ## area has already moved the clock on.
 func fell() -> void:
 	mana.refill()
+	cat.place = Cat.BLANKET  # curled on the blanket when the player wakes (Q36)
 	travel(HOUSE, AT_BED)
 
 
@@ -170,6 +173,7 @@ func to_dict() -> Dictionary:
 		"arrival": String(arrival),
 		"farm": farm_state,
 		"house": house_state,
+		"cat": cat.to_dict(),
 		"areas": area_states,
 	}
 
@@ -203,6 +207,9 @@ static func from_dict(data: Dictionary) -> GameState:
 	state.arrival = arrival_name if arrival_name in [AT_BED, AT_DOOR, AT_GATE] else AT_BED
 	var farm: Variant = data.get("farm", {})
 	state.farm_state = farm if farm is Dictionary else {}
+	var cat_data: Variant = data.get("cat")
+	if cat_data is Dictionary:
+		state.cat.load_dict(cat_data)
 	var house: Variant = data.get("house")
 	if house is Dictionary:
 		state.house_state = house

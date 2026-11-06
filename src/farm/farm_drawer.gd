@@ -68,6 +68,8 @@ static func _draw_farm(canvas: CanvasItem, sim: FarmSim, alpha: float, view: Rec
 			_draw_thing(canvas, sim, thing["kind"], rect)
 	if not player_drawn:
 		_draw_player(canvas, sim, at)
+	if sim.cat_position != Vector2.INF and view.grow(24.0).has_point(sim.cat_position):
+		CatDrawer.draw(canvas, sim.cat_position, _tint, sim.cat_purring, false)
 	_draw_lights(canvas, sim)
 	if sim.raining:
 		_draw_rain(canvas, sim, view.intersection(sim.bounds()))

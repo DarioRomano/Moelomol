@@ -29,7 +29,12 @@ static func draw(canvas: CanvasItem, sim: HouseSim, alpha: float, view: Rect2) -
 			_tile(canvas, sim, Vector2i(x, y))
 	_furniture(canvas, sim)
 	var at: Vector2 = sim.previous_position.lerp(sim.player_position, clampf(alpha, 0.0, 1.0))
+	var cat_here: bool = sim.cat_position != Vector2.INF
+	if cat_here and sim.cat_position.y <= at.y:
+		CatDrawer.draw(canvas, sim.cat_position, _tint, sim.cat_purring, sim.cat_curled)
 	_draw_player(canvas, sim, at)
+	if cat_here and sim.cat_position.y > at.y:
+		CatDrawer.draw(canvas, sim.cat_position, _tint, sim.cat_purring, sim.cat_curled)
 	_lights(canvas, sim)
 	_target(canvas, sim)
 

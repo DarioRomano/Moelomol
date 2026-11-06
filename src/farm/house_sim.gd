@@ -9,6 +9,7 @@ extends RefCounted
 ##   {"type": "seed_tin", "items": Dictionary}  the starting seeds taken (Q25)
 ##   {"type": "seed_tin_empty"}
 ##   {"type": "exit", "to": &"farm"}          out of the door
+##   {"type": "stroke", "position": Vector2}  the cat, stroked
 
 const TILE: float = FarmSim.TILE
 const TICK_SECONDS: float = FarmSim.TICK_SECONDS
@@ -27,6 +28,10 @@ var facing: Vector2 = Vector2.DOWN
 ## True once the seed tin's seeds are in the bag (the house remembers it).
 var tin_taken: bool = false
 var events: Array[Dictionary] = []
+## Where the cat sits in the house, or INF (the scene sets it).
+var cat_position: Vector2 = Vector2.INF
+var cat_purring: bool = false
+var cat_curled: bool = false
 ## Waking: beside the bed, at its foot. Arriving from the farm: on the rug,
 ## facing into the room.
 var bed_position: Vector2
@@ -86,6 +91,10 @@ func step(input: FarmInput) -> void:
 
 
 func interact() -> void:
+	if cat_position != Vector2.INF \
+			and (player_position + facing.normalized() * TARGET_REACH).distance_to(cat_position) < FarmSim.CAT_REACH:
+		events.append({"type": "stroke", "position": cat_position})
+		return
 	match target_kind():
 		&"bed":
 			sleep()
