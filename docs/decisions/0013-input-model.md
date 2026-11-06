@@ -44,6 +44,11 @@ is in `docs/design/open-questions.md`, Q6.
 
 ## Verification
 
+Menus so far (2026-11-06): the title and the pause menu work with keyboard
+(arrows, W / S, Enter, Space, Esc), mouse (hover, click) and controller
+(D-pad, stick, A, B; Start pauses), tested in `test_saving.gd` and
+`test_pause_menu.gd`.
+
 Implemented so far: the fullscreen shortcuts (`src/core/window_controls.gd`,
 tests in `tests/unit/test_window_controls.gd`). The rest arrives with the
 first moving character and the first menu.

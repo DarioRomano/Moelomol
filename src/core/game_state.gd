@@ -49,6 +49,9 @@ var area_states: Dictionary = {}
 ## Where save() writes; empty for a game that is never saved (a place
 ## opened on its own, tests).
 var save_path: String = ""
+## When and where the game was last saved (summary()), for the pause menu;
+## empty until the first save or load.
+var last_saved: String = ""
 
 
 ## A new game: day 1, 6:00, waking in the farmhouse bed, the bag empty and
@@ -233,6 +236,8 @@ func save() -> Error:
 		ProjectSettings.globalize_path(save_path))
 	if result != OK:
 		push_warning("GameState: cannot replace %s (%s)" % [save_path, error_string(result)])
+	else:
+		last_saved = summary()
 	return result
 
 
@@ -253,6 +258,7 @@ static func load_from(path: String = SAVE_PATH) -> GameState:
 	var state: GameState = from_dict(json.data)
 	if state != null:
 		state.save_path = path
+		state.last_saved = state.summary()
 	return state
 
 

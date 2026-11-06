@@ -31,6 +31,8 @@ var area: Area = state.make_area(GameState.MILLBROOK)
 ## False in tests: leaving stores the area and emits `leaving`, but the scene
 ## stays.
 var travels: bool = true
+## Esc / Start: Resume, Back to title, Quit.
+var pause_menu: PauseMenu
 var _left: bool = false
 var camera: FollowCamera = FollowCamera.new()
 var haptics: Haptics = Haptics.new()
@@ -46,6 +48,8 @@ var _toast_ticks: int = 0
 
 
 func _ready() -> void:
+	pause_menu = PauseMenu.new()
+	add_child(pause_menu)
 	_camera_node = Camera2D.new()
 	add_child(_camera_node)
 	camera.snap(area.sim.player.position, view_size(), area.map.rect(), view_scale())
@@ -59,7 +63,7 @@ func _ready() -> void:
 	_hud = CombatHud.new()
 	frame.add_child(_hud)
 	_hud.set_help("Move WASD / stick   Light J / X   Heavy (hold) K / RT   Skill L / Y   Dodge Space / A   Swap Tab / RB\n"
-		+ "Lock Shift / LT   Switch Q E / right stick   Interact F / B   Satchel I / View   F6-F9 developer keys")
+		+ "Lock Shift / LT   Switch Q E / right stick   Interact F / B   Satchel I / View   Pause Esc / Start   F6-F9 developer keys")
 	_satchel = SatchelView.new()
 	frame.add_child(_satchel)
 	_note = NoteView.new()
@@ -159,6 +163,7 @@ func _leave() -> void:
 	if _left:
 		return
 	_left = true
+	pause_menu.enabled = false
 	state.store_area(area)
 	state.save()  # at the gate either way, and after falling (ADR-0017)
 	leaving.emit(state.place)

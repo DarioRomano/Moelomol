@@ -40,17 +40,17 @@ func _ready() -> void:
 	column.alignment = BoxContainer.ALIGNMENT_BEGIN
 	column.add_theme_constant_override("separation", 2)
 	frame.add_child(column)
-	var title: Label = _label("MOELOMOL", 32, Palette.WARMTH[3])
+	var title: Label = MenuStyle.label("MOELOMOL", 32, Palette.WARMTH[3])
 	column.add_child(title)
-	_summary = _label("", 7, Palette.PAPER[0])
+	_summary = MenuStyle.label("", 7, Palette.PAPER[0])
 	column.add_child(_summary)
-	column.add_child(_spacer(14))
+	column.add_child(MenuStyle.spacer(14))
 	_menu = VBoxContainer.new()
 	_menu.add_theme_constant_override("separation", 1)
 	column.add_child(_menu)
-	_continue = _button("Continue", _on_continue)
-	_new = _button("New game", _on_new)
-	_quit = _button("Quit", func() -> void: get_tree().quit())
+	_continue = MenuStyle.button("Continue", _on_continue)
+	_new = MenuStyle.button("New game", _on_new)
+	_quit = MenuStyle.button("Quit", func() -> void: get_tree().quit())
 	for b: Button in [_continue, _new, _quit]:
 		_menu.add_child(b)
 	_quit.visible = not OS.has_feature("web")  # a web page cannot quit
@@ -58,13 +58,13 @@ func _ready() -> void:
 	_confirm.add_theme_constant_override("separation", 1)
 	_confirm.visible = false
 	column.add_child(_confirm)
-	_confirm.add_child(_label("Start a new farm? The saved one will be lost.", 8, Palette.PAPER[1]))
-	_confirm.add_child(_spacer(4))
-	_confirm_yes = _button("Start anew", start_new_game)
-	_confirm_no = _button("Keep it", close_confirm)
+	_confirm.add_child(MenuStyle.label("Start a new farm? The saved one will be lost.", 8, Palette.PAPER[1]))
+	_confirm.add_child(MenuStyle.spacer(4))
+	_confirm_yes = MenuStyle.button("Start anew", start_new_game)
+	_confirm_no = MenuStyle.button("Keep it", close_confirm)
 	_confirm.add_child(_confirm_yes)
 	_confirm.add_child(_confirm_no)
-	var hint: Label = _label("F2 test scenes   F3 performance", 6, Palette.STONE[1])
+	var hint: Label = MenuStyle.label("F2 test scenes   F3 performance", 6, Palette.STONE[1])
 	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 6)
 	hint.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -86,53 +86,6 @@ func refresh() -> void:
 	else:
 		_summary.text = ""
 	(_continue if _saved != null else _new).grab_focus.call_deferred()
-
-
-func _label(text: String, size: int, colour: Color) -> Label:
-	var label: Label = Label.new()
-	label.text = text
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", colour)
-	label.add_theme_color_override("font_shadow_color", Palette.SHADOW[0])
-	label.add_theme_constant_override("shadow_offset_x", 1)
-	label.add_theme_constant_override("shadow_offset_y", 1)
-	return label
-
-
-func _spacer(height: float) -> Control:
-	var spacer: Control = Control.new()
-	spacer.custom_minimum_size = Vector2(0, height)
-	return spacer
-
-
-## A quiet menu line: paper-coloured text, warm with a soft band when
-## chosen (by keys, stick or mouse).
-func _button(text: String, pressed: Callable) -> Button:
-	var b: Button = Button.new()
-	b.text = text
-	b.flat = false
-	b.custom_minimum_size = Vector2(120, 14)
-	b.add_theme_font_size_override("font_size", 9)
-	b.add_theme_color_override("font_color", Palette.PAPER[0])
-	b.add_theme_color_override("font_hover_color", Palette.WARMTH[3])
-	b.add_theme_color_override("font_focus_color", Palette.WARMTH[3])
-	b.add_theme_color_override("font_pressed_color", Palette.WARMTH[2])
-	b.add_theme_color_override("font_disabled_color", Palette.STONE[0])
-	var plain: StyleBoxEmpty = StyleBoxEmpty.new()
-	var chosen: StyleBoxFlat = StyleBoxFlat.new()
-	chosen.bg_color = Color(Palette.WARMTH[0], 0.45)
-	chosen.border_color = Palette.WARMTH[2]
-	chosen.border_width_left = 2
-	for style: String in ["normal", "disabled"]:
-		b.add_theme_stylebox_override(style, plain)
-	for style: String in ["hover", "focus", "pressed"]:
-		b.add_theme_stylebox_override(style, chosen)
-	b.pressed.connect(pressed)
-	b.mouse_entered.connect(func() -> void:
-		if not b.disabled:
-			b.grab_focus())
-	return b
 
 
 func _on_continue() -> void:
@@ -179,26 +132,11 @@ func is_confirming() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# W / S choose too (the arrows, D-pad and stick are the engine's ui_up and
-	# ui_down, handled by the buttons before this).
-	if event.is_action_pressed(&"move_up", false) and not event.is_action(&"ui_up"):
-		_move_focus(SIDE_TOP)
-	elif event.is_action_pressed(&"move_down", false) and not event.is_action(&"ui_down"):
-		_move_focus(SIDE_BOTTOM)
+	if MenuStyle.move_focus_with_keys(event, get_viewport()):
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"ui_cancel", false) and _confirm.visible:
 		close_confirm()
-	else:
-		return
-	get_viewport().set_input_as_handled()
-
-
-func _move_focus(side: Side) -> void:
-	var focused: Control = get_viewport().gui_get_focus_owner()
-	if focused == null:
-		return
-	var next: Control = focused.find_valid_focus_neighbor(side)
-	if next != null:
-		next.grab_focus()
+		get_viewport().set_input_as_handled()
 
 
 # --- The picture behind the menu ------------------------------------------------------
