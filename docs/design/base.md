@@ -369,8 +369,9 @@ and withers the thicket back over 3 s, outward from the tile cast on; the
 camera follows the front out and comes back; the player stands and
 watches; the cat is already in the shelter. The fields inside are then
 cleared and tilled like the homestead's old fields. Remembered in the
-save. Not yet: the almanac in the shelter (needs the farm to show notes),
-the other parcels' insides.
+save. The field book in the shelter (the great fields' trace of the
+farm's past) is read with Interact, into the one satchel. Not yet: the
+other parcels' insides.
 
 **Step 4, the cat (2026-11-06; Q41 A):** a cat of places. It keeps its own
 hours across the places above (the basket, porch step, apple tree, bench,

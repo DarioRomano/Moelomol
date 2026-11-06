@@ -40,8 +40,9 @@ or starts a new game; the game saves on sleeping, falling and at the gate
 tin. Esc / Start opens the pause menu (`PauseMenu`) in every place; F / B
 interacts in every place (Q39). The Clear spell opens the old fields. The
 cat (`Cat`) keeps its places by the time of day (Q41). Grist's heart and
-Clear open the great fields (Q42). Next: the almanac (one satchel for the
-game), then the second area (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+Clear open the great fields (Q42). One satchel (`GameState.satchel`,
+`Notes`) holds every note found; the great fields' field book is read at
+the farm. Next: the second area's design (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -211,5 +212,9 @@ note of the bug it caught.
   found it.** The pause tests passed alone, but the scene-loading test
   loaded the pause review scene, which left the game paused and failed the
   combat arena's tests later in the run.
+- **Hold a test's button press for two physics ticks.** `physics_frame`
+  fires before the scene's own tick, so a press released after one await
+  never reaches the scene; a deliberate break of the note-closing guard
+  survived that way, and the guard itself turned out to be too weak.
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.
