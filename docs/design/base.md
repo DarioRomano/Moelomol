@@ -333,6 +333,11 @@ enemies first; the farm follows (`docs/roadmap.md`).
 
 ## Built so far
 
+**Step 3, the Clear spell (2026-11-06):** Clear (2 Mana a tile) turns the
+old fields' long grass into ground ready to till, and long grass elsewhere
+into lawn. Thicket stays until a boss's heart opens its parcel (step 5).
+The farm remembers cleared tiles.
+
 **Step 2, the house inside (2026-11-06):** `scenes/farm/house.tscn`, its
 own place (ADR-0016), joined to the farm at the farmhouse door.
 - The room above (`src/farm/house_layout.gd`, tested against this doc).
@@ -354,10 +359,11 @@ own place (ADR-0016), joined to the farm at the farmhouse door.
   south gate through the woods to the farm's edge.
 - Everything solid that should be (hedges, buildings, the pond, the woods,
   all six parcels' thicket); the pen walkable, its fence down.
-- Only the first field can be tilled; the old fields wait for Clear.
+- Only the first field can be tilled at first; the old fields need Clear
+  (step 3).
 - The farmhouse door leads inside (step 2).
 - The south gate leads down the lane to Millbrook and back (ADR-0016);
   falling in Millbrook wakes the player here (Q36).
-- Not yet: Clear, the cat, parcels opening, the mailbox,
+- Not yet: the cat, parcels opening, the mailbox,
   the bench's sitting, the chest. The old track (estate column 17) is 2
   tiles west of the north gate; to line up when the great fields open.
