@@ -9,7 +9,7 @@ extends RefCounted
 const NOTES: Dictionary = {
 	&"field_almanac": {
 		"title": "A field book in the shelter",
-		"text": "Oats in the top strips. Nine of us at harvest,\nand the Brennan lads for the carting.\n\n(another hand) Hedge down by the shelter after\nthe gale. Mended it Tuesday.\n\n(another, shaky) Too much for the two of us now.\nLeft the top fields to rest a year.\n\n(the last page) Rest.",
+		"text": "Oats in the top strips. Nine of us at harvest,\nand the Brennan lads for the carting.\n(another hand) Hedge down after the gale. Mended.\n(another, shaky) Too much for the two of us now.\nLeft the top fields to rest a year.\n(the last page) Rest.",
 		"objective": false,
 	},
 }

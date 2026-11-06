@@ -115,3 +115,26 @@ func test_the_satchel_opens_in_the_farmhouse_too() -> void:
 	house.queue_free()
 	await _tree().process_frame
 	GameState.current = null
+
+
+func test_every_note_fits_its_paper() -> void:
+	# story.md rule 5: one screen. Laid out as the note view lays it out
+	# (wrapped to the paper), every note's lines fit above the hint; the
+	# first field book ran onto the hint (the render).
+	var view: NoteView = NoteView.new()
+	_tree().root.add_child(view)
+	view.size = Vector2(640, 360)
+	var text_label: Label = view.get("_text_label")
+	for place: StringName in Notes.BOOKS:
+		var book: Dictionary = Notes.BOOKS[place]
+		for note_id: StringName in book:
+			var note: Dictionary = book[note_id]
+			view.open(note["title"], note["text"], false)
+			await _tree().process_frame
+			# The label grows to fit its text, so its minimum height is what
+			# the text needs.
+			var needed: float = text_label.get_minimum_size().y
+			assert_true(needed <= NoteView.TEXT_HEIGHT, "%s: %d lines need %.0f px of %.0f" % [note_id,
+				text_label.get_line_count(), needed, NoteView.TEXT_HEIGHT])
+	view.queue_free()
+	await _tree().process_frame
