@@ -41,6 +41,8 @@ SCENES=(
   "res://scenes/showcase/farm_dusk.tscn"
   "res://scenes/showcase/farm_cleared.tscn"
   "res://scenes/showcase/farm_cat_bench.tscn"
+  "res://scenes/showcase/great_fields_withering.tscn"
+  "res://scenes/showcase/great_fields_open.tscn"
 )
 # Window (= screen, the game starts fullscreen) sizes:
 #   16:9 at 2x, 3x and 4x; a non-integer 16:9 laptop; 16:10 (Steam Deck,
