@@ -1,9 +1,9 @@
-# Kettlebridge: the second area (Proposal)
+# Kettlebridge: the second area
 
-- **Status:** Proposal for the lead's acceptance. The theme was decided by
-  the lead on 2026-11-07 (Q43 A: a market town on the river); the layout,
-  the objective, the creatures and the boss below are the engineer's
-  proposal. Nothing is built.
+- **Status:** Accepted by the lead on 2026-11-07: the theme (Q43 A, a
+  market town on the river), the layout, the objective, the creatures and
+  Duke as proposed below. Built in stages: the town and the bridge, then
+  the creatures, then Duke (`docs/roadmap.md`). Nothing is built yet.
 - **Binding constraints:** as Millbrook (`area-millbrook.md`): ADR-0005
   (no characters, environmental storytelling, objectives open areas),
   ADR-0010 (the cat stays at the base), ADR-0014 (top-down 3/4, no

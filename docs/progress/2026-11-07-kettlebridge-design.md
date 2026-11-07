@@ -1,7 +1,8 @@
 # 2026-11-07: Kettlebridge, the second area: design proposal
 
 The lead chose Q43 A (a market town on the river) on 2026-11-07. This is
-the design pass that follows, for acceptance: `docs/design/area-kettlebridge.md`.
+the design pass that follows: `docs/design/area-kettlebridge.md`. The lead
+accepted it as proposed on 2026-11-07, Duke's herd included.
 
 ## Done
 
