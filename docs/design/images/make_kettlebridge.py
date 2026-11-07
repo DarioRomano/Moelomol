@@ -72,7 +72,7 @@ put(17, 15, '.'); put(17, 16, '.')                      # the ring's gate, to th
 rect(18, 15, 18, 18, ',')                               # the inn yard
 # The church and its churchyard (east).
 rect(45, 9, 50, 13, 'K')
-rect(44, 14, 55, 20, 'g')
+rect(44, 14, 55, 20, 'q')
 for x in range(45, 55, 2):
     for y in range(15, 20, 2):
         put(x, y, '+')                                  # gravestones
@@ -84,8 +84,8 @@ rect(57, 15, 60, 20, 'H')
 # The river, the raised bridge, the winch house, the wharf and the barge.
 rect(0, 23, 63, 28, '~')
 rect(31, 23, 32, 28, 'Y')                               # the bridge, drawn up
-rect(34, 21, 35, 21, 'W')                               # the winch house
-rect(44, 24, 49, 25, 'b')                               # the moored barge
+rect(34, 21, 35, 21, 'Z')                               # the winch house
+rect(44, 24, 49, 25, 'n')                               # the moored barge
 rect(10, 25, 13, 26, 'i')                               # the island
 # Beyond the river: the changed land, and the road on south.
 rect(1, 29, 62, 34, 'v')
@@ -119,7 +119,7 @@ KETTLEBRIDGE = '\n'.join(''.join(r) for r in g)
 
 # Walkable: everything but woods, buildings, walls, water and the raised
 # bridge; the stalls and gravestones are things to walk round.
-SOLID = set('tHK#~YWbihk+R')
+SOLID = set('tHK#~YZnihk+R')
 
 
 def walk(start, solid):
@@ -154,8 +154,8 @@ def check():
 if __name__ == '__main__':
     check()
     col = dict(COL)
-    col.update({'_': '#b9ad8c', 'k': '#8a6a4a', 'O': '#c9a26a', 'R': '#5c3d22', 'g': '#55704a', '+': '#a9b0bf',
-                'Y': '#7a4a2b', 'W': '#a9b0bf', 'b': '#5c3d22', 'K': '#a9b0bf'})
+    col.update({'_': '#b9ad8c', 'k': '#8a6a4a', 'O': '#c9a26a', 'R': '#5c3d22', 'q': '#55704a', '+': '#a9b0bf',
+                'Y': '#7a4a2b', 'Z': '#a9b0bf', 'n': '#5c3d22', 'K': '#a9b0bf'})
     import make_sketches
     make_sketches.COL.update(col)
     render(KETTLEBRIDGE, 20, 'kettlebridge.png', 'Kettlebridge (proposal): 128 x 72 tiles; one square = 2 x 2 tiles', set(MARKERS))

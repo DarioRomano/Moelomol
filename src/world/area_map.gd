@@ -1,12 +1,14 @@
 class_name AreaMap
 extends RefCounted
 ## An area's layout from its accepted text map (docs/design/world.md,
-## area-millbrook.md): one character per cell of 2 x 2 tiles (32 layout px).
-## Says which cells are solid, where the numbered places are, and turns cells
-## into layout positions. Floodwater (`w`) is solid until drained.
+## area-millbrook.md, area-kettlebridge.md): one character per cell of 2 x 2
+## tiles (32 layout px). Says which cells are solid, where the numbered places
+## are, and turns cells into layout positions. Each map has its own solid
+## characters, and a barrier that is solid until the area's objective clears
+## it (Millbrook's floodwater `w`, Kettlebridge's raised bridge `Y`).
 
 const CELL: float = 32.0  # layout px: 2 x 2 tiles of 16 px
-## Characters that block walking (`world.md` keys in area-millbrook.md).
+## Millbrook's characters that block walking (its key in area-millbrook.md).
 const SOLID: String = "tH#KSM~PcWeaXih"
 const FLOODWATER: String = "w"
 ## Characters that mark the doc's numbered places; the ground under them is
@@ -15,12 +17,17 @@ const MARKERS: String = "123456789ABCDEFG"
 
 var rows: Array[String] = []
 var size: Vector2i  # in cells
-var drained: bool = false  # floodwater gone (Millbrook's objective)
+## This map's solid characters, and its barrier (solid until `drained`).
+var solid: String = SOLID
+var barrier: String = FLOODWATER
+var drained: bool = false  # the barrier cleared (the area's objective)
 var markers: Dictionary = {}  # marker character -> Vector2i cell
 
 
-func _init(p_rows: Array[String]) -> void:
+func _init(p_rows: Array[String], p_solid: String = SOLID, p_barrier: String = FLOODWATER) -> void:
 	rows = p_rows
+	solid = p_solid
+	barrier = p_barrier
 	size = Vector2i(rows[0].length(), rows.size())
 	for y: int in range(size.y):
 		for x: int in range(size.x):
@@ -42,9 +49,9 @@ func char_at(cell: Vector2i) -> String:
 
 func is_solid(cell: Vector2i) -> bool:
 	var c: String = char_at(cell)
-	if FLOODWATER.contains(c):
+	if barrier.contains(c):
 		return not drained
-	return SOLID.contains(c)
+	return solid.contains(c)
 
 
 ## The cell containing a layout position.

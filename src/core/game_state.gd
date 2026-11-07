@@ -16,10 +16,12 @@ extends RefCounted
 const FARM: StringName = &"farm"
 const HOUSE: StringName = &"house"
 const MILLBROOK: StringName = &"millbrook"
+const KETTLEBRIDGE: StringName = &"kettlebridge"
 const SCENES: Dictionary = {
 	FARM: "res://scenes/farm/farm.tscn",
 	HOUSE: "res://scenes/farm/house.tscn",
 	MILLBROOK: "res://scenes/world/millbrook.tscn",
+	KETTLEBRIDGE: "res://scenes/world/kettlebridge.tscn",
 }
 ## Where the player appears on arriving at a place.
 const AT_BED: StringName = &"bed"  # the house, beside the bed (waking)
@@ -45,6 +47,10 @@ var cat: Cat = Cat.new()
 var satchel: Array[StringName] = []
 var place: StringName = HOUSE
 var arrival: StringName = AT_BED
+## The place the player last came from: an area with more than one way in
+## puts them at the matching one (Millbrook: the lane from the farm, or the
+## ford from Kettlebridge).
+var came_from: StringName = &""
 ## FarmSim.export_state() as the player last left the farm; empty until then.
 var farm_state: Dictionary = {}
 ## HouseSim.export_state(): the seed tin.
@@ -123,6 +129,8 @@ func make_area(area_id: StringName) -> Area:
 	match area_id:
 		MILLBROOK:
 			area = Millbrook.make()
+		KETTLEBRIDGE:
+			area = Kettlebridge.make()
 		_:
 			push_error("GameState: no area called %s" % area_id)
 			return null
@@ -139,7 +147,7 @@ func make_area(area_id: StringName) -> Area:
 		if not (note_id in satchel):
 			satchel.append(note_id)
 	area.satchel = satchel
-	area.enter()
+	area.enter(came_from)
 	return area
 
 
@@ -147,11 +155,13 @@ func store_area(area: Area) -> void:
 	area_states[area.id] = area.export_state()
 
 
-## The player is going to `to`, arriving at `at` (AT_BED or AT_GATE). The
-## place being left must store itself first.
-func travel(to: StringName, at: StringName) -> void:
+## The player is going to `to`, arriving at `at` (AT_BED, AT_DOOR or
+## AT_GATE), from the place `from` (it picks the way in). The place being
+## left must store itself first.
+func travel(to: StringName, at: StringName, from: StringName = &"") -> void:
 	place = to
 	arrival = at
+	came_from = from
 
 
 ## Falling out in an area (Q36): the next 6:00, waking in the farmhouse bed
@@ -180,6 +190,7 @@ func to_dict() -> Dictionary:
 		"items": inventory.to_dict(),
 		"place": String(place),
 		"arrival": String(arrival),
+		"came_from": String(came_from),
 		"farm": farm_state,
 		"house": house_state,
 		"cat": cat.to_dict(),
@@ -213,6 +224,7 @@ static func from_dict(data: Dictionary) -> GameState:
 	if items is Dictionary:
 		state.inventory.load_dict(items)
 	state.place = place_name
+	state.came_from = StringName(str(data.get("came_from", "")))
 	var arrival_name: StringName = StringName(str(data.get("arrival", "")))
 	state.arrival = arrival_name if arrival_name in [AT_BED, AT_DOOR, AT_GATE] else AT_BED
 	var farm: Variant = data.get("farm", {})

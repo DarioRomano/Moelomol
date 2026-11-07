@@ -10,12 +10,13 @@ extends RefCounted
 ## Colours keep to art-direction.md: the world is cool and muted; warm
 ## colours are kept for the player, crops, lights and traces of people.
 
-const BUILDINGS: String = "HKSMPc"
+const BUILDINGS: String = "HKSMPcZ"
 const CELL: float = AreaMap.CELL
 
 
 ## Draws the cells of `map` inside `view` (layout px). `tick` animates water.
-## `drain`: 0 = floodwater, 1 = drained mud (Millbrook's sluice).
+## `drain`: 0 = floodwater, 1 = drained mud (Millbrook's sluice); for
+## Kettlebridge, 0 = the bridge drawn up, 1 = down.
 static func draw(canvas: CanvasItem, map: AreaMap, view: Rect2, tick: int, drain: float = 0.0) -> void:
 	var low: Vector2i = AreaMap.cell_of(view.position) - Vector2i.ONE
 	var high: Vector2i = AreaMap.cell_of(view.end) + Vector2i.ONE
@@ -27,6 +28,7 @@ static func draw(canvas: CanvasItem, map: AreaMap, view: Rect2, tick: int, drain
 	for y: int in range(low.y, high.y + 1):
 		for x: int in range(low.x, high.x + 1):
 			_draw_cell_top(canvas, map, Vector2i(x, y), tick)
+	_draw_bridge(canvas, map, view, drain)
 	for block: Dictionary in buildings(map):
 		var rect: Rect2 = block["rect"]
 		if rect.intersects(view.grow(CELL)):
@@ -72,12 +74,12 @@ static func _draw_ground(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tick:
 		# A numbered place: the ground it stands on is its neighbours' (the
 		# village green, the lane), not a patch of plain grass.
 		c = map.char_at(cell + Vector2i.LEFT)
-		if AreaMap.MARKERS.contains(c) or AreaMap.SOLID.contains(c):
+		if AreaMap.MARKERS.contains(c) or map.solid.contains(c):
 			c = map.char_at(cell + Vector2i.RIGHT)
 	var h: int = _hash(cell)
 	var grass: Color = Palette.WILD[1] if h % 2 == 0 else Palette.WILD[1].darkened(0.06)
 	match c:
-		"~":
+		"~", "Y", "n":
 			canvas.draw_rect(rect, Palette.WATER[0])
 			var wave: float = fmod(tick * 0.2 + h, CELL)
 			canvas.draw_line(rect.position + Vector2(4, wave * 0.5 + 6), rect.position + Vector2(12, wave * 0.5 + 6), Palette.WATER[1], 1.0)
@@ -110,6 +112,19 @@ static func _draw_ground(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tick:
 			canvas.draw_rect(rect, Palette.CHANGED[1].darkened(0.25))
 		"b":
 			canvas.draw_rect(rect, Palette.WATER[0])
+		"_", "k":
+			# The market square's cobbles.
+			canvas.draw_rect(rect, Palette.STONE[1].darkened(0.1))
+			for i: int in range(2):
+				var off: float = 4.0 if i == 0 else 20.0
+				canvas.draw_line(rect.position + Vector2(0, off + 6), rect.position + Vector2(CELL, off + 6), Palette.STONE[0], 1.0)
+				canvas.draw_line(rect.position + Vector2(off + float(h % 4), off - 4), rect.position + Vector2(off + float(h % 4), off + 6), Palette.STONE[0], 1.0)
+		"O", "R":
+			# The auction ring's sawdust, scuffed.
+			canvas.draw_rect(rect, Palette.CHANGED[2].lightened(0.05))
+			canvas.draw_rect(Rect2(rect.position + Vector2(h % 22 + 3, h % 19 + 5), Vector2(3, 2)), Palette.CHANGED[2].darkened(0.15))
+		"q", "+":
+			canvas.draw_rect(rect, Palette.WILD[1].darkened(0.2))  # the churchyard: grass gone long and dark
 		_:
 			canvas.draw_rect(rect, grass)
 			if h % 5 == 0:
@@ -162,18 +177,80 @@ static func _draw_cell_top(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tic
 			canvas.draw_rect(rect, Palette.WATER[0])
 			canvas.draw_rect(Rect2(p + Vector2(4, 0), Vector2(24, CELL)), Palette.CHANGED[0])
 			canvas.draw_circle(rect.get_center(), 5.0, Palette.STONE[2])  # the sluice wheel
+		"k":
+			# A market stall left set out: trestle and awning.
+			canvas.draw_rect(Rect2(p + Vector2(3, 14), Vector2(26, 10)), Palette.CHANGED[0])
+			canvas.draw_rect(Rect2(p + Vector2(2, 6), Vector2(28, 7)), Palette.CHANGED[1] if h % 2 == 0 else Palette.STONE[2])
+			canvas.draw_line(p + Vector2(4, 24), p + Vector2(4, 30), Palette.CHANGED[0].darkened(0.2), 2.0)
+			canvas.draw_line(p + Vector2(28, 24), p + Vector2(28, 30), Palette.CHANGED[0].darkened(0.2), 2.0)
+		"R":
+			# The auctioneer's rostrum: a box with steps.
+			canvas.draw_rect(Rect2(p + Vector2(4, 4), Vector2(24, 18)), Palette.CHANGED[0].lightened(0.1))
+			canvas.draw_rect(Rect2(p + Vector2(4, 22), Vector2(24, 8)), Palette.CHANGED[0].darkened(0.2))
+		"+":
+			canvas.draw_rect(Rect2(p + Vector2(10, 8), Vector2(12, 18)), Palette.STONE[2])
+			canvas.draw_rect(Rect2(p + Vector2(10, 22), Vector2(12, 4)), Palette.STONE[1])
+		"n":
+			# The barge, tied up: a long hull, its hold open.
+			canvas.draw_rect(Rect2(p + Vector2(0, 6), Vector2(CELL, 22)), Palette.CHANGED[0].darkened(0.1))
+			canvas.draw_rect(Rect2(p + Vector2(0, 11), Vector2(CELL, 12)), Palette.SHADOW[1])
 		"s":
 			canvas.draw_rect(Rect2(p + Vector2(15, 8), Vector2(3, 22)), Palette.CHANGED[0])
 			canvas.draw_rect(Rect2(p + Vector2(8, 6), Vector2(18, 7)), Palette.PAPER[0].darkened(0.2))
+
+
+## The bounds of every `c` cell, cached per map (Kettlebridge's bridge).
+static func bounds_of(map: AreaMap, c: String) -> Rect2:
+	var key: StringName = StringName("bounds_" + c)
+	if map.has_meta(key):
+		return map.get_meta(key)
+	var cells: Array[Vector2i] = map.cells_of(c)
+	var r: Rect2 = Rect2()
+	if not cells.is_empty():
+		r = AreaMap.cell_rect(cells[0])
+		for cell: Vector2i in cells:
+			r = r.merge(AreaMap.cell_rect(cell))
+	map.set_meta(key, r)
+	return r
+
+
+## The lifting bridge (`Y`): two leaves hinged at the banks. Drawn up, each
+## stands on end (a dark underside seen from the ¾ view); lowering (`drain`
+## 0 -> 1), each leaf's deck reaches out until they meet.
+static func _draw_bridge(canvas: CanvasItem, map: AreaMap, view: Rect2, drain: float) -> void:
+	var r: Rect2 = bounds_of(map, "Y")
+	if r.size == Vector2.ZERO or not r.intersects(view.grow(CELL * 4.0)):
+		return
+	var down: float = 1.0 if map.drained else clampf(drain, 0.0, 1.0)
+	var half: float = r.size.y / 2.0
+	var reach: float = half * down
+	var stands: float = half * 0.6 * (1.0 - down)  # the upright part, foreshortened
+	var deck: Color = Palette.CHANGED[0].lightened(0.1)
+	var under: Color = Palette.CHANGED[0].darkened(0.3)
+	# The north leaf, hinged on the north bank.
+	canvas.draw_rect(Rect2(r.position, Vector2(r.size.x, reach)), deck)
+	canvas.draw_rect(Rect2(r.position - Vector2(0, stands), Vector2(r.size.x, stands)), under)
+	# The south leaf, hinged on the south bank, standing up over the river.
+	canvas.draw_rect(Rect2(Vector2(r.position.x, r.end.y - reach), Vector2(r.size.x, reach)), deck)
+	canvas.draw_rect(Rect2(Vector2(r.position.x, r.end.y - stands), Vector2(r.size.x, stands)), under)
+	var y: float = r.position.y + 4.0
+	while y < r.end.y:
+		if y < r.position.y + reach or y > r.end.y - reach:
+			canvas.draw_line(Vector2(r.position.x, y), Vector2(r.end.x, y), deck.darkened(0.2), 1.0)
+		y += 7.0
+	# The rails along each side.
+	for x: float in [r.position.x + 1.0, r.end.x - 1.0]:
+		canvas.draw_line(Vector2(x, r.position.y), Vector2(x, r.position.y + reach), Palette.CHANGED[0].darkened(0.4), 2.0)
+		canvas.draw_line(Vector2(x, r.end.y - reach), Vector2(x, r.end.y), Palette.CHANGED[0].darkened(0.4), 2.0)
 
 
 ## A building: the roof from above (the lighter top) and the front wall below
 ## it (darker), with a door and dark windows: nobody is home.
 static func _draw_building(canvas: CanvasItem, c: String, rect: Rect2) -> void:
 	var roofs: Dictionary = {"H": Palette.SHADOW[2], "K": Palette.STONE[0], "S": Palette.SHADOW[2].lightened(0.1),
-		"M": Palette.STONE[0].darkened(0.1), "P": Palette.CHANGED[0], "c": Palette.CHANGED[0]}
+		"M": Palette.STONE[0].darkened(0.1), "P": Palette.CHANGED[0], "c": Palette.CHANGED[0], "Z": Palette.STONE[0].darkened(0.05)}
 	var walls: Dictionary = {"H": Palette.STONE[1], "K": Palette.STONE[2], "S": Palette.STONE[1],
-		"M": Palette.STONE[1], "P": Palette.CHANGED[0].darkened(0.2), "c": Palette.CHANGED[0].darkened(0.2)}
+		"M": Palette.STONE[1], "P": Palette.CHANGED[0].darkened(0.2), "c": Palette.CHANGED[0].darkened(0.2), "Z": Palette.STONE[2]}
 	var wall_h: float = minf(18.0, rect.size.y * 0.4)
 	var roof: Rect2 = Rect2(rect.position, Vector2(rect.size.x, rect.size.y - wall_h))
 	var wall: Rect2 = Rect2(rect.position + Vector2(0, rect.size.y - wall_h), Vector2(rect.size.x, wall_h))

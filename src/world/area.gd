@@ -22,8 +22,21 @@ const START_MINUTE: float = 9.0 * 60.0
 const INTERACT_RANGE: float = 22.0
 ## Millbrook's flood drains over this long once the sluice opens.
 const DRAIN_SECONDS: float = 10.0
+const TAKEN_KINDS: Array[StringName] = [&"crank", &"heart", &"key"]
+const MECHANISM_KINDS: Array[StringName] = [&"sluice", &"winch"]
 
 var id: StringName
+## The name the HUD shows ("Millbrook").
+var display_name: String = ""
+## Where the player arrives from each neighbouring place, facing into the
+## area: {place id: {"at": Vector2, "facing": Vector2}}. Anything else
+## arrives at `entrance`, facing down.
+var entrances: Dictionary = {}
+## The quiet line when the objective's barrier clears ("The meadow has
+## drained.").
+var cleared_line: String = ""
+## What the HUD says when something is taken: {item id: text}.
+var taken_lines: Dictionary = {}
 var map: AreaMap
 var sim: CombatSim
 var clock: GameClock = GameClock.new()
@@ -39,8 +52,10 @@ var time_scale: float = 1.0
 ## instead of waking them at the entrance.
 var wakes_at_home: bool = false
 ## Things the player can interact with (Area.interact): each
-## {"id": StringName, "kind": &"note" | &"crank" | &"sluice" | &"heart",
-##  "position": Vector2, "shown": bool, "taken": bool}.
+## {"id": StringName, "kind": StringName, "position": Vector2, "shown": bool,
+##  "taken": bool, "needs": StringName}. Kinds: &"note"; things to take
+## (TAKEN_KINDS: the crank, the key, a heart); the objective's mechanism
+## (MECHANISM_KINDS: the sluice, the winch), which needs an item from the bag.
 var things: Array[Dictionary] = []
 ## The notes this area holds: {id: {"title", "text", "objective"}}.
 var notes: Dictionary = {}
@@ -199,9 +214,9 @@ func _wake_next_morning() -> void:
 
 # --- Things to interact with ------------------------------------------------------------
 
-## Adds something to interact with.
-func add_thing(thing_id: StringName, kind: StringName, at: Vector2, shown: bool = true) -> void:
-	things.append({"id": thing_id, "kind": kind, "position": at, "shown": shown, "taken": false})
+## Adds something to interact with. A mechanism `needs` an item.
+func add_thing(thing_id: StringName, kind: StringName, at: Vector2, shown: bool = true, needs: StringName = &"") -> void:
+	things.append({"id": thing_id, "kind": kind, "position": at, "shown": shown, "taken": false, "needs": needs})
 
 
 ## The nearest thing within reach of the player, or {}.
@@ -220,34 +235,34 @@ func thing_in_reach() -> Dictionary:
 
 ## The player interacts with whatever is in reach. Returns what happened:
 ## {"type": "note", "note": id}, {"type": "taken", "item": id},
-## {"type": "sluice_opened"}, {"type": "sluice_stuck"} (no crank), or
-## {"type": "nothing"}.
+## {"type": "opened", "thing": id} (the objective's mechanism, with what it
+## needs), {"type": "stuck", "thing": id} (without), or {"type": "nothing"}.
 func interact() -> Dictionary:
 	if not sim.player.is_alive() or sim.player.state != Fighter.State.FREE:
 		return {"type": "nothing"}
 	var thing: Dictionary = thing_in_reach()
 	if thing.is_empty():
 		return {"type": "nothing"}
-	match thing["kind"]:
-		&"note":
-			var note_id: StringName = thing["id"]
-			if not (note_id in satchel):
-				satchel.append(note_id)
-			return {"type": "note", "note": note_id}
-		&"crank", &"heart":
-			thing["taken"] = true
-			var item: StringName = thing["id"]
-			bag.add(item)
-			if item == &"grist_heart":
-				bag.add(&"tusk")
-			return {"type": "taken", "item": item}
-		&"sluice":
-			if objective_done:
-				return {"type": "nothing"}
-			if not bag.take(&"sluice_crank"):
-				return {"type": "sluice_stuck"}
-			objective_done = true
-			return {"type": "sluice_opened"}
+	var kind: StringName = thing["kind"]
+	if kind == &"note":
+		var note_id: StringName = thing["id"]
+		if not (note_id in satchel):
+			satchel.append(note_id)
+		return {"type": "note", "note": note_id}
+	if kind in TAKEN_KINDS:
+		thing["taken"] = true
+		var item: StringName = thing["id"]
+		bag.add(item)
+		if item == &"grist_heart":
+			bag.add(&"tusk")
+		return {"type": "taken", "item": item}
+	if kind in MECHANISM_KINDS:
+		if objective_done:
+			return {"type": "nothing"}
+		if not bag.take(thing.get("needs", &"")):
+			return {"type": "stuck", "thing": thing["id"]}
+		objective_done = true
+		return {"type": "opened", "thing": thing["id"]}
 	return {"type": "nothing"}
 
 
@@ -386,13 +401,18 @@ func _thing(thing_id: StringName) -> Dictionary:
 	return {}
 
 
-## Puts the player at the entrance, facing into the area (arriving from the
-## farm; ADR-0016).
-func enter() -> void:
-	sim.player.position = entrance
-	sim.player.previous_position = entrance
-	sim.player.facing = Vector2.DOWN
+## Puts the player where they arrive from `from` (a neighbouring place),
+## facing into the area (ADR-0016); the main entrance otherwise.
+func enter(from: StringName = &"") -> void:
+	var at: Vector2 = entrance
+	var facing: Vector2 = Vector2.DOWN
+	if entrances.has(from):
+		at = entrances[from]["at"]
+		facing = entrances[from]["facing"]
+	sim.player.position = at
+	sim.player.previous_position = at
+	sim.player.facing = facing
 	_in_exit = &""
 	for exit: Dictionary in exits:
-		if (exit["rect"] as Rect2).has_point(entrance):
+		if (exit["rect"] as Rect2).has_point(at):
 			_in_exit = exit["id"]
