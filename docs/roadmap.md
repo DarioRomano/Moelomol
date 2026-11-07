@@ -155,8 +155,12 @@ sleeping and at the gate, and to keep one save (2026-10-12).
 7. **The cat** (`base.md` step 4; Q41 A, 2026-11-06): a cat of places.
    Playtest: `docs/playtests/2026-11-06-the-cat.md`.
 
-Then: Grist's heart opening the great fields (`base.md` step 5; Q42 A,
-decided 2026-11-06).
+8. **The great fields** (`base.md` step 5; Q42 A, 2026-11-06): Grist's
+   heart and Clear open them. Playtest:
+   `docs/playtests/2026-11-06-great-fields.md`.
+
+Next: the almanac in the field shelter (one satchel for the whole game,
+notes readable at the farm); then the second area.
 
 ## Later (not planned)
 

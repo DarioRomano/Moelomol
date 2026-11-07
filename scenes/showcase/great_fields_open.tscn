@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/showcase/great_fields_open.gd" id="1_great_fields_open"]
+
+[node name="great_fields_open" type="Node2D"]
+script = ExtResource("1_great_fields_open")

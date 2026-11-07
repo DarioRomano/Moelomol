@@ -91,3 +91,81 @@ static func tile_rows() -> Array[String]:
 	for row: PackedStringArray in grid:
 		rows.append("".join(row))
 	return rows
+
+
+# --- The great fields (parcel 1; Q42 A, accepted 2026-11-06) --------------------------
+
+## What is inside the great fields' thicket, one character per estate square
+## (4 x 4 tiles), for estate columns 10-29 and rows 5-14; spaces are other
+## parcels. `:` old field under long grass, `-` the old track, `h`
+## hedgerow, `=` a gap in a hedgerow, `F` the ruined field shelter.
+const GREAT_FIELDS: Array[String] = [
+	":::::::-:::::h::::::",
+	":::::::-:::::=::::::",
+	"hhhhhhh-hhhhhhhhhhhh",
+	"::::::F-:::::h::::::",
+	":::::::-:::::=::::::",
+	"hhhhhhh-hhhhhhhhhhhh",
+	":::::::-:::::=::::::",
+	"    :::-::::::::    ",
+	"    :::-::::::::    ",
+	"    :::-::::::::    ",
+]
+const GREAT_FIELDS_ORIGIN: Vector2i = Vector2i(10, 5)  # its top-left estate square
+## The old track, moved 2 tiles east of its estate column to meet the north
+## gate (Q42): 4 tiles wide, like the gate.
+const TRACK_X: int = 70
+const TRACK_WIDTH: int = 4
+## Grist's heart opens the great fields (Q38 C, base.md).
+const PARCEL_HEARTS: Dictionary = {1: &"grist_heart"}
+
+
+## The tile characters the great fields become when opened: every tile of
+## parcel 1's thicket (`1` and the old track `-`) gets one. Hedgerows are a
+## 1-tile hedge (`r`) through their square, with long grass (`,`) either
+## side; the shelter is 3 x 2 tiles (`F`); the track is path (`=`).
+static func opened_tiles(parcel: int, rows: Array[String]) -> Dictionary:
+	var out: Dictionary = {}  # Vector2i -> String
+	if parcel != 1:
+		return out
+	for y: int in range(rows.size()):
+		for x: int in range(rows[y].length()):
+			var c: String = rows[y][x]
+			if c != "1" and c != "-":
+				continue
+			out[Vector2i(x, y)] = _great_fields_tile(Vector2i(x, y))
+	return out
+
+
+static func _sketch_at(square: Vector2i) -> String:
+	var r: Vector2i = square - GREAT_FIELDS_ORIGIN
+	if r.y < 0 or r.y >= GREAT_FIELDS.size() or r.x < 0 or r.x >= GREAT_FIELDS[0].length():
+		return " "
+	return GREAT_FIELDS[r.y][r.x]
+
+
+static func _great_fields_tile(tile: Vector2i) -> String:
+	if tile.x >= TRACK_X and tile.x < TRACK_X + TRACK_WIDTH:
+		return "="  # the track, all the way to the north gate
+	var square: Vector2i = Vector2i(tile.x / ESTATE_SCALE, tile.y / ESTATE_SCALE)
+	var local: Vector2i = Vector2i(tile.x % ESTATE_SCALE, tile.y % ESTATE_SCALE)
+	var c: String = _sketch_at(square)
+	match c:
+		":":
+			return ":"
+		"-":
+			return ":"  # the sketch's track column, west of where the track now runs
+		"=":
+			return ","
+		"F":
+			return "F" if local.x < 3 and local.y >= 1 and local.y < 3 else ","
+		"h":
+			var across: bool = _sketch_at(square + Vector2i.LEFT) in ["h", "-", "="] \
+				or _sketch_at(square + Vector2i.RIGHT) in ["h", "-", "="]
+			var down: bool = _sketch_at(square + Vector2i.UP) in ["h", "="] \
+				or _sketch_at(square + Vector2i.DOWN) in ["h", "="]
+			if (across and local.y == 1) or (down and local.x == 1):
+				return "r"
+			return ","
+	# Outside the sketch: the two rows above the homestead's hedge.
+	return ","

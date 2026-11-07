@@ -48,9 +48,14 @@ static func _draw_farm(canvas: CanvasItem, sim: FarmSim, alpha: float, view: Rec
 	canvas.draw_texture(FarmGround.texture_for(sim.map), sim.origin, _tint)
 	var low: Vector2i = sim.cell_at(view.position) - Vector2i.ONE
 	var high: Vector2i = sim.cell_at(view.end) + Vector2i.ONE
+	var withering: bool = not sim.withering.is_empty()
+	var origin: Vector2 = sim.withering.get("origin", Vector2.ZERO)
+	var reach: float = sim.withering_reach()
 	for y: int in range(maxi(low.y, 0), mini(high.y + 1, sim.plot.size.y)):
 		for x: int in range(maxi(low.x, 0), mini(high.x + 1, sim.plot.size.x)):
 			var cell: Vector2i = Vector2i(x, y)
+			if withering:
+				_draw_withering(canvas, sim, cell, origin, reach)
 			if sim.cleared.has(cell):
 				_draw_cleared(canvas, sim, cell)
 			if sim.plot.is_tilled(cell):
@@ -93,6 +98,20 @@ static func _things_of(map: FarmMap) -> Array[Dictionary]:
 		_things.append({"kind": kinds[chars], "rect": Rect2(Vector2(cells.position) * FarmSim.TILE, Vector2(cells.size) * FarmSim.TILE)})
 	_things.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a["rect"] as Rect2).end.y < (b["rect"] as Rect2).end.y)
 	return _things
+
+
+## Ahead of the withering front the thicket browns and sags (a band of
+## about two tiles), so the wave can be seen coming.
+static func _draw_withering(canvas: CanvasItem, sim: FarmSim, cell: Vector2i, origin: Vector2, reach: float) -> void:
+	if sim.parcel_at(cell) != int(sim.withering["parcel"]):
+		return
+	var ahead: float = sim.cell_centre(cell).distance_to(origin) - reach
+	if ahead < 0.0 or ahead > 32.0:
+		return
+	var dry: float = 1.0 - ahead / 32.0
+	var r: Rect2 = sim.cell_rect(Rect2i(cell, Vector2i.ONE))
+	canvas.draw_rect(r, Color(_c(Palette.WARMTH[0].darkened(0.35)), 0.75 * dry))
+	canvas.draw_rect(Rect2(r.position + Vector2(3, 6), Vector2(10, 1)), Color(_c(Palette.WARMTH[1].darkened(0.2)), dry))
 
 
 ## Ground the Clear spell has cut: short grass over the painted long grass.

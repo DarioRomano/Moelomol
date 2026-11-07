@@ -17,9 +17,12 @@ const PORCH: StringName = &"porch_step"  # the farm, by the farmhouse door
 const APPLE_TREE: StringName = &"apple_tree"  # the farm
 const BENCH: StringName = &"bench"  # the farm, by the pond, facing the sunset
 const ROOF: StringName = &"workshop_roof"  # the farm
+## The great fields' ruined shelter: where it is already sitting, waiting,
+## when the thicket withers back (base.md: always first into a new parcel).
+const SHELTER: StringName = &"field_shelter"
 
 const HOUSE_PLACES: Array[StringName] = [BASKET, WINDOW_SEAT, BLANKET]
-const FARM_PLACES: Array[StringName] = [PORCH, APPLE_TREE, BENCH, ROOF]
+const FARM_PLACES: Array[StringName] = [PORCH, APPLE_TREE, BENCH, ROOF, SHELTER]
 ## How long the eyes stay closed after a stroke.
 const PURR_TICKS: int = 90
 
@@ -81,6 +84,11 @@ static func farm_position(p: StringName, map: FarmMap) -> Vector2:
 			# Beside where the player sits, on the bench (base.md).
 			var bench: Rect2i = map.bounds_of("n")
 			return Vector2((bench.position.x + 1.4) * tile, (bench.position.y + 1.0) * tile)
+		SHELTER:
+			var shelter: Rect2i = map.bounds_of("F")
+			if shelter.size == Vector2i.ZERO:
+				return Vector2.INF  # the great fields are not open
+			return Vector2((shelter.position.x + 1.5) * tile, (shelter.end.y + 0.5) * tile)
 		ROOF:
 			var shop: Rect2i = map.bounds_of("B").merge(map.bounds_of("b"))
 			return Vector2((shop.position.x + shop.size.x * 0.7) * tile, (shop.position.y + 0.6) * tile)

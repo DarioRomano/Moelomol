@@ -74,10 +74,20 @@ func _physics_process(delta: float) -> void:
 				_slept()
 			"stroke":
 				state.cat.stroke()
+			"opening":
+				state.cat.place = Cat.SHELTER  # already there, waiting
+			"opened":
+				FarmGround.flush()
 			"exit":
 				leave(event["to"])
 				return
-	camera.update(sim.player_position, view_size(), sim.bounds(), view_scale(), delta)
+	if not sim.withered_now.is_empty():
+		FarmGround.paint_cells(sim.map, sim.withered_now)
+		if Engine.get_physics_frames() % 6 == 0:
+			FarmGround.flush()  # ten uploads a second while the thicket withers
+	# While a parcel opens the camera follows the withering, then comes back.
+	var focus: Vector2 = sim.withering_focus() if not sim.withering.is_empty() else sim.player_position
+	camera.update(focus, view_size(), sim.bounds(), view_scale(), delta)
 	_camera_node.position = camera.position
 
 

@@ -19,7 +19,10 @@ const PLAYER_RADIUS: float = 6.0
 const TARGET_REACH: float = 12.0
 const CAST_MS: int = 250
 ## How near the point in front of the player must be to the cat's feet.
-const CAT_REACH: float = 12.0  # the player stands still while casting or picking
+const CAT_REACH: float = 12.0
+## How long a parcel's thicket takes to wither back (base.md: one long
+## moment, the camera following).
+const WITHER_TICKS: int = 180  # the player stands still while casting or picking
 
 ## Farming is magic (Q27, decided 2026-10-10): every farming action is a
 ## spell that costs Mana. Sowing has one entry per seed kind, keyed by the
@@ -83,6 +86,14 @@ var cleared: Dictionary = {}
 ## the scene sets it from the game's Cat. Interact while facing it strokes it.
 var cat_position: Vector2 = Vector2.INF
 var cat_purring: bool = false
+## The parcels opened with a boss's heart (base.md, Q38 C), remembered.
+var parcels_open: Array[int] = []
+## While a parcel's thicket withers (one long moment, about 3 s): the
+## parcel, where it started (layout px), how far it has gone, and the tiles
+## still to wither, nearest first: [{"cell", "char", "distance"}].
+var withering: Dictionary = {}
+## The tiles that withered this tick (for the ground to be painted again).
+var withered_now: Array[Vector2i] = []
 var door_cell: Vector2i
 var wake_position: Vector2
 ## Where the player arrives from Millbrook: the top of the lane below the
@@ -212,6 +223,94 @@ func can_clear(cell: Vector2i) -> bool:
 	return map != null and CLEARABLE.contains(map.char_at(cell)) and not cleared.has(cell)
 
 
+## The parcel whose thicket `cell` is (1-6), or 0.
+func parcel_at(cell: Vector2i) -> int:
+	if map == null:
+		return 0
+	var c: String = map.char_at(cell)
+	if c == "-":
+		return 1  # the old track, under the great fields' thicket
+	if c.length() == 1 and "123456".contains(c):
+		return int(c)
+	return 0
+
+
+## True if Clear on `cell` would open its parcel: thicket of a parcel not yet
+## open (nor opening), with that parcel's boss heart in the bag (Q38 C).
+## Only the great fields' heart exists so far.
+func can_open(cell: Vector2i) -> bool:
+	var parcel: int = parcel_at(cell)
+	if parcel == 0 or parcel in parcels_open or not withering.is_empty():
+		return false
+	var heart: StringName = FarmLayout.PARCEL_HEARTS.get(parcel, &"")
+	return heart != &"" and inventory.count(heart) > 0
+
+
+## The heart is used up and the thicket begins to wither back from `from`.
+func _start_opening(cell: Vector2i) -> void:
+	var parcel: int = parcel_at(cell)
+	inventory.take(FarmLayout.PARCEL_HEARTS[parcel])
+	var origin: Vector2 = cell_centre(cell)
+	var tiles: Array[Dictionary] = []
+	var opened: Dictionary = FarmLayout.opened_tiles(parcel, map.rows)
+	for t: Vector2i in opened:
+		tiles.append({"cell": t, "char": opened[t], "distance": cell_centre(t).distance_to(origin)})
+	tiles.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["distance"] < b["distance"])
+	var farthest: Vector2 = cell_centre(tiles[tiles.size() - 1]["cell"]) if not tiles.is_empty() else origin
+	withering = {"parcel": parcel, "origin": origin, "farthest": farthest, "ticks": 0, "tiles": tiles, "next": 0,
+		"reach": float(tiles[tiles.size() - 1]["distance"]) if not tiles.is_empty() else 0.0}
+	events.append({"type": "opening", "parcel": parcel, "position": origin})
+
+
+## One tick of the withering: every tile the front has reached turns into
+## what was under the thicket. At the end the parcel is open.
+func _step_withering() -> void:
+	withering["ticks"] = int(withering["ticks"]) + 1
+	var reach: float = float(withering["reach"]) * minf(float(withering["ticks"]) / WITHER_TICKS, 1.0)
+	var tiles: Array[Dictionary] = withering["tiles"]
+	var i: int = int(withering["next"])
+	while i < tiles.size() and float(tiles[i]["distance"]) <= reach:
+		map.set_tile(tiles[i]["cell"], tiles[i]["char"])
+		withered_now.append(tiles[i]["cell"])
+		i += 1
+	withering["next"] = i
+	if i >= tiles.size():
+		var parcel: int = withering["parcel"]
+		parcels_open.append(parcel)
+		withering = {}
+		events.append({"type": "opened", "parcel": parcel})
+
+
+## How far the withering front has gone (0 to 1), and the point the camera
+## follows: from where it started out to its farthest reach.
+func withering_progress() -> float:
+	return clampf(float(withering.get("ticks", 0)) / WITHER_TICKS, 0.0, 1.0) if not withering.is_empty() else 0.0
+
+
+## How far from where it started the thicket has withered (layout px).
+func withering_reach() -> float:
+	return float(withering.get("reach", 0.0)) * withering_progress()
+
+
+func withering_focus() -> Vector2:
+	if withering.is_empty():
+		return player_position
+	var origin: Vector2 = withering["origin"]
+	return origin.lerp(withering["farthest"], withering_progress())
+
+
+## Opens a parcel at once (loading a game where it was opened).
+func open_parcel(parcel: int) -> void:
+	if parcel in parcels_open:
+		return
+	var opened: Dictionary = FarmLayout.opened_tiles(parcel, map.rows)
+	if opened.is_empty():
+		return
+	for t: Vector2i in opened:
+		map.set_tile(t, opened[t])
+	parcels_open.append(parcel)
+
+
 ## Clears a tile: lawn, or on the old fields, ground ready to till.
 func clear_tile(cell: Vector2i) -> void:
 	cleared[cell] = true
@@ -241,9 +340,13 @@ func water_area(target: Vector2i) -> Array[Vector2i]:
 
 func step(input: FarmInput) -> void:
 	events.clear()
+	withered_now.clear()
 	previous_position = player_position
 	for i: int in range(clock.advance(TICK_SECONDS * time_scale)):
 		_new_day()  # 6:00, asleep or awake (Q21)
+	if not withering.is_empty():
+		_step_withering()  # the player stands and watches
+		return
 	if input.tool_next_pressed or input.tool_prev_pressed:
 		var by: int = (1 if input.tool_next_pressed else 0) - (1 if input.tool_prev_pressed else 0)
 		spell_index = posmod(spell_index + by, spells.size())
@@ -316,7 +419,7 @@ func _cast() -> void:
 		TILL:
 			does_something = not plot.is_blocked(cell) and not plot.is_tilled(cell)
 		CLEAR:
-			does_something = can_clear(cell)
+			does_something = can_clear(cell) or can_open(cell)
 		WATER:
 			if water_spell()["size"] == Vector2i.ZERO:
 				does_something = not raining
@@ -340,8 +443,11 @@ func _cast() -> void:
 				plot.water(cell)
 			events.append({"type": "till", "cell": cell, "position": cell_centre(cell)})
 		CLEAR:
-			clear_tile(cell)
-			events.append({"type": "clear", "cell": cell, "position": cell_centre(cell)})
+			if can_open(cell):
+				_start_opening(cell)
+			else:
+				clear_tile(cell)
+				events.append({"type": "clear", "cell": cell, "position": cell_centre(cell)})
 		WATER:
 			if water_spell()["size"] == Vector2i.ZERO:
 				raining = true
@@ -411,14 +517,22 @@ func export_state() -> Dictionary:
 	var cleared_cells: Array = []
 	for cell: Vector2i in cleared:
 		cleared_cells.append([cell.x, cell.y])
-	return {"cells": plot.export_cells(), "cleared": cleared_cells, "raining": raining, "day": clock.day(),
+	var opened: Array[int] = parcels_open.duplicate()
+	if not withering.is_empty():
+		opened.append(int(withering["parcel"]))  # the heart is spent: it opens
+	return {"cells": plot.export_cells(), "cleared": cleared_cells, "parcels_open": opened,
+		"raining": raining, "day": clock.day(),
 		"spell_index": spell_index, "water_tier": water_tier}
 
 
 ## Restores export_state(), then runs every 6:00 that passed since (the
 ## clock may have moved on while the player was away).
 func apply_state(state: Dictionary) -> void:
-	# Cleared ground first: tilled tiles on the old fields need it.
+	# Opened parcels first (cleared ground may be inside them), then cleared
+	# ground (tilled tiles on the old fields need it), then the soil.
+	for parcel: Variant in state.get("parcels_open", []):
+		if parcel is int or parcel is float:
+			open_parcel(int(parcel))
 	for entry: Variant in state.get("cleared", []):
 		if entry is Array and (entry as Array).size() == 2:
 			var cell: Vector2i = Vector2i(int(entry[0]), int(entry[1]))

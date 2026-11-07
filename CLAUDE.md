@@ -39,8 +39,9 @@ or starts a new game; the game saves on sleeping, falling and at the gate
 (ADR-0017). The farmhouse inside (`house.tscn`) has the bed and the seed
 tin. Esc / Start opens the pause menu (`PauseMenu`) in every place; F / B
 interacts in every place (Q39). The Clear spell opens the old fields. The
-cat (`Cat`) keeps its places by the time of day (Q41). Next, from
-`base.md`: opening the first parcel, the great fields (Q42; `docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+cat (`Cat`) keeps its places by the time of day (Q41). Grist's heart and
+Clear open the great fields (Q42). Next: the almanac (one satchel for the
+game), then the second area (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
