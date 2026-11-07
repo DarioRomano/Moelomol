@@ -137,7 +137,9 @@ func test_a_runt_is_never_dropped_inside_a_wall() -> void:
 	var area: Area = Kettlebridge.make()
 	var sim: CombatSim = area.sim
 	# The player against the wall of a house on the square; the bird over the house.
-	sim.player.position = sim.resolve_position(Kettlebridge.at(30, 11) + Vector2(0, -20), sim.player.radius)
+	sim.player.position = Vector2(26.5 * AreaMap.CELL, 11.0 * AreaMap.CELL + sim.player.radius + 1.0)
+	assert_true(area.map.is_solid(AreaMap.cell_of(sim.player.position + Vector2(0, -CreatureBrain.DROP_OFFSET))),
+		"the drop spot, unresolved, is inside the house")
 	var bird: Fighter = sim.add_creature(sim.player.position + Vector2(0, -40), CreatureKind.jackdaw())
 	var runt: Fighter = CreatureBrain.drop_carried(sim, bird)
 	assert_false(area.map.is_solid(AreaMap.cell_of(runt.position)), "on open ground (%s)" % runt.position)
