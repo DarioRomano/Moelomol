@@ -635,7 +635,7 @@ func _hit(attacker: Fighter, target: Fighter, move: CombatMove) -> void:
 			stagger(target, move.stagger_ms)
 		elif target.poise.damage(move.poise_damage, target.has_hyper_armour()):
 			stagger(target)
-	if move.push > 0.0:
+	if move.push > 0.0 and not CreatureBrain.rooted(target):
 		var direction: Vector2 = target.position - attacker.position
 		direction = direction.normalized() if direction.length() > 0.001 else attacker.facing
 		target.push_ticks = CombatTuning.ticks(CombatTuning.PUSH_MS)
@@ -655,8 +655,9 @@ func _riposte(guard: Fighter, attacker: Fighter) -> void:
 		stagger(attacker)
 	var direction: Vector2 = attacker.position - guard.position
 	direction = direction.normalized() if direction.length() > 0.001 else guard.facing
-	attacker.push_ticks = CombatTuning.ticks(CombatTuning.PUSH_MS)
-	attacker.push_velocity = direction * (Greatsword.RIPOSTE_REPEL / attacker.push_ticks)
+	if not CreatureBrain.rooted(attacker):
+		attacker.push_ticks = CombatTuning.ticks(CombatTuning.PUSH_MS)
+		attacker.push_velocity = direction * (Greatsword.RIPOSTE_REPEL / attacker.push_ticks)
 	guard.facing = direction
 	start_attack(guard, Greatsword.BRACE_COUNTER, false)
 
@@ -1099,6 +1100,8 @@ func _separate_fighters() -> void:
 				continue
 			if (a.state == Fighter.State.DODGE) or (b.state == Fighter.State.DODGE):
 				continue
+			if CreatureBrain.rooted(a) or CreatureBrain.rooted(b):
+				continue  # a pike in the river: nothing shares its water
 			var offset: Vector2 = b.position - a.position
 			var distance: float = offset.length()
 			var overlap: float = a.radius + b.radius - distance

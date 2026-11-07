@@ -44,8 +44,9 @@ Clear open the great fields (Q42). One satchel (`GameState.satchel`,
 `Notes`) holds every note found; the great fields' field book is read at
 the farm. The second area, Kettlebridge (`docs/design/area-kettlebridge.md`), is
 walkable over Millbrook's ford, with its notes and its objective (Arthur's
-key, the winch house, the bridge); both areas share one scene
-(`scenes/world/area_scene.gd`). Next: Kettlebridge's creatures, then Duke
+key, the winch house, the bridge) and its creatures (market rats that
+split, jackdaws, river pike, Lichen-backs); both areas share one scene
+(`scenes/world/area_scene.gd`). Next: Duke, Kettlebridge's boss
 (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.

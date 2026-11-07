@@ -189,8 +189,8 @@ static func _draw_cell_top(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tic
 			canvas.draw_rect(Rect2(p + Vector2(4, 4), Vector2(24, 18)), Palette.CHANGED[0].lightened(0.1))
 			canvas.draw_rect(Rect2(p + Vector2(4, 22), Vector2(24, 8)), Palette.CHANGED[0].darkened(0.2))
 		"+":
-			canvas.draw_rect(Rect2(p + Vector2(10, 8), Vector2(12, 18)), Palette.STONE[2])
-			canvas.draw_rect(Rect2(p + Vector2(10, 22), Vector2(12, 4)), Palette.STONE[1])
+			# The same stone a Lichen-back hides as (CombatDrawer).
+			CombatDrawer._draw_gravestone(canvas, rect.get_center() + Vector2(0, 10), 1.0)
 		"s":
 			canvas.draw_rect(Rect2(p + Vector2(15, 8), Vector2(3, 22)), Palette.CHANGED[0])
 			canvas.draw_rect(Rect2(p + Vector2(8, 6), Vector2(18, 7)), Palette.PAPER[0].darkened(0.2))

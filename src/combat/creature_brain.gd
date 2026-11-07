@@ -42,6 +42,16 @@ const GRIST_WAKE_GAP: float = 24.0
 const GRIST_SACK_MICE: int = 3
 const MILLSTONE_SPEED: float = 160.0
 const MILLSTONE_RADIUS: float = 10.0
+## Market rats: how far apart the two runts land when one splits.
+const SPLIT_SPREAD: float = 7.0
+## Jackdaws: how far from the player a carried runt is dropped.
+const DROP_OFFSET: float = 20.0
+## River pike: it surfaces to spit when the player is this close, lies at
+## the surface this long after a spit, and its jet lands on a marked spot.
+const PIKE_SIGHT: float = 150.0
+const PIKE_SURFACED_MS: int = 1500
+const JET_RADIUS: float = 12.0
+const JET_FLIGHT_MS: int = 500
 
 
 ## A creature that is free to act: move, or start an attack.
@@ -61,6 +71,8 @@ static func think(sim: CombatSim, c: Fighter) -> void:
 			_light_seeker(sim, c)
 		CreatureKind.BRUTE_BOSS:
 			_grist(sim, c)
+		CreatureKind.WATER_ARTILLERY:
+			_pike(sim, c)
 		_:
 			_chaser(sim, c)
 
@@ -152,9 +164,47 @@ static func _flyer(sim: CombatSim, c: Fighter) -> void:
 	c.ai_timer += 1
 	if c.ai_timer >= CombatTuning.ticks(ROOK_ALOFT_MS) and c.cooldown == 0:
 		c.ai_timer = 0
+		if c.creature_kind.carries != &"" and c.ai_count == 0:
+			drop_carried(sim, c)
+			return
 		_face_player(sim, c)
 		c.airborne = false  # it comes down for the dive
 		_attack(sim, c, &"attack")
+
+
+## A jackdaw lets go of what it carries: a runt lands beside the player, on
+## the side the jackdaw is (never inside a wall), and the jackdaw goes back
+## to circling before its first dive.
+static func drop_carried(sim: CombatSim, c: Fighter) -> Fighter:
+	c.ai_count = 1
+	var side: Vector2 = c.position - sim.player.position
+	side = side.normalized() if side.length() > 0.001 else Vector2.RIGHT
+	var at: Vector2 = sim.resolve_position(sim.player.position + side * DROP_OFFSET, 4.0)
+	var dropped: Fighter = sim.add_creature(at, CreatureKind.by_id(c.creature_kind.carries))
+	dropped.cooldown = CombatTuning.ticks(400)  # it lands before it bites
+	sim.events.append({"type": "drop", "fighter": c, "position": at})
+	return dropped
+
+
+## A market rat hit hard splits: it is gone (until the next morning, like a
+## defeat), and two runts take its place either side.
+static func split(sim: CombatSim, c: Fighter) -> Array[Fighter]:
+	var runts: Array[Fighter] = []
+	var across: Vector2 = c.facing.orthogonal() if c.facing.length() > 0.001 else Vector2.RIGHT
+	for side: float in [-1.0, 1.0]:
+		var at: Vector2 = sim.resolve_position(c.position + across * side * SPLIT_SPREAD, 4.0)
+		var runt: Fighter = sim.add_creature(at, CreatureKind.by_id(c.creature_kind.splits_into))
+		runt.facing = c.facing
+		runt.ai_state = &"flee"  # they scatter first
+		runt.ai_timer = CombatTuning.ticks(MOUSE_FLEE_MS)
+		runts.append(runt)
+	sim.events.append({"type": "split", "fighter": c, "position": c.position})
+	if sim.lock_target == c:
+		sim.lock_target = null
+	c.move = null
+	c.push_ticks = 0
+	c.enter(Fighter.State.GONE, CombatTuning.ticks(CombatTuning.CREATURE_RESPAWN_MS))
+	return runts
 
 
 # --- Curler: hedgehogs ----------------------------------------------------------------
@@ -208,6 +258,37 @@ static func _artillery(sim: CombatSim, c: Fighter) -> void:
 	if c.cooldown == 0:
 		c.ai_target = sim.player.position  # where the glob will land
 		_attack(sim, c, &"attack")
+
+
+# --- Water artillery: river pike -------------------------------------------------------
+
+## Under the water it cannot be touched and does not move. When the player is
+## in sight and it is ready, it surfaces and spits at where the player
+## stands; then it lies at the surface (PIKE_SURFACED_MS) before going under.
+static func _pike(sim: CombatSim, c: Fighter) -> void:
+	if c.ai_state == &"surfaced":
+		c.ai_timer -= 1
+		if c.ai_timer <= 0:
+			submerge(sim, c)
+		return
+	c.untouchable = true
+	if not sim.player.is_alive() or c.cooldown > 0:
+		return
+	if c.position.distance_to(sim.player.position) > PIKE_SIGHT:
+		return
+	_face_player(sim, c)
+	c.untouchable = false
+	c.ai_target = sim.player.position  # where the jet will land
+	sim.events.append({"type": "surface", "fighter": c, "position": c.position})
+	_attack(sim, c, &"attack")
+
+
+## A pike goes back under.
+static func submerge(sim: CombatSim, c: Fighter) -> void:
+	c.ai_state = &""
+	c.ai_timer = 0
+	c.untouchable = true
+	sim.events.append({"type": "submerge", "fighter": c, "position": c.position})
 
 
 # --- Ambusher: stooks -------------------------------------------------------------------
@@ -404,6 +485,10 @@ static func on_active_start(sim: CombatSim, c: Fighter) -> void:
 			sim.zones.append(Zone.make(&"slick", c, CombatMove.new(), c.ai_target, GLOB_RADIUS, flight,
 				CombatTuning.ticks(SLICK_MS), 2))
 			sim.events.append({"type": "lob", "fighter": c, "position": c.ai_target})
+		&"pike_spit":
+			var jet: CombatMove = c.creature_kind.moves[&"jet"]
+			sim.zones.append(Zone.make(&"jet", c, jet, c.ai_target, JET_RADIUS, CombatTuning.ticks(JET_FLIGHT_MS), 1, 1))
+			sim.events.append({"type": "spit", "fighter": c, "position": c.ai_target})
 		&"grist_heave":
 			var stone: Dictionary = sim.prop_of(&"millstone_leaning")
 			if stone.is_empty():
@@ -428,6 +513,9 @@ static func on_attack_end(sim: CombatSim, c: Fighter, move: CombatMove) -> void:
 			c.curled = false
 		CreatureKind.FLYER:
 			c.airborne = true  # back up after the landing
+		CreatureKind.WATER_ARTILLERY:
+			c.ai_state = &"surfaced"  # lying at the surface after the spit
+			c.ai_timer = CombatTuning.ticks(PIKE_SURFACED_MS)
 		CreatureKind.BRUTE_BOSS:
 			if c.ai_state == &"second_charge":
 				c.ai_state = &""
@@ -497,6 +585,9 @@ static func resists_stagger(c: Fighter, move: CombatMove) -> bool:
 static func after_hit(sim: CombatSim, c: Fighter, move: CombatMove) -> void:
 	match c.creature_kind.behaviour:
 		CreatureKind.SWARMER:
+			if move.heavy and c.creature_kind.splits_into != &"":
+				split(sim, c)
+				return
 			if c.state == Fighter.State.FREE or c.state == Fighter.State.STAGGERED:
 				c.ai_state = &"flee"
 				c.ai_timer = CombatTuning.ticks(MOUSE_FLEE_MS)
@@ -518,6 +609,13 @@ static func after_landed(sim: CombatSim, c: Fighter) -> void:
 		sim.defeat(c)  # a moth is spent on the hit
 
 
-## False for creatures that look like scenery (no lock-on, no soft aim).
+## False for creatures that look like scenery (no lock-on, no soft aim), and
+## for a pike under the water.
 static func can_be_aimed_at(c: Fighter) -> bool:
-	return not c.disguised
+	return not c.disguised and not (rooted(c) and c.untouchable)
+
+
+## True for a creature that nothing moves: a river pike stays in its water
+## (no push from hits, no shoving by other fighters).
+static func rooted(f: Fighter) -> bool:
+	return f.kind == Fighter.Kind.CREATURE and f.creature_kind.behaviour == CreatureKind.WATER_ARTILLERY

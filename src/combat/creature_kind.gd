@@ -16,6 +16,8 @@ const ARTILLERY: StringName = &"artillery"
 const AMBUSHER: StringName = &"ambusher"
 const LIGHT_SEEKER: StringName = &"light_seeker"
 const BRUTE_BOSS: StringName = &"brute_boss"
+## Kettlebridge's river pike: artillery from water (area-kettlebridge.md).
+const WATER_ARTILLERY: StringName = &"water_artillery"
 
 var id: StringName
 var display_name: String
@@ -37,6 +39,11 @@ var respawns: bool = true
 ## Smoulder spreads from it at this many stacks (dry straw burns sooner).
 var smoulder_spread_at: int = StatusEffects.MAX_STACKS
 var drops: Array[StringName] = []
+## A swarmer that splits: hit hard, it becomes two of this kind (market rats).
+var splits_into: StringName = &""
+## A flyer that carries: it drops one of this kind beside the player
+## (jackdaws carry rat runts).
+var carries: StringName = &""
 ## Its moves by name; which names a brain uses depends on its behaviour.
 var moves: Dictionary = {}
 
@@ -165,6 +172,83 @@ static func grist() -> CreatureKind:
 	return k
 
 
+## Market rats (Swarmer that splits; area-kettlebridge.md): big, greyed and
+## slow for a swarmer; a heavy hit splits one into two runts.
+static func market_rat() -> CreatureKind:
+	var k: CreatureKind = _make(&"market_rat", "Market rat", SWARMER, 36.0, 14.0, 6.0, 60.0)
+	k.stagger_ms = 600
+	k.attack_range = 14.0
+	k.cooldown_ms = 800
+	var bite: CombatMove = CombatMove.make(&"rat_bite", "Bite", Vector3i(400, 100, 450), 6.0, 10.0, 3.0, 9.0, 70.0, 0.0)
+	bite.dash = 10.0
+	bite.hitstop_ms = 0
+	k.moves[&"attack"] = bite
+	k.splits_into = &"rat_runt"
+	k.drops = [&"grey_pelt"]
+	return k
+
+
+## A rat runt: what a market rat splits into, or a jackdaw drops. Quick and
+## weak; it does not come back.
+static func rat_runt() -> CreatureKind:
+	var k: CreatureKind = _make(&"rat_runt", "Rat runt", SWARMER, 12.0, 6.0, 4.0, 80.0)
+	k.stagger_ms = 500
+	k.attack_range = 12.0
+	k.cooldown_ms = 700
+	k.respawns = false
+	k.leash = 10000.0  # loose in the town: it follows
+	var nip: CombatMove = CombatMove.make(&"runt_nip", "Nip", Vector3i(300, 100, 400), 3.0, 6.0, 2.0, 8.0, 70.0, 0.0)
+	nip.dash = 8.0
+	nip.hitstop_ms = 0
+	k.moves[&"attack"] = nip
+	return k
+
+
+## Jackdaws (Flyer that drops creatures): circle like rooks, but each comes
+## carrying a rat runt and drops it beside the player before its first dive.
+static func jackdaw() -> CreatureKind:
+	var k: CreatureKind = _make(&"jackdaw", "Jackdaw", FLYER, 20.0, 10.0, 5.0, 100.0)
+	k.stagger_ms = 800
+	var dive: CombatMove = CombatMove.make(&"jackdaw_dive", "Dive", Vector3i(450, 250, 1000), 6.0, 15.0, 5.0, 4.0, 0.0, 0.0)
+	dive.shape = &"lane"
+	dive.lane_width = 8.0
+	dive.dash = 90.0
+	k.moves[&"attack"] = dive
+	k.carries = &"rat_runt"
+	k.drops = [&"jackdaw_feather"]
+	return k
+
+
+## River pike (Artillery from water): under the river, out of reach; it
+## surfaces to spit at a marked spot, then lies at the surface a while,
+## where arrows (and a blade from the bank's edge) can reach it.
+static func river_pike() -> CreatureKind:
+	var k: CreatureKind = _make(&"river_pike", "River pike", WATER_ARTILLERY, 40.0, 25.0, 8.0, 0.0)
+	k.cooldown_ms = 2400
+	k.leash = 10000.0  # it never leaves its stretch of river
+	k.resists = [StatusEffects.SMOULDER]
+	var spit: CombatMove = CombatMove.make(&"pike_spit", "Spit", Vector3i(700, 17, 300), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+	spit.melee = false
+	k.moves[&"attack"] = spit
+	var jet: CombatMove = CombatMove.make(&"pike_jet", "Jet", Vector3i.ZERO, 10.0, 20.0, 0.0, 0.0, 0.0, 0.0)
+	jet.hitstop_ms = 0
+	k.moves[&"jet"] = jet
+	k.drops = [&"pike_scale"]
+	return k
+
+
+## Lichen-backs (Ambusher among gravestones): a mossed gravestone until the
+## player is close; then it heaves up and slams.
+static func lichen_back() -> CreatureKind:
+	var k: CreatureKind = _make(&"lichen_back", "Lichen-back", AMBUSHER, 60.0, 40.0, 7.0, 28.0)
+	k.leash = 64.0  # it holds its plot
+	k.cooldown_ms = 1300
+	var slam: CombatMove = CombatMove.make(&"lichen_slam", "Slam", Vector3i(550, 100, 650), 14.0, 35.0, 10.0, 18.0, 120.0, 0.0)
+	k.moves[&"attack"] = slam
+	k.drops = [&"lichen"]
+	return k
+
+
 ## Every kind, by id (the arena's creature sets, tests).
 static func by_id(kind_id: StringName) -> CreatureKind:
 	match kind_id:
@@ -182,6 +266,16 @@ static func by_id(kind_id: StringName) -> CreatureKind:
 			return moth()
 		&"grist":
 			return grist()
+		&"market_rat":
+			return market_rat()
+		&"rat_runt":
+			return rat_runt()
+		&"jackdaw":
+			return jackdaw()
+		&"river_pike":
+			return river_pike()
+		&"lichen_back":
+			return lichen_back()
 	return training()
 
 

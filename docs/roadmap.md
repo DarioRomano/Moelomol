@@ -186,4 +186,8 @@ ADR-0005 but are not scheduled and are not to be built speculatively.
    objective (the key, the winch house, the bridge lowering). **Built**
    2026-11-07; playtest: `docs/playtests/2026-11-07-kettlebridge-town.md`.
 2. Its creatures: market rats, jackdaws, river pike, Lichen-backs.
+   **Built** 2026-11-07; playtest:
+   `docs/playtests/2026-11-07-kettlebridge-creatures.md`.
 3. Duke, the fair's champion bull, and the herd.
+4. Not yet built, from the accepted doc: the lantern at the chandler's
+   (place 4, Q35 C) and the seed merchant's stall (G, new crop kinds).
