@@ -121,6 +121,9 @@ Constraints the architecture must honour:
 - The farmhouse inside (`HouseSim`, `HouseLayout`, `HouseDrawer`): its own
   small simulation (walking, the bed, the seed tin, the door), sharing the
   game's clock, Mana and bag; `scenes/farm/house.tscn`.
+- The cat (`Cat`, `CatDrawer`) lives in `GameState`; the farm and house
+  scenes call `Cat.settle` each tick with what is in view, then tell their
+  simulation where it sits (`cat_position`) so Interact can stroke it.
 - `scenes/farm/farm.tscn` reads the farming InputMap actions
   (`FarmInput.read()`), follows the player with `FollowCamera`; `FarmHud`
   sits in a `UiFrame`. `scenes/showcase/farm_times.tscn` (dawn, midday,

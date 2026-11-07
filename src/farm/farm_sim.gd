@@ -17,7 +17,9 @@ const PLAYER_SPEED: float = 80.0  # layout px per second, as in combat
 const PLAYER_RADIUS: float = 6.0
 ## The tile acted on is the one under this point in front of the feet.
 const TARGET_REACH: float = 12.0
-const CAST_MS: int = 250  # the player stands still while casting or picking
+const CAST_MS: int = 250
+## How near the point in front of the player must be to the cat's feet.
+const CAT_REACH: float = 12.0  # the player stands still while casting or picking
 
 ## Farming is magic (Q27, decided 2026-10-10): every farming action is a
 ## spell that costs Mana. Sowing has one entry per seed kind, keyed by the
@@ -77,6 +79,10 @@ var map: FarmMap = null
 ## Tiles the Clear spell has cleared (Vector2i -> true); the farm
 ## remembers them.
 var cleared: Dictionary = {}
+## Where the cat sits at the farm (its feet), or INF when it is not here;
+## the scene sets it from the game's Cat. Interact while facing it strokes it.
+var cat_position: Vector2 = Vector2.INF
+var cat_purring: bool = false
 var door_cell: Vector2i
 var wake_position: Vector2
 ## Where the player arrives from Millbrook: the top of the lane below the
@@ -354,6 +360,9 @@ func _cast() -> void:
 
 
 func _interact() -> void:
+	if faces_cat():
+		events.append({"type": "stroke", "position": cat_position})
+		return
 	var cell: Vector2i = target_cell()
 	if is_door(cell):
 		if map != null:
@@ -370,6 +379,13 @@ func _interact() -> void:
 	busy = cast_ticks()
 	last_action = &"harvest"
 	events.append({"type": "harvest", "cell": cell, "items": items, "position": cell_centre(cell)})
+
+
+## True if the cat is here and the player faces it, close enough to reach.
+func faces_cat() -> bool:
+	if cat_position == Vector2.INF:
+		return false
+	return (player_position + facing.normalized() * TARGET_REACH).distance_to(cat_position) < CAT_REACH
 
 
 ## True for the farmhouse door's tiles (on the test field, the bed).

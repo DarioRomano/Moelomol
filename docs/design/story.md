@@ -115,6 +115,9 @@ not matching it for a moment; the ambience going briefly silent around it).
   - The overgrowth is neglect, not the calamity: the base stays untouched.
   - Each parcel opens with a boss's heart, a changed material, through the
     farming magic. That is one more quiet hint at the shared source.
+- **The cat's first build is a cat of places** (Q41 A, 2026-11-06): always
+  in one of its places by the time of day, never seen moving, stroked
+  without text. The impossible moments come with the story's stages.
 - **Proposal (part of the farm layout, `base.md`):** the cat is always
   first into a newly opened parcel, one of the small impossible things at
   the base.

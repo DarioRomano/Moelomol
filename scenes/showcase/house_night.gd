@@ -7,6 +7,7 @@ func _ready() -> void:
 	sim.clock.total_minutes += 16.0 * 60.0  # 22:00
 	sim.tin_taken = false
 	sim.inventory = Inventory.new()  # the seeds still in the tin
+	state.cat.place = Cat.WINDOW_SEAT
 	sim.place_player(Vector2(2.5, 7.5) * HouseSim.TILE, Vector2.LEFT)
 	super()
 	set_physics_process(false)

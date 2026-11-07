@@ -49,6 +49,7 @@ const EFFECTS: Dictionary = {
 	&"farm_harvest": [0.15, 0.35, 0.07],
 	&"farm_nothing": [0.12, 0.0, 0.06],  # a dull buzz: the spell did nothing
 	&"farm_rain": [0.2, 0.15, 0.4],  # a long soft roll: the weather turns
+	&"cat_purr": [0.1, 0.0, 0.7],  # the cat, stroked: a long, low purr
 }
 
 ## How long each refresh of the sustained rumble lasts; refreshed every tick,
@@ -200,4 +201,6 @@ static func effect_for_farm_event(event: Dictionary) -> StringName:
 			return &"farm_nothing"
 		"rain":
 			return &"farm_rain"
+		"stroke":
+			return &"cat_purr"
 	return &""
