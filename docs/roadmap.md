@@ -183,6 +183,7 @@ ADR-0005 but are not scheduled and are not to be built speculatively.
 
 `docs/design/area-kettlebridge.md`. Built in stages:
 1. The town, walkable, joined to Millbrook's ford; its notes; the bridge
-   objective (the key, the winch house, the bridge lowering).
+   objective (the key, the winch house, the bridge lowering). **Built**
+   2026-11-07; playtest: `docs/playtests/2026-11-07-kettlebridge-town.md`.
 2. Its creatures: market rats, jackdaws, river pike, Lichen-backs.
 3. Duke, the fair's champion bull, and the herd.

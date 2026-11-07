@@ -29,6 +29,7 @@ static func draw(canvas: CanvasItem, map: AreaMap, view: Rect2, tick: int, drain
 		for x: int in range(low.x, high.x + 1):
 			_draw_cell_top(canvas, map, Vector2i(x, y), tick)
 	_draw_bridge(canvas, map, view, drain)
+	_draw_barge(canvas, map, view)
 	for block: Dictionary in buildings(map):
 		var rect: Rect2 = block["rect"]
 		if rect.intersects(view.grow(CELL)):
@@ -190,10 +191,6 @@ static func _draw_cell_top(canvas: CanvasItem, map: AreaMap, cell: Vector2i, tic
 		"+":
 			canvas.draw_rect(Rect2(p + Vector2(10, 8), Vector2(12, 18)), Palette.STONE[2])
 			canvas.draw_rect(Rect2(p + Vector2(10, 22), Vector2(12, 4)), Palette.STONE[1])
-		"n":
-			# The barge, tied up: a long hull, its hold open.
-			canvas.draw_rect(Rect2(p + Vector2(0, 6), Vector2(CELL, 22)), Palette.CHANGED[0].darkened(0.1))
-			canvas.draw_rect(Rect2(p + Vector2(0, 11), Vector2(CELL, 12)), Palette.SHADOW[1])
 		"s":
 			canvas.draw_rect(Rect2(p + Vector2(15, 8), Vector2(3, 22)), Palette.CHANGED[0])
 			canvas.draw_rect(Rect2(p + Vector2(8, 6), Vector2(18, 7)), Palette.PAPER[0].darkened(0.2))
@@ -224,7 +221,7 @@ static func _draw_bridge(canvas: CanvasItem, map: AreaMap, view: Rect2, drain: f
 	var down: float = 1.0 if map.drained else clampf(drain, 0.0, 1.0)
 	var half: float = r.size.y / 2.0
 	var reach: float = half * down
-	var stands: float = half * 0.6 * (1.0 - down)  # the upright part, foreshortened
+	var stands: float = half * 0.4 * (1.0 - down)  # the upright part, foreshortened
 	var deck: Color = Palette.CHANGED[0].lightened(0.1)
 	var under: Color = Palette.CHANGED[0].darkened(0.3)
 	# The north leaf, hinged on the north bank.
@@ -242,6 +239,20 @@ static func _draw_bridge(canvas: CanvasItem, map: AreaMap, view: Rect2, drain: f
 	for x: float in [r.position.x + 1.0, r.end.x - 1.0]:
 		canvas.draw_line(Vector2(x, r.position.y), Vector2(x, r.position.y + reach), Palette.CHANGED[0].darkened(0.4), 2.0)
 		canvas.draw_line(Vector2(x, r.end.y - reach), Vector2(x, r.end.y), Palette.CHANGED[0].darkened(0.4), 2.0)
+
+
+## The barge (`n`), tied up at the wharf: one long hull, its hold open.
+static func _draw_barge(canvas: CanvasItem, map: AreaMap, view: Rect2) -> void:
+	var r: Rect2 = bounds_of(map, "n")
+	if r.size == Vector2.ZERO or not r.intersects(view.grow(CELL)):
+		return
+	var hull: Rect2 = r.grow_individual(0, -6, 0, -6)
+	canvas.draw_rect(hull, Palette.CHANGED[0].darkened(0.1))
+	canvas.draw_rect(Rect2(hull.position + Vector2(-8, 4), Vector2(8, hull.size.y - 8)), Palette.CHANGED[0].darkened(0.1))  # the bow
+	canvas.draw_rect(hull.grow(-6), Palette.SHADOW[1])  # the open hold
+	for x: float in [hull.position.x + hull.size.x * 0.33, hull.position.x + hull.size.x * 0.66]:
+		canvas.draw_line(Vector2(x, hull.position.y + 6), Vector2(x, hull.end.y - 6), Palette.CHANGED[0].darkened(0.3), 2.0)
+	canvas.draw_line(Vector2(hull.position.x + 12, hull.position.y), Vector2(hull.position.x + 12, r.position.y - 8), Palette.STONE[0], 1.0)  # the mooring rope
 
 
 ## A building: the roof from above (the lighter top) and the front wall below
