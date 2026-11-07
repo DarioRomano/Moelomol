@@ -1,0 +1,25 @@
+# Deletes a pull request's builds and renders when it is merged or closed
+# (Q40, ADR-0009 amendment, 2026-11-06). Releases keep the merged builds and
+# do not count toward the Actions storage quota; PR artifacts do.
+name: Pull request cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  actions: write
+
+jobs:
+  delete-artifacts:
+    name: Delete this PR's builds
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Delete the artifacts of this PR's branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO_ID: ${{ github.event.pull_request.head.repo.id }}
+        run: python3 tools/ci/pr_artifacts.py "$GITHUB_REPOSITORY" "$HEAD_REF" "$HEAD_REPO_ID"

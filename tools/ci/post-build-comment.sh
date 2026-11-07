@@ -27,7 +27,8 @@ Commit \`${BUILD_COMMIT:0:7}\` · [CI run]($RUN_URL)
 **Test build (not a supported platform):** $(link "Linux ARM64, e.g. Steam Frame" "${URL_LINUX_ARM64:-}")
 **Renders to review:** $(link "Showcase images" "$URL_RENDERS")
 
-Downloads need a GitHub login and expire after 14 days. The macOS build is
+Downloads need a GitHub login. They expire after 3 days, and are deleted
+when the pull request is merged or closed (the release keeps merged builds). The macOS build is
 not notarised: right-click the app and choose Open the first time. The Linux
 binary may need \`chmod +x\`. The web build must be served over HTTP, for
 example \`python3 -m http.server\` in the unzipped folder.
