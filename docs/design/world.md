@@ -4,7 +4,8 @@
   2026-10-11). Items marked **Proposal** are still the engineer's
   suggestions. Built so far: the farm, the farmhouse and Millbrook, joined
   at their exits (ADR-0016); falling (Q36); the satchel (Q37); saving
-  (ADR-0017). The second area's theme is Q43.
+  (ADR-0017). The second area is a market town on the river (Q43 A,
+2026-11-07); its design pass is next.
 - **Binding constraints:**
   - ADR-0005: one base, the only place farming happens; no combat there;
     the story moves forward by adventuring, fulfilling objectives and

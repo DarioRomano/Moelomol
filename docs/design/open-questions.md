@@ -5,7 +5,7 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-10-14: Q39 and Q40 are open. Everything before them is resolved.
+Status at 2026-11-07: every question is resolved. The lead accepted the recommendations for Q39 to Q43 (2026-11-06 and 2026-11-07).
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
@@ -1903,7 +1903,9 @@ render for a look before merging.
 
 ## Q43. What the second area is
 
-**Open (2026-11-06).** Raised by the engineer: the farm's build order is
+**Resolved 2026-11-07 (the lead):** A, a market town on the river, as
+recommended. Its layout, creatures and boss come next in a design pass for
+acceptance. Raised by the engineer: the farm's build order is
 done through step 5, and the next steps (`docs/roadmap.md`) wait on the
 second area. What is decided about it:
 - It lies **south of Millbrook, across the ford** that Millbrook's
