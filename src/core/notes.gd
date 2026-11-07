@@ -6,6 +6,7 @@ extends RefCounted
 ## Place id -> that place's notes ({id: {"title", "text", "objective"}}).
 const BOOKS: Dictionary = {
 	&"millbrook": MillbrookNotes.NOTES,
+	&"kettlebridge": KettlebridgeNotes.NOTES,
 	&"farm": FarmNotes.NOTES,
 }
 

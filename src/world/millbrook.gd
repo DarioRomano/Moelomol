@@ -13,6 +13,12 @@ static func make() -> Area:
 	var map: AreaMap = AreaMap.new(MillbrookMap.ROWS)
 	var entrance: Vector2 = Vector2(ENTRANCE_CELL.x * AreaMap.CELL, ENTRANCE_CELL.y * AreaMap.CELL + 8.0)
 	var area: Area = Area.new(&"millbrook", map, entrance)
+	area.display_name = "Millbrook"
+	area.cleared_line = "The meadow has drained."
+	area.taken_lines = {&"sluice_crank": "Taken: the sluice crank.", &"grist_heart": "Taken: Grist's heart, and a tusk."}
+	# Coming back up from Kettlebridge: at the ford, facing north into the
+	# valley (the meadow is drained, or the player could not have crossed).
+	area.entrances[&"kettlebridge"] = {"at": Vector2(28 * AreaMap.CELL, 30.5 * AreaMap.CELL), "facing": Vector2.UP}
 	_roster(area)
 	_yard(area)
 	_field(area)
@@ -47,13 +53,14 @@ static func _things(area: Area) -> void:
 	# Shown once Grist is defeated (enemies.md: a note for after).
 	area.add_thing(&"grist_apples", &"note", MILLER_DOOR + Vector2(26, 0), false)
 	area.add_thing(&"sluice_crank", &"crank", MILLER_DOOR)
-	area.add_thing(&"sluice", &"sluice", at(37, 17))
+	area.add_thing(&"sluice", &"sluice", at(37, 17), true, &"sluice_crank")
 
 
-## Up the lane to the farm, and the ford south (once the meadow drains).
+## Up the lane to the farm, and over the ford south to Kettlebridge (once
+## the meadow drains).
 static func _exits(area: Area) -> void:
 	area.add_exit(&"farm", Rect2(27 * AreaMap.CELL, 0, AreaMap.CELL * 2, 10), false)
-	area.add_exit(&"south", Rect2(27 * AreaMap.CELL, area.map.rect().end.y - 10, AreaMap.CELL * 2, 10), true)
+	area.add_exit(&"kettlebridge", Rect2(27 * AreaMap.CELL, area.map.rect().end.y - 10, AreaMap.CELL * 2, 10), true)
 
 
 ## The miller's door: below the middle of the miller's cottage (cells 48-50,

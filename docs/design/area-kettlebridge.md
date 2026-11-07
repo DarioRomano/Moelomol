@@ -63,18 +63,18 @@ t.,###############.==..HHHHHHH.==.HHHHHHH.==.KKKKKK.HHHHHHHHH..t
 tt,#OOOOOOOOOOOOO#.==HH__________________.==.KKKKKK.HHHHHHHHH.tt
 tt,#OOOOOO7OOOOOO#.==HH4_________________.==CKKKKKK....E.......t
 tt,#OOOOOOOOOOOOO#.==HH__k__k__k__k__k___.==.KKKKKK............t
-t.,#OOOOOOOOOOOOO#.==.._____3____________.==gggggggggggg#......t
-t.,#OOOOOORROOOOO.,==HH__________________.==g+g+g+g+g+gg#HHHH..t
-tt,#OOOOOOOOOOOOO.6==HH__k__k__k__k__k___.==gggggggggggg#HHHH..t
-t.,#OOOOOOOOOOOOO#,==HH5_________________.==g+g+g+g+g+gg#HHHH..t
-t.,#OOOOOOOOOOOOO#,==HH___________G______.==ggggggDggggg#HHHH..t
-t.,#OOOOOOOOOOOOO#.==HHHHHHHHH.==.HHHHHHH.==g+g+g+g+g+gg#HHHH.tt
-t.,#OOOOOOOOOOOOO#.==HHHHHHHHH.==.HHHHHHH.==gggggggggggg#HHHH..t
-tt,###############.==HHHHHHHHH.==.WW......==#####.#######......t
+t.,#OOOOOOOOOOOOO#.==.._____3____________.==qqqqqqqqqqqq#......t
+t.,#OOOOOORROOOOO.,==HH__________________.==q+q+q+q+q+qq#HHHH..t
+tt,#OOOOOOOOOOOOO.6==HH__k__k__k__k__k___.==qqqqqqqqqqqq#HHHH..t
+t.,#OOOOOOOOOOOOO#,==HH5_________________.==q+q+q+q+q+qq#HHHH..t
+t.,#OOOOOOOOOOOOO#,==HH___________G______.==qqqqqqDqqqqq#HHHH..t
+t.,#OOOOOOOOOOOOO#.==HHHHHHHHH.==.HHHHHHH.==q+q+q+q+q+qq#HHHH.tt
+t.,#OOOOOOOOOOOOO#.==HHHHHHHHH.==.HHHHHHH.==qqqqqqqqqqqq#HHHH..t
+tt,###############.==HHHHHHHHH.==.ZZ......==#####.#######......t
 tt==========F=================8==A==9=========B===============.t
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~bbbbbb~~~~~~~~~~~~~~
-~~~~~~~~~~iiii~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~bbbbbb~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~nnnnnn~~~~~~~~~~~~~~
+~~~~~~~~~~iiii~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~nnnnnn~~~~~~~~~~~~~~
 ~~~~~~~~~~iiii~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~YY~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,13 +93,15 @@ ttttttttttttttttttttttttttttttt==ttttttttttttttttttttttttttttttt
 | `.` `,` | Grass; long grass | `v` | Changed land, violet-tinged |
 | `=` | Road, street, lane, towpath | `_` | The market square's cobbles |
 | `H` | Houses, shops, the inn, the corn exchange | `k` | A market stall (left set out) |
-| `K` | The church | `g` `+` | The churchyard; gravestones |
+| `K` | The church | `q` `+` | The churchyard; gravestones |
 | `#` | Rails, walls | `O` `R` | The auction ring's sawdust; the auctioneer's rostrum |
 | `~` | The river Kett | `Y` | The lifting bridge, drawn up |
-| `W` | The bridge's winch house | `b` | The barge, tied up |
+| `Z` | The bridge's winch house | `n` | The barge, tied up |
 | `i` | The island | 1–9, A–G | Places below |
 
-At tile scale the ring is round, the stalls have awnings, and the streets
+Its own characters where Millbrook's mean something else (the
+churchyard `q`, the winch house `Z`, the barge `n`), so both maps can be
+read by the same code. At tile scale the ring is round, the stalls have awnings, and the streets
 bend a little; the sketch only fixes what is where.
 
 ## Places

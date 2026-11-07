@@ -9,7 +9,7 @@ extends Node
 ## - F4: V-Sync on/off. With V-Sync on, the frame rate is capped at the
 ##   screen's refresh rate; off shows the real headroom.
 ## - Launch options (after `--` on the command line, or in Steam's launch
-##   options): `--perf-overlay`, `--start-scene <title|test_card|renderer_features|combat_arena|farm|house|millbrook>`,
+##   options): `--perf-overlay`, `--start-scene <title|test_card|renderer_features|combat_arena|farm|house|millbrook|kettlebridge>`,
 ##   `--no-vsync`. (`--scene` is already used by the render tool.)
 ##
 ## Available in every build: the lead tests release builds on real devices.
@@ -25,6 +25,7 @@ const SHOWCASE_SCENES: Dictionary = {
 	"farm": "res://scenes/farm/farm.tscn",
 	"house": "res://scenes/farm/house.tscn",
 	"millbrook": "res://scenes/world/millbrook.tscn",
+	"kettlebridge": "res://scenes/world/kettlebridge.tscn",
 }
 const REFRESH_SECONDS: float = 0.25
 

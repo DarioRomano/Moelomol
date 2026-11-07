@@ -78,7 +78,7 @@ func test_nothing_in_reach_does_nothing() -> void:
 func test_the_sluice_will_not_turn_without_the_crank() -> void:
 	var area: Area = _area()
 	_go_to(area, &"sluice")
-	assert_eq(area.interact()["type"], "sluice_stuck", "stuck")
+	assert_eq(area.interact()["type"], "stuck", "stuck")
 	assert_false(area.objective_done, "still shut")
 
 
@@ -96,7 +96,7 @@ func test_the_crank_opens_the_sluice_and_the_meadow_drains_over_ten_seconds() ->
 	assert_eq(area.interact(), {"type": "taken", "item": &"sluice_crank"}, "the crank from the hook")
 	assert_eq(area.bag.count(&"sluice_crank"), 1, "carried")
 	_go_to(area, &"sluice")
-	assert_eq(area.interact()["type"], "sluice_opened", "the sluice opens")
+	assert_eq(area.interact()["type"], "opened", "the sluice opens")
 	assert_true(area.objective_done, "the objective is done")
 	assert_eq(area.bag.count(&"sluice_crank"), 0, "the crank stays on the wheel")
 	var flood: Vector2i = area.map.cells_of("w")[0]
@@ -118,7 +118,7 @@ func test_the_ford_is_an_exit_only_once_the_meadow_drains() -> void:
 	seen = _run(area, 5)
 	var exits: Array[Dictionary] = seen.filter(func(e: Dictionary) -> bool: return e["type"] == "exit")
 	assert_eq(exits.size(), 1, "reported once while standing there")
-	assert_eq(exits[0]["to"], &"south", "the way south")
+	assert_eq(exits[0]["to"], &"kettlebridge", "the ford leads to Kettlebridge")
 
 
 func test_the_lane_s_top_is_the_way_back_to_the_farm() -> void:

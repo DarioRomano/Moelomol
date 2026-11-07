@@ -517,3 +517,13 @@ a real controller)
   of the same size (the farm's ground, while a parcel opens);
   `Image.fill_rect` clips a rectangle that runs off the image. Headless
   timing of `update` says nothing (the dummy renderer); real cost: playtest.
+
+### 2026-11-07 (Kettlebridge, the town), Godot 4.7.2.stable.official
+
+- `Rect2.grow_individual(left, top, right, bottom)` grows each side
+  separately (negative shrinks): `Rect2(0,0,10,10).grow_individual(0,-2,0,-2)`
+  is position (0, 2), size (10, 6). `Rect2.merge` returns the smallest
+  rectangle holding both (the bridge's and the barge's bounds).
+- A script that `extends "res://…/area_scene.gd"` by path keeps working
+  when the scene it was split from is renamed with its `.uid` moved along;
+  the showcase scenes that extend `millbrook.gd` loaded unchanged.

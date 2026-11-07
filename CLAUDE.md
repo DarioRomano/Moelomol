@@ -42,8 +42,11 @@ interacts in every place (Q39). The Clear spell opens the old fields. The
 cat (`Cat`) keeps its places by the time of day (Q41). Grist's heart and
 Clear open the great fields (Q42). One satchel (`GameState.satchel`,
 `Notes`) holds every note found; the great fields' field book is read at
-the farm. Next: building the second area, Kettlebridge (designed and
-accepted, `docs/design/area-kettlebridge.md`; `docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+the farm. The second area, Kettlebridge (`docs/design/area-kettlebridge.md`), is
+walkable over Millbrook's ford, with its notes and its objective (Arthur's
+key, the winch house, the bridge); both areas share one scene
+(`scenes/world/area_scene.gd`). Next: Kettlebridge's creatures, then Duke
+(`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -91,8 +94,8 @@ prints failures as `::error` annotations: read them with
 | `scenes/title/` | Main scene: the title screen (Continue, New game, Quit) |
 | `scenes/combat/` | Combat test arena and its HUD |
 | `scenes/farm/` | The farm (`farm.tscn`), the farmhouse inside (`house.tscn`) and their HUD |
-| `scenes/world/` | Adventure areas: Millbrook (`millbrook.tscn`) |
-| `src/world/` | Areas: `AreaMap` (text maps), `Area` (clock, rosters), `FollowCamera` (ADR-0015), `AreaDrawer`, Millbrook's map and roster |
+| `scenes/world/` | Adventure areas: one shared scene (`area_scene.gd`), extended by Millbrook (`millbrook.tscn`) and Kettlebridge (`kettlebridge.tscn`) |
+| `src/world/` | Areas: `AreaMap` (text maps), `Area` (clock, rosters, entrances), `FollowCamera` (ADR-0015), `AreaDrawer`, each area's map, notes and roster |
 | `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), the farm's layout (`FarmLayout`, `FarmMap`), drawing (`FarmGround`, `FarmDrawer`); the house (`HouseLayout`, `HouseSim`, `HouseDrawer`) |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
