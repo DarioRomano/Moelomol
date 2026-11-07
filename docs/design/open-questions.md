@@ -51,7 +51,7 @@ Status at 2026-10-14: Q39 and Q40 are open. Everything before them is resolved.
 | Q40 | How long to keep pull-request builds | Actions storage | **Resolved** 2026-11-06: C, 3 days and deleted on merge or close |
 | Q41 | What the cat does in its first build | The cat (`base.md` step 4) | **Resolved** 2026-11-06: A, a cat of places |
 | Q42 | The great fields inside, and how they open | Opening the first parcel (`base.md` step 5) | **Resolved** 2026-11-06: A, the sketch accepted |
-| Q43 | What the second area is | The second area's design | **Open** |
+| Q43 | What the second area is | The second area's design | **Resolved** 2026-11-07: A, a market town on the river |
 
 ---
 
