@@ -178,3 +178,11 @@ and UI width (ADR-0008). Q17 decided: keep whole-number scaling. Waiting on the 
 Exploration and foraging, crafting and enhancement, upgrade systems, skills,
 trinkets and artefacts, notes and story, animals. These are named in
 ADR-0005 but are not scheduled and are not to be built speculatively.
+
+## Kettlebridge, the second area (designed and accepted 2026-11-07)
+
+`docs/design/area-kettlebridge.md`. Built in stages:
+1. The town, walkable, joined to Millbrook's ford; its notes; the bridge
+   objective (the key, the winch house, the bridge lowering).
+2. Its creatures: market rats, jackdaws, river pike, Lichen-backs.
+3. Duke, the fair's champion bull, and the herd.
