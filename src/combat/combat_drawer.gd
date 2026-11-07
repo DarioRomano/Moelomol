@@ -13,7 +13,8 @@ const TILE: float = 16.0
 ## How long each effect plays, in ticks.
 const EFFECT_TICKS: Dictionary = {"impact": 12, "hit": 6, "shockwave": 18, "armour_break": 16,
 	"release": 14, "shatter": 16, "blight_bloom": 18, "brittle": 14, "frozen": 14, "spread": 12,
-	"wardstep": 12, "beam": 12, "seed_jump": 14, "seed_latch": 10, "perfect_brace": 16, "brace_absorb": 10}
+	"wardstep": 12, "beam": 12, "seed_jump": 14, "seed_latch": 10, "perfect_brace": 16, "brace_absorb": 10,
+	"split": 12, "surface": 14, "submerge": 14, "drop": 10}
 ## Effect colours (docs/design/combat.md, "The three effects").
 const EFFECT_COLOURS: Dictionary = {
 	StatusEffects.SMOULDER: Color("#e0a95b"),
@@ -458,6 +459,15 @@ static func _draw_zone(canvas: CanvasItem, zone: Zone) -> void:
 		var arc_top: Vector2 = zone.position + Vector2(0, -28.0 * sin(PI * t))
 		canvas.draw_circle(arc_top, 2.5, Palette.CHANGED[1].lightened(0.2))
 		return
+	if zone.kind == &"jet":
+		# A pike's jet in flight: the marked circle, filling as it comes down.
+		var t: float = clampf(float(zone.age) / maxf(1.0, zone.delay), 0.0, 1.0)
+		canvas.draw_circle(zone.position, zone.radius * t, Color(Palette.DANGER[0], 0.3))
+		canvas.draw_arc(zone.position, zone.radius, 0, TAU, 24, Color(Palette.DANGER[1], 0.85), 1.0)
+		var from: Vector2 = zone.owner.position if zone.owner != null else zone.position
+		var arc_at: Vector2 = from.lerp(zone.position, t) + Vector2(0, -24.0 * sin(PI * t))
+		canvas.draw_circle(arc_at, 2.5, Palette.WATER[1].lightened(0.4))
+		return
 	if zone.kind == &"slick":
 		if zone.age < zone.delay:
 			return
@@ -531,7 +541,10 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 		# Returning to the land: a patch of moss grows where it stood.
 		canvas.draw_rect(Rect2(at.x - f.radius, at.y - 2, f.radius * 2, 4), Color(Palette.WILD[2], 1.0 - fade))
 	if f.disguised:
-		_draw_sheaf(canvas, at, 1.0)  # a stook: a sheaf like any other
+		if f.creature_kind.id == &"lichen_back":
+			_draw_gravestone(canvas, at, 1.0)  # a gravestone like the rest
+		else:
+			_draw_sheaf(canvas, at, 1.0)  # a stook: a sheaf like any other
 		return
 	var phase: StringName = f.attack_phase()
 	var flash: bool = phase == &"windup" and (f.state_tick / 4) % 2 == 0
@@ -559,6 +572,18 @@ static func _draw_creature(canvas: CanvasItem, f: Fighter, at: Vector2) -> void:
 			_draw_moth(canvas, f, body_at, flash, fade)
 		&"grist":
 			_draw_grist(canvas, f, body_at, flash, fade)
+		&"market_rat":
+			_draw_rat(canvas, f, body_at, flash, fade, 1.0)
+		&"rat_runt":
+			_draw_rat(canvas, f, body_at, flash, fade, 0.65)
+		&"jackdaw":
+			_draw_jackdaw(canvas, f, body_at, flash, fade)
+		&"river_pike":
+			_draw_pike(canvas, f, at, flash, fade)
+			if f.untouchable:
+				return  # under the water: no bars
+		&"lichen_back":
+			_draw_lichen_back(canvas, f, body_at, flash, fade)
 		_:
 			_draw_training(canvas, f, body_at, flash, fade)
 	if f.state == Fighter.State.DOWN or f.ai_state == &"asleep":
@@ -711,6 +736,82 @@ static func _draw_moth(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool,
 	canvas.draw_rect(Rect2(centre + Vector2(flutter + 1, -1), Vector2(1, 1)), Color(Palette.CHANGED[0], fade))
 
 
+## A market rat (or, small, a runt): grey and violet-tinged, a scarred
+## back, a long bare tail.
+static func _draw_rat(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float, size: float) -> void:
+	var body: Color = _body_colour(f, Palette.STONE[1].lerp(Palette.CHANGED[1], 0.35), flash)
+	var back: Vector2 = -f.facing
+	canvas.draw_line(at + Vector2(0, -3) + back * 5 * size, at + Vector2(0, -1) + back * 13 * size + back.orthogonal() * 3,
+		Color(Palette.CHANGED[2].darkened(0.2), fade), 1.0)
+	var w: float = roundf(12.0 * size)
+	var h: float = roundf(7.0 * size)
+	canvas.draw_rect(Rect2(at.x - w / 2, at.y - h - 1, w, h), Color(body, fade))
+	canvas.draw_rect(Rect2(at.x - w / 2 + 2, at.y - h - 1, w - 4, 1), Color(Palette.STONE[0], fade))  # the scarred back
+	canvas.draw_rect(Rect2(at.x - 3, at.y - h - 3, 2, 2), Color(Palette.STONE[2], fade))
+	canvas.draw_rect(Rect2(at.x + 1, at.y - h - 3, 2, 2), Color(Palette.STONE[2], fade))
+	_eyes(canvas, f, at + Vector2(-1, -h + 1), 2.0, Palette.DANGER[1], fade)
+
+
+## A jackdaw: a rook's shape, smaller, with a grey nape and pale eyes; a
+## runt dangles beneath it while it still carries one.
+static func _draw_jackdaw(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var body: Color = _body_colour(f, Palette.SHADOW[1], flash)
+	if f.airborne:
+		canvas.draw_circle(at + Vector2(0, 10), 3.5, Color(Palette.SHADOW[0], 0.35 * fade))
+		var flap: float = sin(f.ai_timer * 0.5) * 3.0
+		canvas.draw_line(at + Vector2(-1, -6), at + Vector2(-8, -8 - flap), Color(body, fade), 2.0)
+		canvas.draw_line(at + Vector2(1, -6), at + Vector2(8, -8 - flap), Color(body, fade), 2.0)
+		if f.creature_kind.carries != &"" and f.ai_count == 0:
+			canvas.draw_line(at + Vector2(0, -3), at + Vector2(0, 1), Color(Palette.STONE[2], fade), 1.0)
+			canvas.draw_rect(Rect2(at.x - 3, at.y + 1, 6, 4), Color(Palette.STONE[1].lerp(Palette.CHANGED[1], 0.35), fade))
+	canvas.draw_rect(Rect2(at.x - 3, at.y - 8, 7, 6), Color(body, fade))
+	canvas.draw_rect(Rect2(at.x - 3, at.y - 9, 7, 2), Color(Palette.STONE[1], fade))  # the grey nape
+	canvas.draw_rect(Rect2(at.x - 1 + f.facing.x * 4, at.y - 6 + f.facing.y * 2, 2, 2), Color(Palette.SHADOW[0], fade))
+	_eyes(canvas, f, at + Vector2(-1, -7), 1.5, Palette.PAPER[1], fade)
+
+
+## A river pike: under the water, only a long dark shape; surfaced, a
+## mottled green back and a pale jaw.
+static func _draw_pike(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var length: float = f.radius * 2.6
+	var along: Vector2 = f.facing if f.facing.length() > 0.001 else Vector2.RIGHT
+	if f.untouchable:
+		canvas.draw_line(at - along * length / 2, at + along * length / 2, Color(Palette.SHADOW[0], 0.45), 5.0)
+		return
+	var body: Color = _body_colour(f, Palette.WILD[1].darkened(0.2), flash)
+	canvas.draw_line(at - along * length / 2, at + along * length / 2, Color(body, fade), 7.0)
+	canvas.draw_line(at - along * length / 2, at - along * (length / 2 + 4) + along.orthogonal() * 4, Color(body, fade), 2.0)
+	canvas.draw_line(at - along * length / 2, at - along * (length / 2 + 4) - along.orthogonal() * 4, Color(body, fade), 2.0)
+	canvas.draw_line(at + along * (length / 2 - 4), at + along * length / 2, Color(Palette.PAPER[0], fade), 3.0)  # the jaw
+	for i: int in range(3):
+		canvas.draw_rect(Rect2(at + along * (i * 4.0 - 6.0) - Vector2(1, 1), Vector2(2, 2)), Color(Palette.CHANGED[2], fade))
+	canvas.draw_arc(at, length / 2 + 3, 0, TAU, 20, Color(Palette.WATER[1].lightened(0.3), 0.5 * fade), 1.0)
+
+
+## A gravestone, mossed (scenery, or a Lichen-back in disguise).
+static func _draw_gravestone(canvas: CanvasItem, at: Vector2, fade: float) -> void:
+	canvas.draw_rect(Rect2(at.x - 6, at.y - 18, 12, 17), Color(Palette.STONE[2], fade))
+	canvas.draw_rect(Rect2(at.x - 6, at.y - 4, 12, 3), Color(Palette.STONE[1], fade))
+	canvas.draw_rect(Rect2(at.x - 5, at.y - 18, 4, 3), Color(Palette.WILD[1], fade))  # lichen
+
+
+## A Lichen-back risen: the stone a shell on a hunched grey body, moss
+## trailing, arms of root.
+static func _draw_lichen_back(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
+	var rising: float = 1.0
+	if f.ai_state == &"rising":
+		rising = 1.0 - float(f.ai_timer) / maxf(1.0, CombatTuning.ticks(CreatureBrain.STOOK_RISE_MS))
+	var shell: Color = _body_colour(f, Palette.STONE[2], flash)
+	var top: float = at.y - 16.0 - 4.0 * rising
+	canvas.draw_rect(Rect2(at.x - 7, top, 14, 12), Color(shell, fade))
+	canvas.draw_rect(Rect2(at.x - 6, top, 5, 3), Color(Palette.WILD[1], fade))
+	canvas.draw_rect(Rect2(at.x - 5, top + 12, 10, at.y - top - 13), Color(Palette.CHANGED[1].darkened(0.3), fade))
+	var reach: float = 3.0 + 7.0 * rising
+	canvas.draw_line(Vector2(at.x - 5, top + 9), Vector2(at.x - 5 - reach, top + 13), Color(Palette.CHANGED[0], fade), 2.0)
+	canvas.draw_line(Vector2(at.x + 5, top + 9), Vector2(at.x + 5 + reach, top + 13), Color(Palette.CHANGED[0], fade), 2.0)
+	_eyes(canvas, f, Vector2(at.x - 1, top + 13), 2.0, Palette.CHANGED[2], fade)
+
+
 ## Grist: a huge dark boar with pale tusks; caked in mud while armoured.
 static func _draw_grist(canvas: CanvasItem, f: Fighter, at: Vector2, flash: bool, fade: float) -> void:
 	var body: Color = _body_colour(f, Palette.SHADOW[2].darkened(0.1), flash)
@@ -772,6 +873,8 @@ static func _draw_props(canvas: CanvasItem, sim: CombatSim) -> void:
 				canvas.draw_circle(c, 2.0, Palette.SHADOW[0])
 			&"sheaf":
 				_draw_sheaf(canvas, rect.get_center() + Vector2(0, 6), 1.0)
+			&"gravestone":
+				_draw_gravestone(canvas, Vector2(rect.get_center().x, rect.end.y), 1.0)
 			_:
 				canvas.draw_rect(rect, Palette.STONE[1])
 
@@ -804,6 +907,17 @@ static func _draw_effect(canvas: CanvasItem, effect: Dictionary) -> void:
 	var at: Vector2 = effect["position"]
 	var age: int = effect["age"]
 	match effect["kind"]:
+		"surface", "submerge":
+			# Rings on the water where a pike comes up or goes under.
+			var t: float = age / float(EFFECT_TICKS[effect["kind"]])
+			for i: int in range(2):
+				canvas.draw_arc(at, 6.0 + t * 12.0 + i * 5.0, 0, TAU, 24, Color(Palette.WATER[1].lightened(0.3), (1.0 - t) * (0.8 - i * 0.3)), 1.0)
+		"split", "drop":
+			# Tufts of grey fur: a rat splitting, a runt landing.
+			var t: float = age / float(EFFECT_TICKS[effect["kind"]])
+			for i: int in range(5):
+				var d: Vector2 = Vector2.from_angle(i * TAU / 5.0 + 0.3)
+				canvas.draw_rect(Rect2(at + Vector2(0, -6) + d * (3.0 + t * 10.0), Vector2(2, 2)), Color(Palette.STONE[2], 1.0 - t))
 		"impact":
 			var r: float = 4.0 + age * 1.5
 			canvas.draw_arc(at + Vector2(0, -6), r, 0, TAU, 20, Color(Palette.CHANGED[2], 1.0 - age / 12.0), 2.0)
