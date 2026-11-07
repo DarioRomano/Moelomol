@@ -42,7 +42,8 @@ interacts in every place (Q39). The Clear spell opens the old fields. The
 cat (`Cat`) keeps its places by the time of day (Q41). Grist's heart and
 Clear open the great fields (Q42). One satchel (`GameState.satchel`,
 `Notes`) holds every note found; the great fields' field book is read at
-the farm. Next: the second area's design (`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+the farm. Next: building the second area, Kettlebridge (designed and
+accepted, `docs/design/area-kettlebridge.md`; `docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 

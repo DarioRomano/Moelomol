@@ -163,8 +163,8 @@ sleeping and at the gate, and to keep one save (2026-10-12).
    every place; the field book in the great fields' shelter. Playtest:
    `docs/playtests/2026-11-06-one-satchel.md`.
 
-Next: the second area (its design first, for the lead), and the systems
-the farm's layout reserves (the workshop's crafting, the stove's cooking
+Next: the second area, Kettlebridge (designed and accepted 2026-11-07;
+below), and the systems the farm's layout reserves (the workshop's crafting, the stove's cooking
 and the cat treats, the pen's animals), each with its own design pass.
 
 ## Later (not planned)
