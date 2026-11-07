@@ -4,8 +4,8 @@ extends Node2D
 ## props. Not a game screen.
 
 const KIND_COLOURS: Dictionary = {
-	&"field_mouse": Color("#a9b0bf"), &"rook": Color("#0e0f16"), &"hedgehog": Color("#4a3f52"),
-	&"flood_toad": Color("#47573f"), &"stook": Color("#8f8a6a"), &"moth": Color("#f0ece1"), &"grist": Color("#c2584a"),
+	&"market_rat": Color("#a9b0bf"), &"jackdaw": Color("#0e0f16"), &"river_pike": Color("#47573f"),
+	&"lichen_back": Color("#6e5b73"), &"moth": Color("#f0ece1"),
 }
 
 var area: Area = Kettlebridge.make()
@@ -13,7 +13,7 @@ var area: Area = Kettlebridge.make()
 
 func _ready() -> void:
 	var title: Label = Label.new()
-	title.text = "Kettlebridge, by day: the accepted map (its creatures follow in stage 2)"
+	title.text = "Kettlebridge, by day: the accepted map and the day roster (Duke follows in stage 3)"
 	title.position = Vector2(8, 2)
 	title.add_theme_font_size_override("font_size", 8)
 	title.add_theme_color_override("font_color", Palette.PAPER[1])
