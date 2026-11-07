@@ -6,6 +6,10 @@ extends Control
 ## UiFrame, so it follows the UI width setting.
 
 const PAPER_SIZE: Vector2 = Vector2(300, 170)
+## The room for a note's text: from below the title to the hint at the
+## paper's foot. Every note must fit in it (story.md rule 5).
+const TEXT_TOP: float = 28.0
+const TEXT_HEIGHT: float = PAPER_SIZE.y - 16.0 - TEXT_TOP
 
 var title: String = ""
 var text: String = ""
@@ -56,8 +60,8 @@ func _layout() -> void:
 	var paper: Rect2 = paper_rect()
 	_title_label.position = paper.position + Vector2(14, 10)
 	_title_label.size = Vector2(paper.size.x - 28, 12)
-	_text_label.position = paper.position + Vector2(14, 28)
-	_text_label.size = Vector2(paper.size.x - 28, paper.size.y - 50)
+	_text_label.position = paper.position + Vector2(14, TEXT_TOP)
+	_text_label.size = Vector2(paper.size.x - 28, TEXT_HEIGHT)
 	_hint.position = paper.position + Vector2(14, paper.size.y - 16)
 
 

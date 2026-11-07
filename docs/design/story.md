@@ -105,7 +105,8 @@ not matching it for a moment; the ambience going briefly silent around it).
 - **Falling in a fight, the player wakes in their own bed** the next
   morning, the cat curled on the blanket (Q36 A). How they got home is never
   explained; it reads as staggering home until the player knows better.
-- **Found notes are kept in a satchel to re-read** (Q37 B). No objective
+- **Found notes are kept in a satchel to re-read** (Q37 B), one satchel
+  for the whole game, readable in every place (2026-11-06). No objective
   text is ever written for the player; no voice speaks but the notes'
   writers.
 - **The farm was once worked by many hands** (Q38 C). It went wild over the

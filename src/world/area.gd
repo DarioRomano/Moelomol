@@ -331,7 +331,8 @@ func export_state() -> Dictionary:
 			"shown": thing["shown"], "taken": thing["taken"]})
 	var found: Array = []
 	for note_id: StringName in satchel:
-		found.append(String(note_id))
+		if notes.has(note_id):  # this area's own (the satchel is the game's)
+			found.append(String(note_id))
 	var bosses: Array = []
 	for boss: StringName in bosses_defeated:
 		bosses.append(String(boss))

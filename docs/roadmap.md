@@ -159,8 +159,13 @@ sleeping and at the gate, and to keep one save (2026-10-12).
    heart and Clear open them. Playtest:
    `docs/playtests/2026-11-06-great-fields.md`.
 
-Next: the almanac in the field shelter (one satchel for the whole game,
-notes readable at the farm); then the second area.
+9. **One satchel for the game** (2026-11-06): notes read and re-read in
+   every place; the field book in the great fields' shelter. Playtest:
+   `docs/playtests/2026-11-06-one-satchel.md`.
+
+Next: the second area, Kettlebridge (designed and accepted 2026-11-07;
+below), and the systems the farm's layout reserves (the workshop's crafting, the stove's cooking
+and the cat treats, the pen's animals), each with its own design pass.
 
 ## Later (not planned)
 

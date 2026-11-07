@@ -470,6 +470,11 @@ func _interact() -> void:
 		events.append({"type": "stroke", "position": cat_position})
 		return
 	var cell: Vector2i = target_cell()
+	if map != null and map.char_at(cell) == "F":
+		# The field book in the great fields' shelter (base.md: one trace of
+		# the farm's past in each parcel).
+		events.append({"type": "note", "note": &"field_almanac"})
+		return
 	if is_door(cell):
 		if map != null:
 			# The farm's door opens on the farmhouse inside (its own place).

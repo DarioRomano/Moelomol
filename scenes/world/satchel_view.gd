@@ -35,14 +35,16 @@ func _label(size: int, colour: Color) -> Label:
 	return label
 
 
-## Opens on `area`'s notes, newest first.
-func open(area: Area) -> void:
-	entries = area.satchel_newest_first()
+## Opens on every note the game has found, newest first (one satchel,
+## Q37). `live` is the area being played, if any.
+func open(state: GameState, live: Area = null) -> void:
+	entries = state.satchel.duplicate()
+	entries.reverse()
 	titles.clear()
 	threads.clear()
 	for note_id: StringName in entries:
-		titles[note_id] = (area.notes[note_id] as Dictionary)["title"]
-		threads[note_id] = area.has_loose_thread(note_id)
+		titles[note_id] = Notes.find(note_id).get("title", String(note_id))
+		threads[note_id] = Notes.loose_thread(note_id, state, live)
 	selected = 0
 	visible = true
 	_refresh()

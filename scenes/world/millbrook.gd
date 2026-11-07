@@ -209,12 +209,12 @@ func press_satchel() -> void:
 	if _satchel.visible:
 		_satchel.close()
 	else:
-		_satchel.open(area)
+		_satchel.open(state, area)
 
 
 func _open_note(note_id: StringName) -> void:
-	var note: Dictionary = area.notes[note_id]
-	_note.open(note["title"], note["text"], area.has_loose_thread(note_id))
+	var note: Dictionary = Notes.find(note_id)
+	_note.open(note["title"], note["text"], Notes.loose_thread(note_id, state, area))
 
 
 func _unhandled_input(event: InputEvent) -> void:

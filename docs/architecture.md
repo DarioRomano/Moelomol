@@ -121,6 +121,10 @@ Constraints the architecture must honour:
 - The farmhouse inside (`HouseSim`, `HouseLayout`, `HouseDrawer`): its own
   small simulation (walking, the bed, the seed tin, the door), sharing the
   game's clock, Mana and bag; `scenes/farm/house.tscn`.
+- Notes: `Notes` looks a note up in every place's book (`MillbrookNotes`,
+  `FarmNotes`); `GameState.satchel` holds those found, shared by reference
+  with the area being played; `NoteReader` shows notes and the satchel at
+  the farm and in the house (`NoteView`, `SatchelView`).
 - The cat (`Cat`, `CatDrawer`) lives in `GameState`; the farm and house
   scenes call `Cat.settle` each tick with what is in view, then tell their
   simulation where it sits (`cat_position`) so Interact can stroke it.

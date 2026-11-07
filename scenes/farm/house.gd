@@ -20,6 +20,8 @@ var haptics: Haptics = Haptics.new()
 var travels: bool = true
 ## Esc / Start: Resume, Back to title, Quit.
 var pause_menu: PauseMenu
+## Notes and the satchel (I / View), as in Millbrook.
+var reader: NoteReader
 
 var _camera_node: Camera2D
 var _hud: FarmHud
@@ -41,8 +43,10 @@ func _ready() -> void:
 	layer.add_child(frame)
 	_hud = FarmHud.new()
 	frame.add_child(_hud)
+	reader = NoteReader.new(state)
+	frame.add_child(reader)
 	_place_cat()  # there from the first frame
-	_hud.set_help("Move WASD / stick   Interact F / B (the bed: sleep; the seed tin)   Out: the door   Pause Esc / Start\n"
+	_hud.set_help("Move WASD / stick   Interact F / B (the bed: sleep; the seed tin)   Out: the door   Satchel I / View   Pause Esc / Start\n"
 		+ "F8 sleep now   F9 time x30")
 
 
@@ -59,8 +63,13 @@ func _physics_process(delta: float) -> void:
 		return
 	if _toast_ticks > 0:
 		_toast_ticks -= 1
+	if reader.is_open():
+		return  # reading: time stands still
 	_place_cat()
-	sim.step(FarmInput.read())
+	var input: FarmInput = FarmInput.read()
+	if reader.just_closed():
+		input.interact_pressed = false
+	sim.step(input)
 	for event: Dictionary in sim.events:
 		_handle(event)
 		if _left:
@@ -136,6 +145,11 @@ func _draw() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if reader.handle(event):
+		get_viewport().set_input_as_handled()
+		return
+	if reader.is_open():
+		return
 	if event.is_action_pressed(&"dev_farm_sleep", false):
 		sim.sleep()
 		_slept()
