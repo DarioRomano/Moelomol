@@ -47,7 +47,10 @@ walkable over Millbrook's ford, with its notes and its objective (Arthur's
 key, the winch house, the bridge) and its creatures (market rats that
 split, jackdaws, river pike, Lichen-backs); both areas share one scene
 (`scenes/world/area_scene.gd`). Next: Duke, Kettlebridge's boss
-(`docs/roadmap.md`). There is no other gameplay: no exploration or story. Do not invent
+(`docs/roadmap.md`). The game's art and sound exist as files (`assets/`,
+made in code by `tools/art/` and `tools/audio/`; Q2 and Q3 amended
+2026-11-12) but **the game does not use them yet**: it still draws itself
+in code, and the audio files wait on Q44. There is no other gameplay: no exploration or story. Do not invent
 gameplay systems speculatively; build what the task asks for. See
 `docs/roadmap.md`.
 
@@ -62,6 +65,8 @@ tools/run-tests.sh --filter palette  # only tests whose "path::name" contains th
 tools/render-showcase.sh [out_dir]   # renders showcase scenes at 10 screen sizes (needs xvfb-run)
 tools/export.sh windows macos linux linux-arm64 web   # runnable zips in dist/ (linux-arm64: test build)
 tools/smoke-run.sh dist/Moelomol-dev-linux.zip   # start the exported Linux build for 120 frames
+tools/art/build.py [module ...]      # regenerate every image in assets/ and the review sheets (standard library only)
+tools/audio/build.py [sfx|ambience|music]   # render the sound into assets/audio/ (needs numpy, scipy, ffmpeg)
 ```
 
 All tools use `$GODOT` (default `godot` on PATH) and refuse any engine other
@@ -99,6 +104,8 @@ prints failures as `::error` annotations: read them with
 | `src/world/` | Areas: `AreaMap` (text maps), `Area` (clock, rosters, entrances), `FollowCamera` (ADR-0015), `AreaDrawer`, each area's map, notes and roster |
 | `src/farm/` | The clock and farming rules as a deterministic 60 Hz simulation (`FarmSim`), the farm's layout (`FarmLayout`, `FarmMap`), drawing (`FarmGround`, `FarmDrawer`); the house (`HouseLayout`, `HouseSim`, `HouseDrawer`) |
 | `src/combat/` | Combat rules as a deterministic 60 Hz simulation (`CombatSim`), weapons (`Weapon` subclasses), creatures (`CreatureKind`, `CreatureBrain`), moves, drawing |
+| `assets/` | The game's art (PNG, palette-locked) and, once Q44 is settled, its sound. Never edit an image by hand: change `tools/art/` and rebuild, or CI fails. `art_manifest.json` lists every file's size, frames and animations |
+| `tools/art/`, `tools/audio/` | The generators for everything in `assets/` (`px.py` drawing library, one module per kind of art; `synth.py` and the sound recipes) |
 | `scenes/showcase/` | Scenes rendered for visual review (test card, renderer feature check); add new ones to `tools/render-showcase.sh` |
 | `src/core/game_state.gd` | The game in play: clock, bag, Mana, which place, what each place remembers; the save (ADR-0017) |
 | `src/` | Game code (`class_name` scripts). `src/art/palette.gd` is the draft palette; `src/core/dev_tools.gd` is the in-build performance overlay (F3) |
@@ -221,5 +228,9 @@ note of the bug it caught.
   fires before the scene's own tick, so a press released after one await
   never reaches the scene; a deliberate break of the note-closing guard
   survived that way, and the guard itself turned out to be too weak.
+- **Keep a reference to every texture you draw.** A texture loaded inside
+  `_draw()` and not stored is freed when the function returns; the draw
+  command holds only its RID, and the engine draws a white block. The first
+  engine render of the art files was solid white; tests had passed.
 - **Check what a tool actually returns.** `DisplayServer.screen_get_image_rect`
   returns an empty image under Xvfb in 4.7.2; `screen_get_image` works.

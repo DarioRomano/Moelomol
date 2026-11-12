@@ -5,13 +5,13 @@ the engineer's recommendation. When the lead decides, record the answer here
 (date and choice), move the substance into an ADR or design doc, and mark the
 question **Resolved**.
 
-Status at 2026-11-07: every question is resolved. The lead accepted the recommendations for Q39 to Q43 (2026-11-06 and 2026-11-07).
+Status at 2026-11-12: **Q44 is open** (how the audio files get into the repository). Q2 and Q3 were amended by the lead on 2026-11-12: the engineer makes the art and the sound in code, as the game's real assets, each replaceable later. Everything else is resolved.
 
 | # | Question | Blocks | Status |
 |---|----------|--------|--------|
 | Q1 | Base resolution, tile size, stretch and scale mode | M1, M2 | **Resolved** → ADR-0008 (amended: 21:9, 32:9) |
-| Q2 | Where the art comes from | M2 | **Resolved**: placeholders now, art provisioned later |
-| Q3 | Where the music and sound come from | M2 | **Resolved**: AI tools run by the lead; prompts in `audio-prompts.md` |
+| Q2 | Where the art comes from | M2 | **Resolved**, amended 2026-11-12: scripted pixel art by the engineer is the game's art, replaceable piece by piece |
+| Q3 | Where the music and sound come from | M2 | **Resolved**, amended 2026-11-12: synthesised by the engineer (effects, ambience, music), replaceable cue by cue |
 | Q4 | Performance budget values (ADR-0007) | First gameplay system | **Resolved** → ADR-0007 (test approach: Q16) |
 | Q5 | Renderer | M1 | **Resolved**: Compatibility everywhere → ADR-0012 |
 | Q6 | Input model | Player movement, first menu | **Resolved**: all recommendations → ADR-0013 |
@@ -52,6 +52,7 @@ Status at 2026-11-07: every question is resolved. The lead accepted the recommen
 | Q41 | What the cat does in its first build | The cat (`base.md` step 4) | **Resolved** 2026-11-06: A, a cat of places |
 | Q42 | The great fields inside, and how they open | Opening the first parcel (`base.md` step 5) | **Resolved** 2026-11-06: A, the sketch accepted |
 | Q43 | What the second area is | The second area's design | **Resolved** 2026-11-07: A, a market town on the river |
+| Q44 | How the audio files get into the repository | Sound in the game | **Open** |
 
 ---
 
@@ -117,6 +118,16 @@ renders at several window sizes in Milestone 1; not yet verified.
 **Resolved 2026-10-09:** option A. Placeholders made in code now; the final art
 will be provisioned later by the lead.
 
+**Amended by the lead 2026-11-12** ("Create full assets (visual and sound) for
+the game"; asked how they should count: "Game art, replaceable"). The engineer
+draws the full set with scripts (`tools/art/`, palette-locked, standard library
+only) and it is the game's art from now on, not placeholder. Any piece can be
+replaced later by a generated or hand-drawn one of the same size
+(`assets/art_manifest.json` gives every size and frame). The limit recorded
+below still holds: scripted art does not reach hand-drawn quality for
+characters; the lead judges it on the review sheets. Wiring the files into
+the game follows in separate pull requests ("Assets first, then wire in").
+
 Adding external art or commissioning art needs the lead's approval. The
 engineer can draw pixel art only with code (scripts that write PNGs pixel by
 pixel), which is fine for shapes, palettes, tiles and layout tests but will not
@@ -153,6 +164,12 @@ the Milestone 2 renders and `art-direction.md` as the brief. Avoid B except
 perhaps for short-lived reference.
 
 ## Q3. Where the music and sound come from
+
+**Amended by the lead 2026-11-12:** asked which sound the engineer should
+make, the lead chose "All: effects, ambience, music". All of it is synthesised
+in code (`tools/audio/`) to the cue sheet in `audio-prompts.md`, and any cue
+can be replaced later by a generated or recorded take with the same name.
+This also settles the open point below: sound effects are synthesised too.
 
 **Resolved 2026-10-09:** none of the options below. Music and ambience will be
 made with separate specialised AI tools, run by the lead. The engineer writes
@@ -1969,3 +1986,37 @@ and boss come in a design pass after, for acceptance as Millbrook's did.
 
 **Recommendation: A.** It carries stage 2's notes best, ties the boss to
 the parcel it opens, and brings streets as new ground.
+
+## Q44. How the audio files get into the repository
+
+**Open.** Raised 2026-11-12 with the first audio.
+
+ADR-0011 puts all audio through Git LFS, and CI fails any audio file
+committed without it. The engineer's environment cannot upload to LFS: the
+push reaches GitHub, but the upload to GitHub's LFS storage is refused by the
+environment's proxy ("Forbidden"). So the 159 rendered audio files (31 MB)
+are not in the pull request that adds the art; the generators that make them
+are. The files were handed to the lead as a zip.
+
+**A. The lead commits the zip from their own machine** (unzip into the
+repository, `git lfs install`, `git add assets/audio assets/audio_manifest.json`,
+commit, push)
+- Pro: no decision changes; ADR-0011 stands; five minutes' work.
+- Con: every later change to a sound needs the same hand-over.
+
+**B. Amend ADR-0011: audio under 1 MiB stays in plain git, like PNGs**
+- Pro: the engineer can commit effects (134 files, all under 1 MiB) and
+  stings directly; only the long loops need LFS.
+- Con: changes an ADR; every re-render of an effect adds its bytes to the
+  history for good; the long music and ambience files still need option A.
+
+**C. Do not commit audio at all: CI renders it from `tools/audio/` at build**
+- Pro: nothing binary in the repository; always matches the source.
+- Con: CI gains numpy, scipy and ffmpeg as build dependencies (needs the
+  lead's approval) and about three minutes per build; Ogg encoding is not
+  guaranteed identical across ffmpeg versions; a hand-made replacement cue
+  would have nowhere to live.
+
+**Recommendation: A now.** It needs no decision beyond doing it, and keeps
+the door open for replacement takes. If hand-overs become frequent once the
+sound is wired in and being tuned, revisit B for effects only.
