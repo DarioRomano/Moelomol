@@ -2,7 +2,6 @@
 
 Standard library only (CI runs it with the other script tests).
 """
-import filecmp
 import json
 import os
 import struct
@@ -115,7 +114,8 @@ class TestAssets(unittest.TestCase):
                 continue
             self.assertIn("assets/creatures/%s.png" % kind, self.manifest, "no sprite for the creature kind '%s'" % kind)
 
-    def test_the_art_rebuilds_byte_for_byte_from_its_source(self):
+    def test_the_art_rebuilds_pixel_for_pixel_from_its_source(self):
+        """Pixels, not bytes: PNG compression differs between zlib builds."""
         import importlib
         import lib
         import build
@@ -127,12 +127,19 @@ class TestAssets(unittest.TestCase):
             try:
                 for name in build.MODULES:
                     importlib.import_module(name).build()
-                lib.write_manifest("art_manifest.json")
+                fresh_manifest = dict(lib.MANIFEST)
+                differing = []
                 for rel in self.manifest:
                     fresh = os.path.join(tmp, rel)
-                    self.assertTrue(os.path.exists(fresh), "the generators no longer make %s" % rel)
-                    self.assertTrue(filecmp.cmp(fresh, os.path.join(ROOT, rel), shallow=False), "%s differs from what tools/art/build.py makes" % rel)
-                self.assertTrue(filecmp.cmp(os.path.join(lib.ASSETS, "art_manifest.json"), os.path.join(ASSETS, "art_manifest.json"), shallow=False), "the manifest is stale")
+                    if not os.path.exists(fresh):
+                        differing.append("%s is no longer made" % rel)
+                    elif read_png(fresh) != read_png(os.path.join(ROOT, rel)):
+                        differing.append("%s differs" % rel)
+                if fresh_manifest != self.manifest:
+                    differing.append("assets/art_manifest.json is stale")
+                if differing:  # CI shows annotations, not logs
+                    print("::error title=Art does not match tools/art::%s" % "; ".join(differing[:12]))
+                self.assertEqual(differing, [], "run tools/art/build.py and commit the result")
             finally:
                 lib.ASSETS, lib.SHEETS = keep[0], keep[1]
                 lib.MANIFEST.clear()
