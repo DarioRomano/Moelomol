@@ -534,6 +534,11 @@ a real controller)
   a `FontFile` (importer `font_data_bmfont`): `fixed_size` 10,
   `get_height(10)` 10, `get_ascent(10)` 7, antialiasing none;
   `get_string_size("Moelomol", …, 10)` is (39, 10).
+- Importing the `.fnt` rewrites its page's sidecar
+  (`moelomol_font.png.import`) to `importer="skip"`: the PNG is then part
+  of the font and `load()` of it fails. The first import can leave it as a
+  texture and the next one flips it, so the committed sidecar is the
+  settled `skip` one. Found by a deliberate break that re-imported.
 - PNGs import as `CompressedTexture2D` with `compress/mode=0` (lossless);
   `get_image()` returns RGBA8 with the file's exact colours.
 - **A `Texture2D` must be held by a variable for as long as it is drawn.**

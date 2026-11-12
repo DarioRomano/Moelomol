@@ -15,6 +15,8 @@ func test_every_image_in_the_manifest_imports_at_its_size() -> void:
 	var manifest: Dictionary = _manifest()
 	assert_true(manifest.size() > 250, "the manifest lists the art (%d files)" % manifest.size())
 	for path: String in manifest:
+		if (manifest[path] as Dictionary).has("glyphs"):
+			continue  # the font's page: the font importer marks it "skip", it is not a texture to draw
 		var texture: Texture2D = load("res://" + path)
 		assert_true(texture != null, "%s loads" % path)
 		if texture == null:
