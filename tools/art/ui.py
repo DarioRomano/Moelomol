@@ -3,7 +3,8 @@
 The only place the palette's pure black and white are allowed."""
 import math
 from px import Canvas, strip
-from lib import out, ASSETS
+from lib import out
+import lib
 import font
 import creatures
 
@@ -142,9 +143,8 @@ def build():
         keep("pad_" + text.lower(), keycap(text, pad=True))
     keep("title", title())
     keep("app_icon", app_icon())
-    n = font.build(ASSETS + "/ui")
-    from lib import MANIFEST
-    MANIFEST["assets/ui/moelomol_font.png"] = {"size": [128, 60], "glyphs": n, "line_height": font.LINE_HEIGHT, "format": "BMFont text (moelomol_font.fnt)"}
+    n = font.build(lib.ASSETS + "/ui")
+    lib.MANIFEST["assets/ui/moelomol_font.png"] = {"size": [128, 60], "glyphs": n, "line_height": font.LINE_HEIGHT, "format": "BMFont text (moelomol_font.fnt)"}
     sample = Canvas(250, 44, "1")
     sample.text(3, 3, "The quick brown fox jumps over the lazy dog.", "P")
     sample.text(3, 14, "ARTHUR'S KEY, 0123456789 - Kettlebridge?", "h")

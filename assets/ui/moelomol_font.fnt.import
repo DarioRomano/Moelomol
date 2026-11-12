@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://dgm2l8004bajh"
+path="res://.godot/imported/moelomol_font.fnt-464508f95dcecba9310159df4d232e94.fontdata"
+
+[deps]
+
+source_file="res://assets/ui/moelomol_font.fnt"
+dest_files=["res://.godot/imported/moelomol_font.fnt-464508f95dcecba9310159df4d232e94.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=2

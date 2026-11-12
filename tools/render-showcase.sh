@@ -36,6 +36,7 @@ SCENES=(
   "res://scenes/showcase/kettlebridge_bridge.tscn"
   "res://scenes/showcase/kettlebridge_night.tscn"
   "res://scenes/showcase/kettlebridge_creature_poses.tscn"
+  "res://scenes/showcase/assets_sheet.tscn"
   "res://scenes/combat/combat_arena.tscn"
   "res://scenes/showcase/farm_times.tscn"
   "res://scenes/showcase/farm_spells.tscn"

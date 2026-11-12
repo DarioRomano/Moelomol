@@ -527,3 +527,24 @@ a real controller)
 - A script that `extends "res://…/area_scene.gd"` by path keeps working
   when the scene it was split from is renamed with its `.uid` moved along;
   the showcase scenes that extend `millbrook.gd` loaded unchanged.
+
+### 2026-11-12 (the art and sound files), Godot 4.7.2.stable.official
+
+- A `.fnt` file in AngelCode BMFont text format beside its PNG imports as
+  a `FontFile` (importer `font_data_bmfont`): `fixed_size` 10,
+  `get_height(10)` 10, `get_ascent(10)` 7, antialiasing none;
+  `get_string_size("Moelomol", …, 10)` is (39, 10).
+- PNGs import as `CompressedTexture2D` with `compress/mode=0` (lossless);
+  `get_image()` returns RGBA8 with the file's exact colours.
+- **A `Texture2D` must be held by a variable for as long as it is drawn.**
+  `draw_texture(load(path), …)` inside `_draw()` draws the engine's white
+  stand-in: the resource is freed when the function returns and the canvas
+  item's draw command keeps only the RID. Holding the texture in a member
+  (or a Dictionary) fixes it. Verified under Xvfb with the Compatibility
+  renderer by reading pixels from the render.
+- WAV import: `edit/loop_mode=2` in the `.import` file means Forward and
+  gives `AudioStreamWAV.loop_mode == LOOP_FORWARD` (which is 1 at runtime;
+  the import option counts from "Detect From WAV" = 0, "Disabled" = 1).
+  Ogg import: `loop=true` gives `AudioStreamOggVorbis.loop == true`.
+  `get_length()` matches the rendered length (163.64 s for MUS-01).
+

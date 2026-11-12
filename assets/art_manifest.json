@@ -3023,8 +3023,8 @@
  },
  "assets/props/farm/cat_blanket.png": {
   "size": [
-   16,
-   5
+   18,
+   7
   ]
  },
  "assets/props/farm/chest.png": {
@@ -3085,8 +3085,8 @@
  },
  "assets/props/house/basket.png": {
   "size": [
-   10,
-   6
+   12,
+   8
   ]
  },
  "assets/props/house/bed.png": {
@@ -3121,8 +3121,8 @@
  },
  "assets/props/house/cup.png": {
   "size": [
-   5,
-   4
+   7,
+   6
   ]
  },
  "assets/props/house/cupboard.png": {
@@ -3139,8 +3139,8 @@
  },
  "assets/props/house/seed_tin.png": {
   "size": [
-   8,
-   6
+   10,
+   8
   ]
  },
  "assets/props/house/stove.png": {
@@ -3171,8 +3171,8 @@
  },
  "assets/props/house/window_seat.png": {
   "size": [
-   32,
-   8
+   34,
+   10
   ]
  },
  "assets/props/kettlebridge/barge.png": {
@@ -3211,8 +3211,8 @@
  },
  "assets/props/kettlebridge/padlock.png": {
   "size": [
-   4,
-   5
+   6,
+   7
   ]
  },
  "assets/props/kettlebridge/rostrum.png": {
@@ -3247,20 +3247,20 @@
  },
  "assets/props/kettlebridge/vase_dead.png": {
   "size": [
-   5,
-   6
+   7,
+   8
   ]
  },
  "assets/props/kettlebridge/winch_key.png": {
   "size": [
-   6,
-   3
+   8,
+   5
   ]
  },
  "assets/props/millbrook/crank.png": {
   "size": [
-   8,
-   5
+   10,
+   7
   ]
  },
  "assets/props/millbrook/footbridge.png": {
@@ -3294,8 +3294,8 @@
  },
  "assets/props/millbrook/grist_heart.png": {
   "size": [
-   7,
-   6
+   9,
+   8
   ]
  },
  "assets/props/millbrook/millstone.png": {
@@ -3382,8 +3382,8 @@
    8
   ],
   "size": [
-   14,
-   6
+   18,
+   8
   ]
  },
  "assets/props/world/notice_board.png": {

@@ -236,7 +236,10 @@ def candle(frame):
 
 
 def small(rows):
-    return from_art(rows).outline()
+    """A little hand-drawn thing, with a pixel of margin for its outline."""
+    c = Canvas(max(len(r) for r in rows) + 2, len(rows) + 2)
+    c.art(1, 1, rows)
+    return c.outline()
 
 
 # --- Millbrook --------------------------------------------------------------------

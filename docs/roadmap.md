@@ -167,6 +167,21 @@ Next: the second area, Kettlebridge (designed and accepted 2026-11-07;
 below), and the systems the farm's layout reserves (the workshop's crafting, the stove's cooking
 and the cat treats, the pen's animals), each with its own design pass.
 
+## Art and sound (started 2026-11-12)
+
+The lead asked for the full art and sound, made by the engineer in code
+(Q2 and Q3 amended). `docs/progress/2026-11-12-game-assets.md`.
+
+1. The assets: 288 images, the pixel font, 159 sounds, their generators,
+   manifest, tests and review sheets. **Built** 2026-11-12. Look and
+   listen: `docs/playtests/2026-11-12-assets-look-and-listen.md`.
+2. The audio files into the repository (Q44, **open**: waiting for the lead).
+3. Wiring in, one pull request each, each with renders: the pixel font and
+   interface; the farm and the farmhouse; the areas' ground, buildings and
+   props; the player and creatures (sprites driven by the simulation's
+   states); effects; then sound (bus layout from `audio-direction.md`,
+   ambience per place, music, effects on the simulation's events).
+
 ## Later (not planned)
 
 Decided and ready for the first gameplay system: language (ADR-0003),

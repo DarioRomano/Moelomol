@@ -1,10 +1,12 @@
 # Audio direction
 
 - **Status:** Draft, for the lead's review.
-- **Decided inputs:** Q3: music and ambience come from separate specialised AI
-  tools, run by the lead, from the prompts in `audio-prompts.md`. Q9 → ADR-0010
+- **Decided inputs:** Q3 (amended 2026-11-12): effects, ambience and music
+  are synthesised by the engineer (`tools/audio/`) to the cue sheet in
+  `audio-prompts.md`, replaceable cue by cue. Q44 (open): how the files get
+  into the repository. Q9 → ADR-0010
   (the pet is secretly a god).
-- **Still open:** sound effects source. (Q13 decided: monsters are wildlife
+- **Settled 2026-11-12:** sound effects are synthesised too. (Q13 decided: monsters are wildlife
   changed by the god's presence, more so further from the base.)
 - **Binding constraints:** ADR-0005 as amended by ADR-0010 (lonely tone, no
   human characters, so no voices).

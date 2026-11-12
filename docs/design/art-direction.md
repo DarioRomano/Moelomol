@@ -2,8 +2,10 @@
 
 - **Status:** Draft, for the lead's review. Nothing here is final until shown on
   screen in Milestone 2 renders.
-- **Decided inputs:** Q1 → ADR-0008 (640×360, 16 px tiles); Q2 → placeholders
-  in code now, final art provisioned later by the lead; Q9 → ADR-0010 (the pet).
+- **Decided inputs:** Q1 → ADR-0008 (640×360, 16 px tiles); Q2 (amended
+  2026-11-12) → the art is scripted by the engineer (`tools/art/`, files in
+  `assets/`, review sheets in `images/assets/`), replaceable piece by piece;
+  Q9 → ADR-0010 (the pet).
 - **Q13 decided:** people were taken town by town; monsters are wildlife and
   land changed by the god's presence (`story.md`).
 - **Binding constraints:** ADR-0005 as amended by ADR-0010 (one base, peaceful
