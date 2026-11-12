@@ -16,9 +16,15 @@ ASSETS = os.path.join(ROOT, "assets")
 sys.path.insert(0, os.path.join(ROOT, "tools", "art"))
 
 
+def read_text(path):
+    with open(path) as f:
+        return f.read()
+
+
 def read_png(path):
     """Width, height and RGBA rows of a PNG as tools/art/px.py writes them."""
-    data = open(path, "rb").read()
+    with open(path, "rb") as f:
+        data = f.read()
     assert data[:8] == b"\x89PNG\r\n\x1a\n", path
     at, idat, size = 8, b"", None
     while at < len(data):
@@ -51,7 +57,7 @@ def all_pngs():
 class TestAssets(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.manifest = json.load(open(os.path.join(ASSETS, "art_manifest.json")))
+        cls.manifest = json.loads(read_text(os.path.join(ASSETS, "art_manifest.json")))
         import px
         cls.palette = {bytes(rgb) + b"\xff": key for key, rgb in px.RGB.items()}
 
@@ -102,7 +108,7 @@ class TestAssets(unittest.TestCase):
             self.assertTrue({"idle", "walk"} <= names, weapon)
 
     def test_every_creature_kind_has_a_sprite(self):
-        source = open(os.path.join(ROOT, "src", "combat", "creature_kind.gd")).read()
+        source = read_text(os.path.join(ROOT, "src", "combat", "creature_kind.gd"))
         import re
         for kind in re.findall(r'_make\(&"(\w+)"', source):
             if kind in ("training", "shelled", "runner", "caster"):  # the arena's test dummies keep their code drawing
@@ -133,7 +139,7 @@ class TestAssets(unittest.TestCase):
                 lib.MANIFEST.update(keep[2])
 
     def test_every_asset_folder_is_in_the_register(self):
-        register = open(os.path.join(ROOT, "docs", "design", "asset-register.md")).read()
+        register = read_text(os.path.join(ROOT, "docs", "design", "asset-register.md"))
         for folder in sorted({rel.split("/")[1] for rel in self.manifest}):
             self.assertIn("`assets/%s/" % folder, register, "assets/%s/ is not in docs/design/asset-register.md" % folder)
 
