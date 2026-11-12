@@ -70,9 +70,13 @@ the lead as a zip to commit.
 - **Tests** (`tools/ci/test_assets.py`, `tests/unit/test_assets.gd`): every
   pixel is a palette colour; pure black and white only in the interface;
   the manifest matches the files; frames and animations fit their images;
-  every creature kind has a sprite; the art rebuilds byte for byte from
+  every creature kind has a sprite; the art rebuilds pixel for pixel from
   source; every folder is in the register; every image imports at its size;
   the font is a 10 px bitmap font.
+- **Nine deliberate breaks**, all caught (an off-palette pixel, pure white
+  in an icon, an image deleted, a generator edited without rebuilding, a
+  wrong frame size, a creature without a sprite, the font's line height,
+  an image resized, an import setting shrinking a texture).
 - **Sound, measured (it cannot be heard here)**: loudness on the spec's
   targets (music −18 LUFS, ambience −24, peaks under −1 dB); every loop's
   seam smaller than the largest ordinary step in the file; the motif reads
@@ -87,6 +91,15 @@ the lead as a zip to commit.
   returns; the draw command holds only its RID, and the engine draws its
   white stand-in. Only the render showed it. The showcase now holds its
   textures; rule added to `CLAUDE.md`.
+- **The first CI run failed with no detail.** The rebuild test compared
+  PNG files byte for byte; the same pixels compress to different bytes
+  under a different zlib build, so it passed here and failed in CI. It now
+  compares pixels, and prints what differs as an annotation (the only CI
+  output this environment can read).
+- **The font's PNG page flips its import state.** Importing the `.fnt`
+  re-marks the page as `importer="skip"`. A deliberate break that
+  re-imported showed the engine test then failing to load it; the settled
+  sidecar is committed and the test treats the page as part of the font.
 - **Small props had clipped outlines and one wrong frame size**: drawn with
   no margin, so the outline had nowhere to go. The manifest test found it.
 - **Market rats vanished on the cobbles** (grey on grey) in the
